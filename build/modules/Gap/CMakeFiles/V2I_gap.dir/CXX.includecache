@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/baojiali/Projects/V2I/modules/Gap/MLE.cpp
+MLE.h
+/home/baojiali/Projects/V2I/modules/Gap/MLE.h
+iostream
+-
+
+/home/baojiali/Projects/V2I/modules/Gap/MLE.h
+
