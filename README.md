@@ -4,7 +4,8 @@
 1. Eigen \
 sudo apt install libeigen3-dev
 2. 
-## Build
+
+## 2. Build
 mkdir build \
 cd build \
 cmake .. \
@@ -12,7 +13,7 @@ make \
 
 
 
-## Code structure
+## 3. Code structure
 ├─CMakeLists.txt
 ├─README.md
 ├─main.cpp
@@ -45,14 +46,12 @@ make \
 |    |  ├─MLE.h
 |    |  ├─gap.cpp
 |    |  └gap.h
-## TTC
+
+## 4. TTC
 
 
-## GAP
-## HMM
+## 5. GAP
+The gap parameters are estimated via Maximum Likelihood Estimate (MLE), which is implemented in the MLE. 
 
+## 6. HMM
 
-asdfasdf
-### level 3
-
-asdfsadf

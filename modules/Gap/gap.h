@@ -16,8 +16,11 @@ namespace V2I
         /// @return probability of gap acceptance
         double CalculateGap(double D2, double V2, double D1, double V1);
 
+        void set_alpha(double alpha);
+        void set_beta(Eigen::Vector4d beta);
+
     private:
-        double alpha;
-        Eigen::Vector4d beta;
+        double alpha_;
+        Eigen::Vector4d beta_;
     };
 } // namespace V2I

@@ -6,7 +6,8 @@ namespace V2I
     public:
         Estimator();
         ~Estimator();
-
+        void ReadData();
+        
     private:
     };
 } // namespace V2I
