@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -std=c++11 -g3 -rdynamic -O0  -shared -Wl,-soname,libV2I_hmm.so -o libV2I_hmm.so CMakeFiles/V2I_hmm.dir/hmm.cpp.o CMakeFiles/V2I_hmm.dir/map.cpp.o CMakeFiles/V2I_hmm.dir/sequence.cpp.o CMakeFiles/V2I_hmm.dir/state.cpp.o CMakeFiles/V2I_hmm.dir/trellis.cpp.o CMakeFiles/V2I_hmm.dir/viterbi.cpp.o 

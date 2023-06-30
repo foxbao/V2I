@@ -16,6 +16,9 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 add_subdirectory(modules)
 set(target_name V2I)
 
+find_package(Eigen3 REQUIRED)
+
+INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
 
 add_executable(${target_name} main.cpp)
 target_link_libraries(

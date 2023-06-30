@@ -6,11 +6,14 @@
 #include <map>
 #include <vector>
 
+
 #define Maxsize_N 100
 #define Maxsize_M 100
 #define Maxsize_T 100
-int HMM_test()
+int V2I_test()
 {
+
+
     using namespace std;
     map<string, int> Q;
     Q["Fair"] = 0;
@@ -119,5 +122,5 @@ int main()
     
     V2I::Map map;
     cv::Mat a;
-    HMM_test();
+    V2I_test();
 }

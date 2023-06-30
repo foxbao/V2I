@@ -1,9 +1,16 @@
 # V2I Introduction
+
+## 1. Requirement
+1. Eigen \
+sudo apt install libeigen3-dev
+2. 
 ## Build
 mkdir build \
 cd build \
 cmake .. \
 make \
+
+
 
 ## Code structure
 ├─CMakeLists.txt
@@ -39,6 +46,8 @@ make \
 |    |  ├─gap.cpp
 |    |  └gap.h
 ## TTC
+
+
 ## GAP
 ## HMM
 

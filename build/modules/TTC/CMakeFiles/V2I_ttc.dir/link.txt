@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -std=c++11 -g3 -rdynamic -O0  -shared -Wl,-soname,libV2I_ttc.so -o libV2I_ttc.so CMakeFiles/V2I_ttc.dir/ttc.cpp.o CMakeFiles/V2I_ttc.dir/ttc_test.cpp.o 
