@@ -6,14 +6,18 @@ sudo apt install libeigen3-dev
 2. 
 
 ## 2. Build
-mkdir build \
-cd build \
-cmake .. \
-make \
+```
+mkdir build
+cd build
+cmake ..
+make
+```
+
 
 
 
 ## 3. Code structure
+```
 ├─CMakeLists.txt
 ├─README.md
 ├─main.cpp
@@ -46,12 +50,22 @@ make \
 |    |  ├─MLE.h
 |    |  ├─gap.cpp
 |    |  └gap.h
+```
 
 ## 4. TTC
-
+Time to Collision(TTC) is implemented to estimate safety of a moving vehicle with reference to another vehicle with which it may interacte. 
 
 ## 5. GAP
+
+Gap acceptance calculates the probability of passing before a vehicle. 
 The gap parameters are estimated via Maximum Likelihood Estimate (MLE), which is implemented in the MLE. 
 
 ## 6. HMM
+
+
+
+
+
+
+
 
