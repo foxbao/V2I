@@ -1,4 +1,5 @@
 #pragma once
+#include<vector>
 namespace V2I
 {
     class Estimator
@@ -7,6 +8,10 @@ namespace V2I
         Estimator();
         ~Estimator();
         void ReadData();
+        double MLE_logit(std::vector<double>y,std::vector<double> x);
+        
+
+
         
     private:
     };
