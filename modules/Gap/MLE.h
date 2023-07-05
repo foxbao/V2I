@@ -9,10 +9,10 @@ namespace V2I
         ~Estimator();
         void ReadData();
         double MLE_logit(std::vector<double>y,std::vector<double> x);
-        
 
-
-        
+        double Jacobian();
+        double Hessian();
+        double Newton_Raphson();        
     private:
     };
 } // namespace V2I
