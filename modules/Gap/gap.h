@@ -8,7 +8,6 @@ namespace V2I
     public:
         gap();
         ~gap();
-
         /// @brief Calculate the gap acceptance probability
         /// @param D2 distance between comming vehicle and conflict point
         /// @param V2 speed of comming vehicle
@@ -24,7 +23,7 @@ namespace V2I
         double logit(std::vector<double> beta, std::vector<double> x);
 
 
-        double logit(Eigen::Vector2d beta, double x);
+        double logit(Eigen::VectorXd beta, std::vector<double> x);
         void set_alpha(double alpha);
         void set_beta(Eigen::Vector4d beta);
 

@@ -154,11 +154,13 @@ $$
 \hat{\theta}=arg\underset{\theta}{\max}\,\,l\left( \theta ;y,x \right) 
 $$
 To get the parameters that maximizes the log-likelihood, we derive the equation
+
 $$
 \nabla _{\theta}l\left( \theta ;y,x \right) =\nabla _{\theta}\left( \sum_{i=1}^N{\sum_{j=1}^J{\ln \left( f_j\left( x_i;\theta \right) \right)}}y_{ij} \right) 
 \\
 =\sum_{i=1}^N{\sum_{j=1}^J{\frac{y_{ij}}{f_j\left( x_i;\theta \right)}\nabla _{\theta}}}f_j\left( x_i;\theta \right) 
 $$
+
 Usually, there is no analytical solution for the estimation of parameters of logit functions. Therefore, we use numerical method as Newton-Raphson to solve it recursively.
 
 
@@ -227,10 +229,19 @@ $$
 
 Newton-Raphson method \
 The first order condition above has no explicit solution. Therefore, we implement Newton-Raphson method. We start from a guess of the solution
+$
+\hat{\beta}_0
+$
+(e.g.,)
+$
+\hat{\beta}_0=0
+$
 , and recursively update the guess with the equation
+
 $$
 \hat{\beta}_t=\hat{\beta}_{t-1}-\left[ \nabla _{\beta \beta}l\left( \hat{\beta}_{t-1};y,X \right) \right] ^{-1}\nabla _{\beta}l\left( \hat{\beta}_{t-1};y,X \right) 
 $$
+
 If you are not clear with Newton-Raphson method, please refer to https://web.mit.edu/10.001/Web/Course_Notes/NLAE/node6.html and https://sm1les.com/2019/03/01/gradient-descent-and-newton-method/
 
 until numerical convergence.\

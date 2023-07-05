@@ -20,7 +20,9 @@ int main()
 
 
     std::vector<double> x;
-    std::vector<double> y;
+    std::vector<std::vector<double>> x_batch;
+    std::vector<double> y_batch;
+
     Eigen::Vector2d beta;
     beta<<2,-2;
     // std::vector<double> beta;
@@ -30,16 +32,19 @@ int main()
     int len=100;
     for(int i=0;i<len;i++)
     {
-        // x.clear();
+        x.clear();
         x.push_back(i*0.1);
-        double result=sp_gap->logit(beta,x[i]);
-        y.push_back(result);
+        double result=sp_gap->logit(beta,x);
+        x_batch.push_back(x);
+        y_batch.push_back(result);
+        // y.push_back(result);
         // y.push_back(sp_gap->logit(beta[1],x[i]));
 
-        std::cout<<"x:"<<x[i]<<",y:"<<y[i]<<std::endl;
+        // std::cout<<"x:"<<x[i]<<",y:"<<y[i]<<std::endl;
     }
 
-    sp_estimator->MLE_logit(y,x);
+
+    sp_estimator->MLE_logit(y_batch,x_batch);
 
 
 

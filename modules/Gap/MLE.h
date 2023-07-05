@@ -1,5 +1,8 @@
 #pragma once
-#include<vector>
+#include <eigen3/Eigen/Core>
+#include <memory>
+#include <vector>
+#include "Optimizer.h"
 namespace V2I
 {
     class Estimator
@@ -8,11 +11,9 @@ namespace V2I
         Estimator();
         ~Estimator();
         void ReadData();
-        double MLE_logit(std::vector<double>y,std::vector<double> x);
-
-        double Jacobian();
-        double Hessian();
-        double Newton_Raphson();        
+        double MLE_logit(std::vector<double> y_batch, std::vector<std::vector<double>> x_batch);
     private:
+        std::shared_ptr<Optimizer> sp_optimizer;
+        
     };
 } // namespace V2I
