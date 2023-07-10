@@ -8,11 +8,21 @@ namespace V2I
     public:
         Optimizer();
         ~Optimizer();
-        double Jacobian(std::vector<double> y_batch, std::vector<std::vector<double>> x_batch);
-        double Hessian(std::vector<double> y_batch, std::vector<std::vector<double>> x_batch);
-        double Newton_Raphson(std::vector<double> y_batch, std::vector<std::vector<double>> x_batch);
-
+        /// @brief 
+        /// @param beta parameter
+        /// @param y_batch data output
+        /// @param x_batch data input
+        /// @return 
+        Eigen::VectorXd Jacobian(Eigen::VectorXd beta, std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch);
+        /// @brief 
+        /// @param beta parameter
+        /// @param y_batch 
+        /// @param x_batch 
+        /// @return 
+        Eigen::MatrixXd Hessian(Eigen::VectorXd beta,std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch);
+        double Newton_Raphson(std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch);
+        double logit(Eigen::VectorXd beta, Eigen::VectorXd x);
     private:
-        Eigen::Vector2d beta;
+        Eigen::Vector2d beta_;
     };
 }

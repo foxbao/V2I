@@ -16,10 +16,9 @@ namespace V2I
 
     }
 
-    double Estimator::MLE_logit(std::vector<double> y_batch, std::vector<std::vector<double>> x_batch)
+    double Estimator::MLE_logit(std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch)
     {
         sp_optimizer->Newton_Raphson(y_batch,x_batch);
-
         return 0.0;
     }
 }

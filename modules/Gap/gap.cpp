@@ -43,12 +43,12 @@ namespace V2I
         return result;
     }
 
-    double gap::logit(std::vector<double> beta, std::vector<double> x)
+    double gap::logit(Eigen::VectorXd beta, Eigen::VectorXd x)
     {
-
-        return 0;
-        // double result = 1 / (1 + exp(beta * x));
-        // return result;
+        Eigen::VectorXd x_homo(beta.size());
+        x_homo(0)=1;
+        x_homo.segment(1,x.size())=x;
+        double result=1/(1+exp(beta.dot(x_homo)));
+        return result;
     }
-
 }

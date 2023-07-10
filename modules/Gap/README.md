@@ -82,7 +82,7 @@ We can refer to the psu manuscript of MLE for more details
 https://online.stat.psu.edu/stat415/lesson/1/1.2 and https://www.statlect.com/fundamentals-of-statistics/logistic-classification-model \
 Here we give a simple derivation of the problem.
 
-Likelihood means the probability of an observation to happen, given the parameters. The likelihood of an observation 
+Likelihood means the probability of an observation to happen, given the parameters. The ##likelihood of an observation 
 $
 \left( y_i,x_i \right) 
 $
@@ -195,7 +195,7 @@ L\left( \beta ;y,x \right) =\prod_{i=1}^N{\left[ S\left( x_i\beta \right) \right
 $$
 
 
-The log-likelihood \
+## The log-likelihood
 The log-likelihood of the logistic model is
 $$
 l\left( \beta ;y,x \right) =\sum_{i=1}^N{\left[ -\ln \left( 1+\exp \left( x_i\beta \right) \right) +y_ix_i\beta \right]}
@@ -314,6 +314,29 @@ $$
 \hat{\beta}_t=\hat{\beta}_{t-1}+\left( X^TW_{t-1}X \right) ^{-1}X^T\left( y-\hat{y}_{t-1} \right) 
 $$
 
+
+## Gradient descend method
+Besides Newton-Raphson, Gradient descends can also be implemented to train the gap model. Actually descend is widely used in Machine Learning.  
+The target of Gradient Descent is recursively find the minimum value of
+$
+f\left( x \right)
+$, which means to find 
+$
+f\left( x_t+\varDelta x \right) <f\left( x_t \right) 
+$.
+
+The Taylor Series of 
+$
+f\left( x \right)
+$ 
+is
+$$
+f\left( x \right) =f\left( x_t \right) +f\prime\left( x_t \right) \left( x-x^t \right) +\frac{1}{2}f''\left( x_t \right) \left( x-x^t \right) ^2+\cdots 
+$$
+We tranche the taylor series until the first order item, and it becomes 
+$$
+f\left( x \right) =f\left( x_t \right) +f\prime\left( x_t \right) \left( x-x^t \right) 
+$$
 
 
 

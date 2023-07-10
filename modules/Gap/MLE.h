@@ -11,7 +11,7 @@ namespace V2I
         Estimator();
         ~Estimator();
         void ReadData();
-        double MLE_logit(std::vector<double> y_batch, std::vector<std::vector<double>> x_batch);
+        double MLE_logit(std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch);
     private:
         std::shared_ptr<Optimizer> sp_optimizer;
         

@@ -24,3 +24,10 @@ target_link_libraries(
 	PRIVATE
 	${MODULE_NAME}
 	)
+
+# add_executable(mle_test mle_test.cpp)
+# # target_link_libraries(
+# # 	${target_name}
+# # 	PRIVATE
+# # 	${MODULE_NAME}
+# # 	)

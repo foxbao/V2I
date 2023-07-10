@@ -20,10 +20,8 @@ namespace V2I
         /// @param beta parameter of logistic regression
         /// @param x input data
         /// @return probability
-        double logit(std::vector<double> beta, std::vector<double> x);
-
-
         double logit(Eigen::VectorXd beta, std::vector<double> x);
+        double logit(Eigen::VectorXd beta, Eigen::VectorXd x);
         void set_alpha(double alpha);
         void set_beta(Eigen::Vector4d beta);
 
