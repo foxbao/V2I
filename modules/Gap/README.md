@@ -319,7 +319,7 @@ $$
 
 
 ### Gradient descend method
-Besides Newton-Raphson, Gradient descends can also be implemented to train the gap model. Actually descend is widely used in Machine Learning.  
+Besides Newton-Raphson, Gradient descends can also be implemented to train the gap model. Actually descend is widely used in Machine Learning. The implementation of gradient descent is some how easier than the Newton-Raphson because we do not need to calculate the Hessian Matrix, and also avoid the inverse matrix of Hessian 
 The target of Gradient Descent is recursively find the minimum value of
 $
 f\left( x \right)

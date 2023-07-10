@@ -1,6 +1,6 @@
 #pragma once
 #include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Dense>
+// #include <eigen3/Eigen/Dense>
 #include <vector>
 namespace V2I
 {
@@ -17,17 +17,19 @@ namespace V2I
         /// @return probability of gap acceptance
         double CalculateGap(double D2, double V2, double D1, double V1);
 
-        /// @brief calculate the logistic regression of input
-        /// @param beta parameter of logistic regression
-        /// @param x input data
-        /// @return probability
-        double logit(Eigen::VectorXd beta, std::vector<double> x);
-        double logit(Eigen::VectorXd beta, Eigen::VectorXd x);
-        void set_alpha(double alpha);
-        void set_beta(Eigen::Vector4d beta);
+        /// @brief 
+        /// @param x 
+        /// @param theta 
+        /// @return 
+        double logit( const Eigen::VectorXd &x,const Eigen::VectorXd& theta);
+        /// @brief 
+        /// @param X 
+        /// @param theta 
+        /// @return 
+        Eigen::VectorXd logit(const Eigen::MatrixXd &X, const Eigen::VectorXd &theta);
 
+        void set_theta(const Eigen::VectorXd& theta);
     private:
-        double alpha_;
-        Eigen::Vector4d beta_;
+        Eigen::VectorXd theta_;
     };
 } // namespace V2I

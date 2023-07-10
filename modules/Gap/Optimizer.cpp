@@ -1,11 +1,14 @@
+#include <eigen3/Eigen/Dense>
+#include <iostream>
 #include "Optimizer.h"
+#include "math.h"
 namespace V2I
 {
     // Define the logistic function
-    double sigmoid(double x)
-    {
-        return 1.0 / (1.0 + exp(-x));
-    }
+    // double sigmoid(double x)
+    // {
+    //     return 1.0 / (1.0 + exp(-x));
+    // }
     Optimizer::Optimizer()
     {
     }
@@ -38,7 +41,7 @@ namespace V2I
     }
 
     // Perform maximum likelihood estimation using Newton-Raphson
-    Eigen::VectorXd logisticRegressionMLE(const Eigen::MatrixXd &X, const Eigen::VectorXd &y, int numIterations)
+    Eigen::VectorXd Optimizer::logisticRegressionMLE(const Eigen::MatrixXd &X, const Eigen::VectorXd &y, int numIterations)
     {
         int m = X.rows(); // Number of training examples
         int n = X.cols(); // Number of features
@@ -56,11 +59,10 @@ namespace V2I
             Eigen::VectorXd grad = X.transpose() * (h - y);
             Eigen::MatrixXd Hessian = X.transpose() * (h.array() * (1.0 - h.array())).matrix().asDiagonal() * X;
 
-            // Update the weight vector using Newton-Raphson method
+            // // Update the weight vector using Newton-Raphson method
             theta -= Hessian.inverse() * grad;
+            std::cout<<theta<<std::endl;
         }
-
         return theta;
     }
-
 }

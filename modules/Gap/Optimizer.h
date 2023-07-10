@@ -17,7 +17,7 @@ namespace V2I
         /// @return
         Eigen::VectorXd logisticRegressionMLE(const Eigen::MatrixXd &X, const Eigen::VectorXd &y, double learningRate, int numIterations);
 
-        /// @brief Perform maximum likelihood estimation using Newton-Raphson
+        /// @brief Perform maximum likelihood estimation using Newton-Raphson. Don't use, there are bugs
         /// @param X Input data NxK
         /// @param y Output data Nx1
         /// @param numIterations 

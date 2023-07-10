@@ -3,40 +3,43 @@
 #include <memory>
 #include <vector>
 #include "gap.h"
-#include "MLE.h"
+#include "math.h"
+#include "Optimizer.h"
+
 
 int main()
 {
-    using namespace V2I;
-    std::cout << "gap_test" << std::endl;
-    // std::shared_ptr<V2I::gap> sp_gap;
-    // V2I::gap aaa;
-    // aaa.CalculateGap(1,2,3,4);
-    // std::shared_ptr<V2I::gap> p1 = std::make_shared<V2I::gap>();
-    // double result=sp_gap->CalculateGap(1,2,3,4);
-    // std::cout<<"result:"<<result<<std::endl;
+    // using namespace V2I;
+    std::shared_ptr<V2I::gap> sp_gap = std::make_shared<V2I::gap>();
 
-    // std::shared_ptr<V2I::Estimator> sp_estimator=std::make_shared<V2I::Estimator>();
+    // Sample dataset
+    Eigen::MatrixXd X(6, 2);
+    X << 1, 2,
+         1, 3,
+         1, 4,
+         1, 6,
+         1, 7,
+         1, 8;
 
-    // std::vector<double> x;
+    Eigen::VectorXd y(6);
+    y << 0, 0, 0, 1, 1, 1;
 
-    // std::vector<Eigen::VectorXd> x_batch;
-    // std::vector<double> y_batch;
+    // Hyperparameters
+    double learningRate = 0.1;
+    int numIterations = 1000;
 
-    // Eigen::Vector2d beta;
-    // beta<<2,-2;
+    std::shared_ptr<V2I::Optimizer> sp_opt=std::make_shared<V2I::Optimizer>();
+    Eigen::VectorXd theta = sp_opt->logisticRegressionMLE(X, y, learningRate, numIterations);
+    // Print the estimated parameters
+    std::cout << "Estimated parameters by gradient descent: " << theta.transpose() << std::endl;
 
-    // int len=100;
-    // for(int i=0;i<len;i++)
-    // {
-    //     Eigen::VectorXd x(1);
-    //     x[0]=i*0.1;
-    //     x_batch.push_back(x);
-    //     y_batch.push_back(sp_gap->logit(beta,x));
-    // }
+    // Test
+    Eigen::VectorXd h=X*theta;
+    h = h.unaryExpr(&V2I::sigmoid);
+    std::cout<<"X:"<<X<<std::endl;
+    std::cout<<"y:"<<y.transpose()<<std::endl;
+    std::cout<<"result:"<<h.transpose()<<std::endl;
 
-    // sp_estimator->MLE_logit(y_batch,x_batch);
-    // return 0;
 
 }
 
