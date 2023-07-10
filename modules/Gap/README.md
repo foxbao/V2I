@@ -154,7 +154,6 @@ $$
 \hat{\theta}=arg\underset{\theta}{\max}\,\,l\left( \theta ;y,x \right) 
 $$
 To get the parameters that maximizes the log-likelihood, we derive the equation
-
 $$
 \nabla _{\theta}l\left( \theta ;y,x \right) =\nabla _{\theta}\left( \sum_{i=1}^N{\sum_{j=1}^J{\ln \left( f_j\left( x_i;\theta \right) \right)}}y_{ij} \right) 
 \\
@@ -323,7 +322,8 @@ f\left( x \right)
 $, which means to find 
 $
 f\left( x_t+\varDelta x \right) <f\left( x_t \right) 
-$.
+$
+.
 
 The Taylor Series of 
 $
@@ -337,6 +337,60 @@ We tranche the taylor series until the first order item, and it becomes
 $$
 f\left( x \right) =f\left( x_t \right) +f\prime\left( x_t \right) \left( x-x^t \right) 
 $$
+
+As 
+$
+x_{t+1}=x_t+\varDelta x
+$, the previous equation can be written as 
+$$
+f\left( x_t+\varDelta x \right) =f\left( x_t \right) +f\prime\left( x_t \right) \cdot \varDelta x
+$$
+
+In order to make 
+$
+f\left( x_t+\varDelta x \right) <f\left( x_t \right) 
+$, we need to make 
+$
+f\prime\left( x_t \right) \cdot \varDelta x<0
+$. As far as 
+$
+f\prime\left( x_t \right) 
+$
+is fixed and 
+$
+\varDelta x
+$
+is changeable, we make 
+$
+\varDelta x=-\eta f\prime\left( x_t \right) 
+$
+, where 
+$
+\eta >0
+$
+, and 
+$$
+f\prime\left( x_t \right) \cdot \varDelta x=-\eta \left( f\prime\left( x_t \right) \right) ^2<0
+$$
+Therefore, when 
+$
+\varDelta x=-\eta f\prime\left( x_t \right) 
+$
+,
+$
+f\left( x_t+\varDelta x \right) <f\left( x_t \right) 
+$
+So in the case of Gap training, we can calculate the gradient descent as
+$$
+\hat{\beta}_t=\hat{\beta}_{t-1}-\eta \left( \nabla _{\beta}l\left( \hat{\beta}_{t-1};y,X \right) \right) =\hat{\beta}_{t-1}-\eta \left( X^T\left( y-\hat{y}_{t-1} \right) \right) 
+$$
+
+
+
+
+
+
+
 
 
 
