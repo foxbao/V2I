@@ -1,60 +1,66 @@
 #include "Optimizer.h"
 namespace V2I
 {
+    // Define the logistic function
+    double sigmoid(double x)
+    {
+        return 1.0 / (1.0 + exp(-x));
+    }
     Optimizer::Optimizer()
     {
-        beta_ << 1, -2;
     }
     Optimizer::~Optimizer()
     {
     }
 
-    double Optimizer::logit(Eigen::VectorXd beta, Eigen::VectorXd x)
+    // Perform maximum likelihood estimation using gradient descent
+    Eigen::VectorXd Optimizer::logisticRegressionMLE(const Eigen::MatrixXd &X, const Eigen::VectorXd &y, double learningRate, int numIterations)
     {
-        Eigen::VectorXd x_homo(beta.size());
-        x_homo(0) = 1;
-        x_homo.segment(1, x.size()) = x;
-        // for(int i=0;i<x.size();i++)
-        // {
-        //     x_homo(i+1)=x[i];
-        // }
-        double result = 1 / (1 + exp(beta.dot(x_homo)));
-        return result;
-    }
+        int m = X.rows(); // Number of training examples
+        int n = X.cols(); // Number of features
 
-    Eigen::VectorXd Optimizer::Jacobian(Eigen::VectorXd beta, std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch)
-    {
-        Eigen::VectorXd derivate(2);
-        for (int i = 0; i < y_batch.size(); i++)
+        // Initialize the weight vector
+        Eigen::VectorXd theta(n);
+        theta.setZero();
+
+        for (int iter = 0; iter < numIterations; ++iter)
         {
-            double residual = (y_batch[i] - logit(beta, x_batch[i]));
-            auto aaaa = x_batch[i] * residual;
-            derivate += x_batch[i] * residual;
+            Eigen::VectorXd h = X * theta;
+            h = h.unaryExpr(&sigmoid); // Apply sigmoid function element-wise
+
+            // Compute the gradient
+            Eigen::VectorXd grad = X.transpose() * (h - y);
+
+            // Update the weight vector using gradient descent
+            theta -= learningRate * grad;
         }
-        return derivate;
+        return theta;
     }
 
-    Eigen::MatrixXd Optimizer::Hessian(Eigen::VectorXd beta, std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch)
+    // Perform maximum likelihood estimation using Newton-Raphson
+    Eigen::VectorXd logisticRegressionMLE(const Eigen::MatrixXd &X, const Eigen::VectorXd &y, int numIterations)
     {
-        int size = x_batch[0].size();
-        Eigen::MatrixXd hessian(size, size);
-        for (int i = 0; i < x_batch.size(); i++)
+        int m = X.rows(); // Number of training examples
+        int n = X.cols(); // Number of features
+
+        // Initialize the weight vector
+        Eigen::VectorXd theta(n);
+        theta.setZero();
+
+        for (int iter = 0; iter < numIterations; ++iter)
         {
-            hessian += -(x_batch[i].transpose() * x_batch[i] * logit(beta, x_batch[i]) * (1 - logit(beta, x_batch[i])));
-            logit(beta, x_batch[i]) * (1 - logit(beta, x_batch[i]));
+            Eigen::VectorXd h = X * theta;
+            h = h.unaryExpr(&sigmoid); // Apply sigmoid function element-wise
+
+            // Compute the gradient and Hessian matrix
+            Eigen::VectorXd grad = X.transpose() * (h - y);
+            Eigen::MatrixXd Hessian = X.transpose() * (h.array() * (1.0 - h.array())).matrix().asDiagonal() * X;
+
+            // Update the weight vector using Newton-Raphson method
+            theta -= Hessian.inverse() * grad;
         }
 
-        return hessian;
-
-        // return 0.0;
+        return theta;
     }
 
-    double Optimizer::Newton_Raphson(std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch)
-    {
-
-        Eigen::VectorXd y_hat(x_batch.size());
-        Jacobian(beta_, y_batch, x_batch);
-        auto hessian=Hessian(beta_, y_batch, x_batch);
-        return 0.0;
-    }
 }

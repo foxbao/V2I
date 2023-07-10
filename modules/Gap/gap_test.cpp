@@ -1,98 +1,101 @@
-// #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Core>
+#include <iostream>
+#include <memory>
+#include <vector>
+#include "gap.h"
+#include "MLE.h"
+
+int main()
+{
+    using namespace V2I;
+    std::cout << "gap_test" << std::endl;
+    // std::shared_ptr<V2I::gap> sp_gap;
+    // V2I::gap aaa;
+    // aaa.CalculateGap(1,2,3,4);
+    // std::shared_ptr<V2I::gap> p1 = std::make_shared<V2I::gap>();
+    // double result=sp_gap->CalculateGap(1,2,3,4);
+    // std::cout<<"result:"<<result<<std::endl;
+
+    // std::shared_ptr<V2I::Estimator> sp_estimator=std::make_shared<V2I::Estimator>();
+
+    // std::vector<double> x;
+
+    // std::vector<Eigen::VectorXd> x_batch;
+    // std::vector<double> y_batch;
+
+    // Eigen::Vector2d beta;
+    // beta<<2,-2;
+
+    // int len=100;
+    // for(int i=0;i<len;i++)
+    // {
+    //     Eigen::VectorXd x(1);
+    //     x[0]=i*0.1;
+    //     x_batch.push_back(x);
+    //     y_batch.push_back(sp_gap->logit(beta,x));
+    // }
+
+    // sp_estimator->MLE_logit(y_batch,x_batch);
+    // return 0;
+
+}
+
 // #include <iostream>
-// #include <memory>
-// #include <vector>
-// #include "gap.h"
-// #include "MLE.h"
+// #include <cmath>
+// #include <eigen3/Eigen/Core>
 
-// int main()
-// {
-//     using namespace V2I;
-//     std::cout << "gap_test" << std::endl;
-//     std::shared_ptr<V2I::gap> sp_gap=std::make_shared<gap>();
-//     double result=sp_gap->CalculateGap(1,2,3,4);
-//     std::cout<<"result:"<<result<<std::endl;
+// using namespace std;
+// using namespace Eigen;
 
-//     std::shared_ptr<V2I::Estimator> sp_estimator=std::make_shared<V2I::Estimator>();
-
-//     std::vector<double> x;
-
-//     std::vector<Eigen::VectorXd> x_batch;
-//     std::vector<double> y_batch;
-
-//     Eigen::Vector2d beta;
-//     beta<<2,-2;
-
-//     int len=100;
-//     for(int i=0;i<len;i++)
-//     {
-//         Eigen::VectorXd x(1);
-//         x[0]=i*0.1;
-//         x_batch.push_back(x);
-//         y_batch.push_back(sp_gap->logit(beta,x));
-//     }
-
-//     sp_estimator->MLE_logit(y_batch,x_batch);
-//     return 0;
-
+// // Define the logistic function
+// double sigmoid(double x) {
+//     return 1.0 / (1.0 + exp(-x));
 // }
 
-#include <iostream>
-#include <cmath>
-#include <eigen3/Eigen/Core>
+// // Perform maximum likelihood estimation using gradient descent
+// VectorXd logisticRegressionMLE(const MatrixXd& X, const VectorXd& y, double learningRate, int numIterations) {
+//     int m = X.rows(); // Number of training examples
+//     int n = X.cols(); // Number of features
 
-using namespace std;
-using namespace Eigen;
+//     // Initialize the weight vector
+//     VectorXd theta(n);
+//     theta.setZero();
 
-// Define the logistic function
-double sigmoid(double x) {
-    return 1.0 / (1.0 + exp(-x));
-}
+//     for (int iter = 0; iter < numIterations; ++iter) {
+//         VectorXd h = X * theta;
+//         h = h.unaryExpr(&sigmoid); // Apply sigmoid function element-wise
 
-// Perform maximum likelihood estimation using gradient descent
-VectorXd logisticRegressionMLE(const MatrixXd& X, const VectorXd& y, double learningRate, int numIterations) {
-    int m = X.rows(); // Number of training examples
-    int n = X.cols(); // Number of features
+//         // Compute the gradient
+//         VectorXd grad = X.transpose() * (h - y);
 
-    // Initialize the weight vector
-    VectorXd theta(n);
-    theta.setZero();
+//         // Update the weight vector using gradient descent
+//         theta -= learningRate * grad;
+//     }
+//     return theta;
+// }
 
-    for (int iter = 0; iter < numIterations; ++iter) {
-        VectorXd h = X * theta;
-        h = h.unaryExpr(&sigmoid); // Apply sigmoid function element-wise
+// int main() {
+//     // Sample dataset
+//     MatrixXd X(6, 2);
+//     X << 1, 2,
+//          1, 3,
+//          1, 4,
+//          1, 6,
+//          1, 7,
+//          1, 8;
 
-        // Compute the gradient
-        VectorXd grad = X.transpose() * (h - y);
+//     VectorXd y(6);
+//     y << 0, 0, 0, 1, 1, 1;
 
-        // Update the weight vector using gradient descent
-        theta -= learningRate * grad;
-    }
-    return theta;
-}
+//     // Hyperparameters
+//     double learningRate = 0.1;
+//     int numIterations = 1000;
 
-int main() {
-    // Sample dataset
-    MatrixXd X(6, 2);
-    X << 1, 2,
-         1, 3,
-         1, 4,
-         1, 6,
-         1, 7,
-         1, 8;
+//     // Perform maximum likelihood estimation
+//     VectorXd theta = logisticRegressionMLE(X, y, learningRate, numIterations);
 
-    VectorXd y(6);
-    y << 0, 0, 0, 1, 1, 1;
+//     // Print the estimated parameters
+//     cout << "Estimated parameters: " << theta.transpose() << endl;
 
-    // Hyperparameters
-    double learningRate = 0.1;
-    int numIterations = 1000;
-
-    // Perform maximum likelihood estimation
-    VectorXd theta = logisticRegressionMLE(X, y, learningRate, numIterations);
-
-    // Print the estimated parameters
-    cout << "Estimated parameters: " << theta.transpose() << endl;
-
-    return 0;
-}
+//     return 0;
+// }

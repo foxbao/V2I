@@ -8,21 +8,22 @@ namespace V2I
     public:
         Optimizer();
         ~Optimizer();
-        /// @brief 
-        /// @param beta parameter
-        /// @param y_batch data output
-        /// @param x_batch data input
+
+        /// @brief Perform maximum likelihood estimation using gradient descent
+        /// @param X Input data NxK
+        /// @param y Output data Nx1
+        /// @param learningRate learning rate of gradient descent
+        /// @param numIterations
+        /// @return
+        Eigen::VectorXd logisticRegressionMLE(const Eigen::MatrixXd &X, const Eigen::VectorXd &y, double learningRate, int numIterations);
+
+        /// @brief Perform maximum likelihood estimation using Newton-Raphson
+        /// @param X Input data NxK
+        /// @param y Output data Nx1
+        /// @param numIterations 
         /// @return 
-        Eigen::VectorXd Jacobian(Eigen::VectorXd beta, std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch);
-        /// @brief 
-        /// @param beta parameter
-        /// @param y_batch 
-        /// @param x_batch 
-        /// @return 
-        Eigen::MatrixXd Hessian(Eigen::VectorXd beta,std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch);
-        double Newton_Raphson(std::vector<double> y_batch, std::vector<Eigen::VectorXd> x_batch);
-        double logit(Eigen::VectorXd beta, Eigen::VectorXd x);
+        Eigen::VectorXd logisticRegressionMLE(const Eigen::MatrixXd &X, const Eigen::VectorXd &y, int numIterations);
+
     private:
-        Eigen::Vector2d beta_;
     };
 }

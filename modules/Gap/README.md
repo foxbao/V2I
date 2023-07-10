@@ -226,7 +226,11 @@ $$
 \sum_i^N{\left[ y_i-S\left( x_i\beta \right) \right] x_i=0}
 $$
 
-Newton-Raphson method \
+## Optimization
+The training of gap is actually the optimization problem to find the parameters which minimizes the loss function, which is the likelihood defined previously. There are two popular methods for optimization, which are Newton-Raphson method and Grandient Descent.
+
+
+### Newton-Raphson method
 The first order condition above has no explicit solution. Therefore, we implement Newton-Raphson method. We start from a guess of the solution
 $
 \hat{\beta}_0
@@ -314,7 +318,7 @@ $$
 $$
 
 
-## Gradient descend method
+### Gradient descend method
 Besides Newton-Raphson, Gradient descends can also be implemented to train the gap model. Actually descend is widely used in Machine Learning.  
 The target of Gradient Descent is recursively find the minimum value of
 $
@@ -380,6 +384,7 @@ $
 $
 f\left( x_t+\varDelta x \right) <f\left( x_t \right) 
 $
+
 So in the case of Gap training, we can calculate the gradient descent as
 $$
 \hat{\beta}_t=\hat{\beta}_{t-1}-\eta \left( \nabla _{\beta}l\left( \hat{\beta}_{t-1};y,X \right) \right) =\hat{\beta}_{t-1}-\eta \left( X^T\left( y-\hat{y}_{t-1} \right) \right) 
