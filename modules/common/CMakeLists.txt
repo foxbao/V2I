@@ -28,4 +28,7 @@ target_link_libraries(
 	${target_name}
 	PRIVATE
 	${MODULE_NAME}
+	${CERES_LIBRARIES}
+	${OpenCV_LIBS}
 	)
+

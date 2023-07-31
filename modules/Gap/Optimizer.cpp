@@ -4,11 +4,6 @@
 #include "math.h"
 namespace V2I
 {
-    // Define the logistic function
-    // double sigmoid(double x)
-    // {
-    //     return 1.0 / (1.0 + exp(-x));
-    // }
     Optimizer::Optimizer()
     {
     }
@@ -30,7 +25,6 @@ namespace V2I
         {
             Eigen::VectorXd h = X * theta;
             h = h.unaryExpr(&sigmoid); // Apply sigmoid function element-wise
-
             // Compute the gradient
             Eigen::VectorXd grad = X.transpose() * (h - y);
 

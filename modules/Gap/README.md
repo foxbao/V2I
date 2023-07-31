@@ -1,22 +1,22 @@
-# Gap Introduction
+## Table of Contents
 
-## 1. Gap Scenario
+1. [Introduction](#introduction)
+2. [Gap Scenario](#gap-scenario)
+3. [Gap Definition](#gap-definition)
+4. [MLE](#mle)
+5. [The log-likelihood](#the-log-likelihood)
+6. [Optimization](#optimization)
+
+## Introduction
+
+## Gap Scenario
 Gap acceptance calculates the probability of passing before a vehicle. 
-<center>
-    <img style="border-radius: 0.3125em;
-    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
-    src="../../imgs/gap.png" width = "60%" alt=""/>
-    <br>
-    <div style="color:orange; border-bottom: 1px solid #d9d9d9;
-    display: inline-block;
-    color: #999;
-    padding: 2px;">
-      Gap Scenario
-  	</div>
-</center>
+
+<img src="../../imgs/gap.png" width="400">
+adfasdf
 
 
-## 2. Gap Definition 
+## Gap Definition 
 Critical gap acceptance is a typical classification problem, which outputs 1 or 0, representing whether the vehicle will accept the gap or not. It can described with a logit model, to be more specific, a binomial logistic regression. A general logit model is defined as follows
 $$
 P\left( y_i=1|x_i \right) =S\left( \omega x_i \right) 
@@ -35,35 +35,12 @@ $$
 
 
 From the view point of AI, the logistic regression can be regarded as a simple network
-<center>
-    <img style="border-radius: 0.3125em;
-    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
-    src="../../imgs/framework_sigmoid.png" width = "60%" alt=""/>
-    <br>
-    <div style="color:orange; border-bottom: 1px solid #d9d9d9;
-    display: inline-block;
-    color: #999;
-    padding: 2px;">
-      Logit function sample
-  	</div>
-</center>
+
+<img src="../../imgs/framework_sigmoid.png" width="400">
 
 The function takes in the linear combination of parameters and input date to generate a probability. Therefore, the result P is between 0 and 1, and as shown as follows
 
-<center>
-    <img style="border-radius: 0.3125em;
-    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
-    src="../../imgs/logit_function.png" width = "60%" alt=""/>
-    <br>
-    <div style="color:orange; border-bottom: 1px solid #d9d9d9;
-    display: inline-block;
-    color: #999;
-    padding: 2px;">
-      Logit function sample
-  	</div>
-</center>
-
-
+<img src="../../imgs/logit_function.png" width="400">
 
 In the case of gap acceptance, we will consider the factors of vehicle position and vehicle speed.
 $$
@@ -75,7 +52,7 @@ $$
 D_{v2}
 $$
 
-## 3. MLE
+## MLE
 ### 1. Principal of MLE
 As long as gap acceptance is a logit model, MLE is a widely used method to estimate the parameters. 
 We can refer to the psu manuscript of MLE for more details

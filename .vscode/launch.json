@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
 
-            "program": "${workspaceFolder}/build/modules/Gap/V2I_gap_test",// viewer
+            "program": "${workspaceFolder}/build/modules/HMM/V2I_hmm_test",// viewer
             "args": [],
 
             "stopAtEntry": false,
