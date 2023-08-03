@@ -4,15 +4,77 @@ namespace V2I
 {
     model::model()
     {
+        num_states_ = 2;
+        num_observations_ = 2;
+        transition_matrix_ << 0.7, 0.3,
+            0.4, 0.6;
+
+        initial_probs_ << 0.6, 0.4;
+
+        emission_matrix_ << 0.9, 0.1,
+            0.2, 0.8;
     }
 
     model::~model()
     {
     }
 
-    void model::decode()
+    std::vector<int> model::viterbiAlgorithm(const std::vector<int> &observations)
     {
+        int T = observations.size();
+        // The maximum probability of a given node
+        Eigen::MatrixXd delta(T, num_states_);
+        // the path of a given node
+        Eigen::MatrixXi psi(T, num_states_);
+        std::vector<int> best_path(T);
 
+        // Initialization step
+        for (int s = 0; s < num_states_; ++s)
+        {
+            // viterbi[s,1]<-
+            delta(0, s) = initial_probs_(s) * emission_matrix_(s, observations[0]);
+            // backpointer[s,1]<-0
+            psi(0, s) = 0;
+        }
+
+        // Recursion step
+        for (int t = 1; t < T; ++t)
+        {
+            for (int s = 0; s < num_states_; ++s)
+            {
+                double max_prob = 0.0;
+                int max_state = 0;
+                for (int s_prev = 0; s_prev < num_states_; ++s_prev)
+                {
+                    double prob = delta(t - 1, s_prev) * transition_matrix_(s_prev, s) * emission_matrix_(s, observations[t]);
+                    if (prob > max_prob)
+                    {
+                        max_prob = prob;
+                        max_state = s_prev;
+                    }
+                }
+                delta(t, s) = max_prob;
+                psi(t, s) = max_state;
+            }
+        }
+
+        //termination step, select the maximum probability
+        double max_prob = 0.0;
+        int best_final_state = 0;
+        for (int s = 0; s < num_states_; ++s) {
+            if (delta(T - 1, s) > max_prob) {
+                max_prob = delta(T - 1, s);
+                best_final_state = s;
+            }
+        }
+    
+            // Backtrack to find the best path
+        best_path[T - 1] = best_final_state;
+        for (int t = T - 2; t >= 0; --t) {
+            best_path[t] = psi(t + 1, best_path[t + 1]);
+        }
+
+        return best_path;
     }
 
 }

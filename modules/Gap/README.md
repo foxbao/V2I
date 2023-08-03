@@ -1,11 +1,16 @@
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Gap Scenario](#gap-scenario)
-3. [Gap Definition](#gap-definition)
-4. [MLE](#mle)
-5. [The log-likelihood](#the-log-likelihood)
-6. [Optimization](#optimization)
+- [Table of Contents](#table-of-contents)
+- [Introduction](#introduction)
+- [Gap Scenario](#gap-scenario)
+- [Gap Definition](#gap-definition)
+- [MLE](#mle)
+	- [1. Principal of MLE](#1-principal-of-mle)
+	- [2. Applying MLE in Gap Acceptance](#2-applying-mle-in-gap-acceptance)
+- [The log-likelihood](#the-log-likelihood)
+- [Optimization](#optimization)
+	- [Newton-Raphson method](#newton-raphson-method)
+	- [Gradient descend method](#gradient-descend-method)
 
 ## Introduction
 
@@ -13,7 +18,7 @@
 Gap acceptance calculates the probability of passing before a vehicle. 
 
 <img src="../../imgs/gap.png" width="400">
-adfasdf
+
 
 
 ## Gap Definition 
