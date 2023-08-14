@@ -50,6 +50,12 @@ The key factors of HMM are defined as follows
 | $\pi$=$\pi_1$,$\pi_2$...$\pi_N$  | initial probability distribution over states |
 
 A HMM should be characterized by three fundamental problems
+|  Problem   | Meaning  |
+|  ----  | ----  |
+|Problem 1 (Likelihood):|Given A,B and Y, determine the likelihood P(Y\|A,B) |
+|Problem 2 (Decoding):|Given A,B and Y, discover the best hidden state sequence X|
+|Problem 3 (Learning):|Given X and Y, learn the HMM parameters A and B|
+
 
 
 ## Foward-Backward
@@ -233,3 +239,11 @@ $$
 2. The second formula picks up the best initial state that maximize the product of the terms in the right hand side, and leaving the first state as a free parameter to be determined in the third formula. Similarly, the third formula picks the best first state, then leave the second state for the fourth formula.
 
 3. Let us visualize these repeated processes in a diagram called trellis. In the diagram, we could see how each state is being chosen based on the rule of maximizing the probability, and to keep the diagram small, I would take an assumption that there are only three possible states for us to choose from at each time step. The same idea applies to any number of states, of course.
+
+The formal definition of the Viterbi recursion as follows,
+1. Initialization
+
+2. Recursion
+
+
+3. Termination

@@ -12,6 +12,7 @@ PRIVATE
 target_include_directories(${MODULE_NAME}
 PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/
+	${CMAKE_SOURCE_DIR}
 )
 
 set(target_name ${MODULE_NAME}_test)

@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include "hmm.h"
+#include "modules/Map/map.h"
 using namespace Eigen;
 
 int main() {
@@ -15,5 +16,9 @@ int main() {
         std::cout << state << " ";
     }
     std::cout << std::endl;
+
+
+
+
     return 0;
 }

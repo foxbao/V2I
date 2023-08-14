@@ -1,10 +1,18 @@
 #pragma once
-namespace V2I {
-class map {
- public:
-  map();
-  ~map();
+#include <vector>
+namespace V2I
+{
+    struct Point{
+        double x;
+        double y;
+    };
 
- private:
-};
-}  // namespace V2I
+    struct Line{
+        std::vector<Point> points;
+    };
+
+    struct Map
+    {
+        std::vector<Line> lines;
+    };
+}
