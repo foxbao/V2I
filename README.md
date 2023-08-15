@@ -1,12 +1,16 @@
 # V2I project
-## Table of Contents
 
 - [V2I project](#v2i-project)
-  - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Download Source Code](#download-source-code)
-  - [Third Party](#third-party)
-  - [Build](#build)
+  - [Docker Version Installation](#docker-version-installation)
+    - [Build Docker](#build-docker)
+    - [Start Docker Container](#start-docker-container)
+    - [Enter Docker Container](#enter-docker-container)
+    - [Build project in docker](#build-project-in-docker)
+  - [Normal Version Installation](#normal-version-installation)
+    - [Dependency](#dependency)
+    - [Build](#build)
   - [TTC](#ttc)
   - [GAP](#gap)
   - [HMM](#hmm)
@@ -21,7 +25,33 @@ git clone git@github.com:foxbao/V2I.git
 git checkout -b dev origin/dev
 ```
 
-## Third Party
+## Docker Version Installation
+### Build Docker
+we can build a light docker without visualization function without OpenCV
+```shell
+cd docker/build
+docker build  -f base.x86_64.dockerfile -t civ:v2i .
+```
+### Start Docker Container
+```shell
+cd V2I
+docker run --rm -i -d -v `pwd`:/home/baojiali/Downloads/V2I --name v2u civ:v2i
+```
+### Enter Docker Container
+```shell
+cd V2I
+docker exec -it civauto /bin/bash
+```
+### Build project in docker
+```shell
+mkdir build
+cd build
+cmake ..
+make
+```
+
+## Normal Version Installation
+### Dependency
 1. Eigen
 ```
 sudo apt install libeigen3-dev
@@ -54,10 +84,23 @@ make test
 make install
 ```
 
-2. Opencv (Optional)
-
-## Build
+3. Opencv (Optional)
+If we want to visualize something, we need to install OpenCV
+https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
+```shell
+sudo apt-get install libpng-dev libjpeg-dev libopenexr-dev libtiff-dev libwebp-dev    
+git clone https://github.com/opencv/opencv.git
+cd opencv
+mkdir build
+cd build
+cmake ../
+make -j16
+sudo make install
 ```
+Attention, if we have already installed Anaconda, it may cause some problems in the installation of OpenCV. Please temporarily move Anaconda
+
+### Build
+```shell
 mkdir build
 cd build
 cmake ..
