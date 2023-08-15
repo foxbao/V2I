@@ -10,9 +10,9 @@ endif()
 set(CMAKE_CXX_FLAGS "-std=c++11 -g3 -rdynamic")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-find_package(OpenCV REQUIRED)
+# find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package( Ceres REQUIRED)
+# find_package(Ceres REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories( ${CERES_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -24,7 +24,9 @@ set(compile_dirs
 )
 # compile only the necessary modules
 list(APPEND compile_dirs
+	civmap
 	modules
+	# view
 )
 
 foreach(subdir ${compile_dirs})

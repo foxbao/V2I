@@ -1,6 +1,4 @@
 # V2I project
-
-
 ## Table of Contents
 
 - [V2I project](#v2i-project)

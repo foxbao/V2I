@@ -30,13 +30,13 @@ PUBLIC
 
 
 
-set(target_name fit_test)
-add_executable(${target_name} fit_test.cpp)
-target_link_libraries(
-	${target_name}
-	PRIVATE
-	${MODULE_NAME}
-	${CERES_LIBRARIES}
-	${OpenCV_LIBS}
-	)
+# set(target_name fit_test)
+# add_executable(${target_name} fit_test.cpp)
+# target_link_libraries(
+# 	${target_name}
+# 	PRIVATE
+# 	${MODULE_NAME}
+# 	${CERES_LIBRARIES}
+# 	${OpenCV_LIBS}
+# 	)
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <Eigen/Dense>
 #include <vector>
-#include "modules/Map/inner_types.hpp"
+#include "civmap/inner_types.hpp"
 
 namespace V2I
 {
