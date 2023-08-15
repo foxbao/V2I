@@ -35,12 +35,12 @@ docker build  -f base.x86_64.dockerfile -t civ:v2i .
 ### Start Docker Container
 ```shell
 cd V2I
-docker run --rm -i -d -v `pwd`:/home/baojiali/Downloads/V2I --name v2u civ:v2i
+docker run --rm -i -d -v `pwd`:/home/baojiali/Downloads/V2I --name v2i civ:v2i
 ```
 ### Enter Docker Container
 ```shell
 cd V2I
-docker exec -it civauto /bin/bash
+docker exec -it v2i /bin/bash
 ```
 ### Build project in docker
 ```shell

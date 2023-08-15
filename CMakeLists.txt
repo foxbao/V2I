@@ -36,13 +36,11 @@ foreach(subdir ${compile_dirs})
 endforeach()
 
 
-
-set(target_name V2I)
-
-add_executable(${target_name} main.cpp)
-target_link_libraries(
-	${target_name}
-	PRIVATE
-	${PROJECT_NAME}_hmm
-	${OpenCV_LIBS}
-	)
+# set(target_name V2I)
+# add_executable(${target_name} main.cpp)
+# target_link_libraries(
+# 	${target_name}
+# 	PRIVATE
+# 	${PROJECT_NAME}_hmm
+# 	${OpenCV_LIBS}
+# )
