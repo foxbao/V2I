@@ -12,12 +12,13 @@ PRIVATE
 target_include_directories(${MODULE_NAME}
 PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/
+	${CMAKE_SOURCE_DIR}
 )
 
-add_executable(${MODULE_NAME}_test map_test.cpp)
-# target_link_libraries(
-# 	${target_name}
-# 	PRIVATE
-# 	${PROJECT_NAME}_hmm
-# 	${OpenCV_LIBS}
-# 	)
+set(target_name ${MODULE_NAME}_test)
+add_executable(${target_name} map_test.cpp)
+target_link_libraries(
+	${target_name}
+	PRIVATE
+	${MODULE_NAME}
+	)

@@ -3,7 +3,8 @@
 #include <memory>
 #include <vector>
 #include "hmm.h"
-#include "modules/Map/map.h"
+// #include "modules/Map/map.h"
+// #include "modules/common/type_define.hpp"
 using namespace Eigen;
 
 int main() {
@@ -16,9 +17,5 @@ int main() {
         std::cout << state << " ";
     }
     std::cout << std::endl;
-
-
-
-
     return 0;
 }

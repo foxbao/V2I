@@ -1,6 +1,8 @@
 #pragma once
 #include <Eigen/Dense>
 #include <vector>
+#include "modules/Map/inner_types.hpp"
+
 namespace V2I
 {
     class model
@@ -8,12 +10,14 @@ namespace V2I
     public:
         model();
         ~model();
-        /// @brief the viterbiAlgorithm 
-        /// @param observations 
-        /// @return 
-        std::vector<int> viterbiAlgorithm(const std::vector<int>& observations);
+        /// @brief the viterbiAlgorithm
+        /// @param observations
+        /// @return
+        std::vector<int> viterbiAlgorithm(const std::vector<int> &observations);
 
     private:
+        // double MeasurementProbability(Eigen::Vector2d z,ZMapLineSegment r);
+        double TransitionalProbability();
         // Define HMM parameters
         int num_states_;
         int num_observations_;

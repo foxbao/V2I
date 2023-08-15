@@ -1,6 +1,6 @@
-#include "ttc.h"
-#include "../common/common.h"
 #include <iostream>
+#include "ttc.h"
+#include "common/common.h"
 namespace V2I
 {
     ttc::ttc()

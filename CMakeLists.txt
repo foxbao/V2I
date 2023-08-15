@@ -16,7 +16,24 @@ find_package( Ceres REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories( ${CERES_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
-add_subdirectory(modules)
+
+
+# set the default modules to be compiled
+set(compile_dirs
+    common
+)
+# compile only the necessary modules
+list(APPEND compile_dirs
+	modules
+)
+
+foreach(subdir ${compile_dirs})
+    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/${subdir}")
+      add_subdirectory(${subdir})
+    endif()
+endforeach()
+
+
 
 set(target_name V2I)
 

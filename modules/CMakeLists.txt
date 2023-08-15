@@ -1,5 +1,5 @@
-add_subdirectory(common)
+# add_subdirectory(common)
 add_subdirectory(Gap)
+# add_subdirectory(Map)
 add_subdirectory(HMM)
 add_subdirectory(TTC)
-add_subdirectory(Map)

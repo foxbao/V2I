@@ -58,6 +58,9 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "unordered_set": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "geometry": "cpp",
+        "any": "cpp",
+        "bitset": "cpp"
     }
 }

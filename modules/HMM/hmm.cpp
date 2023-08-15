@@ -1,5 +1,6 @@
 #include "hmm.h"
 #include <iostream>
+#include <math.h>
 namespace V2I
 {
     model::model()
@@ -18,6 +19,8 @@ namespace V2I
     model::~model()
     {
     }
+
+
 
     std::vector<int> model::viterbiAlgorithm(const std::vector<int> &observations)
     {
@@ -77,4 +80,20 @@ namespace V2I
         return best_path;
     }
 
+    // double model::MeasurementProbability(Eigen::Vector2d z, ZMapLineSegment r)
+    // {
+    //     double sigma_z=1;
+    //     double greatCircle=1;
+    //     double prob=(1/(sqrt(2)*M_PI*sigma_z))*exp(-0.5*greatCircle/sigma_z);
+    //     return prob;
+    // }
+
+    // double model::MeasurementProbability(Eigen::Vector2d z)
+    // {
+    //     return 0.0;
+    // }
+    // double model::TransitionalProbability()
+    // {
+    //     return 0.0;
+    // }
 }
