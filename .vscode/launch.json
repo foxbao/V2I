@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
 
-            "program": "${workspaceFolder}/build/modules/HMM/V2I_hmm_test",// viewer
+            "program": "${workspaceFolder}/build/civmap/V2I_map_test",// viewer
             "args": [],
 
             "stopAtEntry": false,

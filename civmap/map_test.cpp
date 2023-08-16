@@ -9,8 +9,9 @@ int main()
     if (!sp_map->ReadData(file_path))
     {
         return false;
-    }
+    }                                                                                       
     std::vector<sp_cZMapLineSegment> lines = sp_map->get_lines_enu();
+    std::cout<<"line number:"<<lines.size()<<std::endl;
     std::cout << "map_test" << std::endl;
     return 0;
 }

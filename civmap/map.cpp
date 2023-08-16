@@ -1,8 +1,8 @@
 #include "map.h"
 #include <fstream>
 #include <iostream>
-// #include "modules/common/coordinate_transform/LocalCartesian_util.h"
-// #include "modules/common/coordinate_transform/earth.hpp"
+#include "common/coordinate_transform/LocalCartesian_util.h"
+#include "common/coordinate_transform/earth.hpp"
 namespace V2I
 {
     std::vector<std::string> split(const std::string &str,
@@ -78,7 +78,8 @@ namespace V2I
             {
                 Eigen::Vector3d pt_enu;
                 //       // Eigen::Vector3d pt_enu = Earth::LLH2ENU(pt_llh, true);
-                //       ConvertLLAToENU(Earth::GetOrigin(), pt_llh, &pt_enu);
+                using namespace civ::common::coord_transform;
+                ConvertLLAToENU(Earth::GetOrigin(), pt_llh, &pt_enu);
                 //       line.points_.push_back(pt_enu);
             }
             //     lines_enu.push_back(std::make_shared<ZMapLineSegment>(line));

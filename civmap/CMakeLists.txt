@@ -15,6 +15,13 @@ PUBLIC
 	${CMAKE_SOURCE_DIR}
 )
 
+target_link_libraries(
+	${MODULE_NAME}
+	PRIVATE
+	V2I_common
+	Geographiccc
+)
+
 set(target_name ${MODULE_NAME}_test)
 add_executable(${target_name} map_test.cpp)
 target_link_libraries(
