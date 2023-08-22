@@ -9,12 +9,6 @@ PRIVATE
     ${CPPS}
 )
 
-# target_include_directories(${MODULE_NAME}
-# PUBLIC
-#     ${CMAKE_CURRENT_LIST_DIR}/
-#     ${CMAKE_SOURCE_DIR}
-# )
-
 # add_executable(${MODULE_NAME}_test ttc_test.cpp)
 # target_link_libraries(
 # 	${target_name}

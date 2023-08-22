@@ -1,6 +1,9 @@
 #pragma once
-namespace V2I {
+namespace civ
+{
+    namespace common
+    {
 #define MAXVAL 2147483647
-
+    }
 
 }

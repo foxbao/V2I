@@ -8,14 +8,12 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-
-            "program": "${workspaceFolder}/build/civmap/V2I_map_test",// viewer
+            // "program": "${workspaceFolder}/build/modules/modules_test",// viewer
+            "program": "${workspaceFolder}/build/view/civview_test",// viewer
             "args": [],
 
             "stopAtEntry": false,
-            // "cwd": "${workspaceFolder}",
             "cwd": "${workspaceFolder}",// this is necessary for the thirdparty
-            // "cwd": "${fileDirname}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",

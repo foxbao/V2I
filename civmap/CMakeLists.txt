@@ -1,4 +1,5 @@
-set(MODULE_NAME ${PROJECT_NAME}_map)
+project(civmap)
+set(MODULE_NAME ${PROJECT_NAME})
 add_library(${MODULE_NAME} SHARED)
 FILE( GLOB CPPS [^.]*.cpp [^.]*.cc)
 FILE( GLOB HPPS [^.]*.hpp [^.]*.h)
@@ -15,10 +16,11 @@ PUBLIC
 	${CMAKE_SOURCE_DIR}
 )
 
-target_link_libraries(
+TARGET_LINK_LIBRARIES(
 	${MODULE_NAME}
+	PUBLIC
 	PRIVATE
-	V2I_common
+	common
 	Geographiccc
 )
 
@@ -28,4 +30,9 @@ target_link_libraries(
 	${target_name}
 	PRIVATE
 	${MODULE_NAME}
+	common
 	)
+
+
+
+	

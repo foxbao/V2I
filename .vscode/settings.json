@@ -61,6 +61,10 @@
         "cinttypes": "cpp",
         "geometry": "cpp",
         "any": "cpp",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "strstream": "cpp",
+        "cfenv": "cpp",
+        "typeindex": "cpp",
+        "variant": "cpp"
     }
 }

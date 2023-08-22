@@ -14,6 +14,7 @@
   - [TTC](#ttc)
   - [GAP](#gap)
   - [HMM](#hmm)
+  - [view](#view)
 
 
 ## Introduction
@@ -84,7 +85,10 @@ make test
 make install
 ```
 
-3. Opencv (Optional)
+3. Boost
+sudo apt-get install libboost-all-dev
+
+4. Opencv (Optional)
 If we want to visualize something, we need to install OpenCV
 https://docs.opencv.org/4.x/d2/de6/tutorial_py_setup_in_ubuntu.html
 ```shell
@@ -121,7 +125,15 @@ The gap parameters are estimated via Maximum Likelihood Estimate (MLE), which is
 HMM is used to infer the vehicle localization on the lane level in order to know if the vehicle is driving on the 
 
 
+```shell
 
+```
+
+## view
+The viewer will show the map, trajectory and the HMM result
+```shell
+./build/view/civview_test
+```
 
 
 

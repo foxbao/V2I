@@ -2,20 +2,56 @@
 #include <eigen3/Eigen/Core>
 #include <vector>
 #include "inner_types.hpp"
-namespace V2I
+namespace civ
 {
-    class CivMap
+    namespace V2I
     {
-    public:
-        CivMap();
-        ~CivMap();
-        bool ReadData(std::string file_path);
-        std::vector<sp_cZMapLineSegment> get_lines() { return lines_; };
-        std::vector<sp_cZMapLineSegment> get_lines_enu();
+        class CivMap
+        {
+        public:
+            CivMap();
+            ~CivMap();
+            /// @brief
+            /// @param file_path
+            /// @return
+            bool ReadData(std::string file_path);
+            std::vector<sp_cZMapLineSegment> get_curves() { return lines_; };
+            /// @brief get the curves in enu coordinate
+            /// @return
+            std::vector<sp_cZMapLineSegment> get_curves_enu();
 
-    private:
-        std::vector<sp_cZMapLineSegment> lines_; // llh
-    };
-    DEFINE_EXTEND_TYPE(CivMap);
+            /// @brief the distance from a given llh point to the nearest point in map
+            /// @param pt_llh point to search
+            /// @param cross_pt_map_llh the nearest point on the map
+            /// @return the distance
 
-} // namespace coop
+            double get_distance_map_llh(const Eigen::Vector3d &pt_llh, Eigen::Vector3d &cross_pt_map_llh);
+            /// @brief the distance from a given enu point to the nearest point in map
+            /// @param pt_enu
+            /// @param cross_pt_map_enu
+            /// @return
+            double get_distance_map_enu(const Eigen::Vector3d &pt_enu, Eigen::Vector3d &cross_pt_map_enu);
+
+            std::vector<sp_cZMapLineSegment> get_lanes_near_enu(const Eigen::Vector3d &pt_enu,double threshold);
+        
+        private:
+            /// @brief
+            /// @param pt_enu
+            /// @param curve
+            /// @param cross_pt_curve
+            /// @return
+            double get_distance_curve_enu(const Eigen::Vector3d &pt_enu, sp_cZMapLineSegment curve, Eigen::Vector3d &cross_pt_curve);
+
+            /// @brief
+            /// @param pt_enu
+            /// @param line_segment_two_points
+            /// @return
+            double min_distance_point_to_line(const Eigen::Vector3d &pt_enu, const std::vector<Eigen::Vector3d> &line_segment_two_points, Eigen::Vector3d &pt_nearest_enu);
+            std::vector<sp_cZMapLineSegment> lines_;     // llh
+            std::vector<sp_cZMapLineSegment> lines_enu_; // enu
+            int id_indicator;
+        };
+        DEFINE_EXTEND_TYPE(CivMap);
+
+    } // namespace coop
+}

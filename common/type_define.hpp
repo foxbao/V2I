@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-namespace V2I
+namespace civ
 {
     namespace common
     {

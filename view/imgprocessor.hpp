@@ -2,41 +2,67 @@
 #include <iostream>
 #include <string>
 #include <opencv2/opencv.hpp>
+#include "civmap/map.h"
+#include "common/math/vec2d.h"
+#include "modules/Trajectory/trajectory_processor.h"
 
-// #include "modules/common/inner_types.hpp"
-// #include "modules/common/math/vec2dloc.h"
-
-// using civ::civloc::Vec2dloc;
 namespace civ
 {
-    namespace view
+    namespace V2I
     {
+        using Vec2d = civ::common::math::Vec2d;
         class IMGPROCESSOR
         {
         public:
             IMGPROCESSOR();
             ~IMGPROCESSOR();
-            void PlotPositionCovariance();
-            void PlotMap();
-            void PlotHmmResult();
-            void PlotPos();
+
+            void PlotMap(std::string map_path);
+            void PlotTrajectory(std::string trajectory_path);
+            /// @brief Plost the closest points of the trajectory to the map
+            /// @param trajectory_path
+            /// @param map_path
+            void PlotClosestPoints(std::string trajectory_path, std::string map_path);
+            void SaveImage(cv::Mat *ptr_img);
 
         private:
-            //   void PlotPosLLH(cv::Mat &img, const Vec3d &pos_llh,
-            //                   cv::Scalar color = cv::Scalar(0, 255, 255),
-            //                   bool is_deg = false);
-            //   Vec3d Convert2IMG(const Vec3d &pos_enu);
-            //   Vec2dloc Convert2IMG(const Vec2dloc &pt);
+            void SetMap(std::string map_path);
+            void SetTrajectory(std::string trajectory_path);
+            /**
+             * @brief Plot map lines on image
+             * @param ptr_img image
+             * @param lines_enu map lines
+             * @return
+             */
+            void PlotMapEnu(cv::Mat *ptr_img,
+                         const std::vector<sp_cZMapLineSegment> &curves_enu);
+            void PlotTrajectoryEnu(cv::Mat *ptr_img,
+                         const sp_cZTrajectory &trajectory_enu);
+            void PlotPointEnu(cv::Mat *ptr_img,const Eigen::Vector3d &pt_enu,cv::Scalar color=cv::Scalar(256, 255, 255));
+            /// @brief 
+            /// @param ptr_img 
+            /// @param curve 
+            /// @param color 
+            void PlotCurveEnu(cv::Mat *ptr_img,const std::vector<Eigen::Vector3d> curve,cv::Scalar color=cv::Scalar(256, 128, 128));
+            Eigen::Vector3d Convert2IMG(const Eigen::Vector3d &pt_enu);
+            Vec2d Convert2IMG(const Vec2d &pt_enu);
+            std::vector<cv::Point> Convert2IMG(const std::vector<Eigen::Vector3d> &pts);
 
         private:
             cv::Mat result_img_;
             int scale_;
             int H_;
             int W_;
+            int shiftY_ = 450;
+            int shiftX_ = 0;
             std::string img_folder_;
-            double pos_ori_deg_[3];
-            double pos_ori_rad_[3];
-            void PlotAxis(cv::Mat &img);
+            std::string img_nofuse_folder_;
+            std::map<int, cv::Scalar> plotColor_;
+            std::map<int, cv::Point2d> title_position_;
+            std::vector<cv::Scalar> color_set_;
+            spCivMap sp_map_;
+            spTrajectoryProcessor sp_trajectory_processor_;
+            int font_;
         };
         // DEFINE_EXTEND_TYPE(IMGPROCESSOR);
     } // namespace civloc

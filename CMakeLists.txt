@@ -26,7 +26,7 @@ set(compile_dirs
 list(APPEND compile_dirs
 	civmap
 	modules
-	# view
+	view
 )
 
 foreach(subdir ${compile_dirs})
