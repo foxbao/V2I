@@ -8,8 +8,8 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            // "program": "${workspaceFolder}/build/modules/modules_test",// viewer
-            "program": "${workspaceFolder}/build/view/civview_test",// viewer
+            "program": "${workspaceFolder}/build/modules/modules_test",// viewer
+            // "program": "${workspaceFolder}/build/view/civview_test",// viewer
             "args": [],
 
             "stopAtEntry": false,

@@ -36,6 +36,8 @@ namespace civ
             {
                 if (str_data.find("---") != string::npos)
                 {
+                    line->id_ = std::to_string(id_indicator);
+                    id_indicator++;
                     lines_.push_back(line);
                     line = std::make_shared<ZMapLineSegment>();
                 }
@@ -50,8 +52,8 @@ namespace civ
                         continue;
                     }
                     line->points_.push_back(Eigen::Vector3d(lat, lon, alt));
-                    id_indicator++;
-                    line->id_ = std::to_string(id_indicator);
+                    
+
                     // line->id_=
                 }
             }

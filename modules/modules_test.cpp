@@ -3,10 +3,14 @@
 #include <memory>
 #include <vector>
 #include "HMM/hmm.h"
+#include "HMM/hmm_loc.h"
 #include "Gap/gap.h"
 #include "Gap/Optimizer.h"
 #include "Gap/math.h"
 #include "TTC/ttc.h"
+#include "Trajectory/trajectory_processor.h"
+#include "common/coordinate_transform/earth.hpp"
+#include "common/util/util.h"
 
 using namespace Eigen;
 void test_ttc()
@@ -81,9 +85,28 @@ void test_hmm()
     std::cout << std::endl;
 }
 
+void test_hmm_loc()
+{
+    using namespace civ::V2I;
+    civ::common::coord_transform::Earth::SetOrigin(Eigen::Vector3d(civ::common::util::g_ori_pos_deg[0],
+                                                                   civ::common::util::g_ori_pos_deg[1],
+                                                                   civ::common::util::g_ori_pos_deg[2]),
+                                                   true);
+    std::cout<<"test hmm loc"<<std::endl;
+    std::shared_ptr<civ::V2I::HMMLoc> sp_model=std::make_shared<civ::V2I::HMMLoc>();
+    sp_model->ReadMap("/home/baojiali/Projects/V2I/map_data/map.txt");
+    spTrajectoryProcessor sp_trajectory_processor=std::make_shared<TrajectoryProcessor>();
+    sp_trajectory_processor->ReadTrajectory("/home/baojiali/Projects/V2I/data/trajectory.txt");
+    
+    sp_model->viterbiAlgorithm(sp_trajectory_processor->get_trajectory_enu());
+
+}
+
 int main() {
     // test_gap();
-    test_hmm();
+    // test_hmm();
+    test_hmm_loc();
     // test_ttc();
+
     return 0;
 }

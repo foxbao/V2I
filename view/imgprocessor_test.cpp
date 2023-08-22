@@ -20,7 +20,6 @@ int main()
     sp_imgprocessor->PlotMap("/home/baojiali/Projects/V2I/map_data/map.txt");
     sp_imgprocessor->PlotTrajectory("/home/baojiali/Projects/V2I/data/trajectory.txt");
     sp_imgprocessor->PlotClosestPoints("/home/baojiali/Projects/V2I/data/trajectory.txt", "/home/baojiali/Projects/V2I/map_data/map.txt");
-
     // std::shared_ptr<> sp_hmm=std::make
 
     return 0;
