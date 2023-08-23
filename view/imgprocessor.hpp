@@ -10,7 +10,10 @@ namespace civ
 {
     namespace V2I
     {
+        namespace view
+        {
         using Vec2d = civ::common::math::Vec2d;
+        using namespace civ::V2I::map;
         class IMGPROCESSOR
         {
         public:
@@ -65,5 +68,6 @@ namespace civ
             int font_;
         };
         // DEFINE_EXTEND_TYPE(IMGPROCESSOR);
+        }
     } // namespace civloc
 } // namespace civ

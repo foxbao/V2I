@@ -11,6 +11,7 @@ int main()
     boost::array<int, 4> arr = {{1, 2, 3, 4}};
     cout << "hi:" << arr[0] << std::endl;
     using namespace civ::V2I;
+    using namespace civ::V2I::view;
     civ::common::coord_transform::Earth::SetOrigin(Eigen::Vector3d(civ::common::util::g_ori_pos_deg[0],
                                                                    civ::common::util::g_ori_pos_deg[1],
                                                                    civ::common::util::g_ori_pos_deg[2]),
@@ -20,7 +21,6 @@ int main()
     sp_imgprocessor->PlotMap("/home/baojiali/Projects/V2I/map_data/map.txt");
     sp_imgprocessor->PlotTrajectory("/home/baojiali/Projects/V2I/data/trajectory.txt");
     sp_imgprocessor->PlotClosestPoints("/home/baojiali/Projects/V2I/data/trajectory.txt", "/home/baojiali/Projects/V2I/map_data/map.txt");
-    // std::shared_ptr<> sp_hmm=std::make
 
     return 0;
 }

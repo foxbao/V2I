@@ -1,8 +1,4 @@
-FILE( GLOB CPPS [^.]*.cpp [^.]*.cc)
-FILE( GLOB HPPS [^.]*.hpp [^.]*.h)
+file(GLOB CPPS [^.]*.cpp [^.]*.cc)
+file(GLOB HPPS [^.]*.hpp [^.]*.h)
 
-target_sources(${MODULE_NAME}
-PRIVATE
-    ${HPPS}
-    ${CPPS}
-)
+target_sources(${MODULE_NAME} PRIVATE ${HPPS} ${CPPS})

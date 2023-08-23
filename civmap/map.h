@@ -6,12 +6,14 @@ namespace civ
 {
     namespace V2I
     {
+        namespace map
+        {
         class CivMap
         {
         public:
             CivMap();
             ~CivMap();
-            /// @brief
+            /// @brief Read in the curves from a map.txt file
             /// @param file_path
             /// @return
             bool ReadData(std::string file_path);
@@ -25,23 +27,23 @@ namespace civ
             /// @param cross_pt_map_llh the nearest point on the map
             /// @return the distance
 
-            double get_distance_map_llh(const Eigen::Vector3d &pt_llh, Eigen::Vector3d &cross_pt_map_llh);
+            double get_distance_pt_map_llh(const Eigen::Vector3d &pt_llh, Eigen::Vector3d &cross_pt_map_llh);
             /// @brief the distance from a given enu point to the nearest point in map
             /// @param pt_enu
             /// @param cross_pt_map_enu
             /// @return
-            double get_distance_map_enu(const Eigen::Vector3d &pt_enu, Eigen::Vector3d &cross_pt_map_enu);
+            double get_distance_pt_map_enu(const Eigen::Vector3d &pt_enu, Eigen::Vector3d &cross_pt_map_enu);
 
-            std::vector<sp_cZMapLineSegment> get_lanes_near_enu(const Eigen::Vector3d &pt_enu,double threshold);
-        
-        private:
-            /// @brief
+            std::vector<sp_cZMapLineSegment> get_lanes_near_enu(const Eigen::Vector3d &pt_enu, double threshold);
+
+            /// @brief calculate the distance from an ENU point to a curve
             /// @param pt_enu
-            /// @param curve
-            /// @param cross_pt_curve
-            /// @return
-            double get_distance_curve_enu(const Eigen::Vector3d &pt_enu, sp_cZMapLineSegment curve, Eigen::Vector3d &cross_pt_curve);
+            /// @param curve the curve to estimate distance
+            /// @param cross_pt_curve the nearest point on the curve to the pt_enu
+            /// @return distance
+            double get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, sp_cZMapLineSegment curve, Eigen::Vector3d &cross_pt_curve);
 
+        private:
             /// @brief
             /// @param pt_enu
             /// @param line_segment_two_points
@@ -52,6 +54,6 @@ namespace civ
             int id_indicator;
         };
         DEFINE_EXTEND_TYPE(CivMap);
-
+        }
     } // namespace coop
 }

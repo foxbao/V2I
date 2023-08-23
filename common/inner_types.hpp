@@ -12,13 +12,8 @@ namespace civ
             std::string id_;                      // string id
             std::vector<Eigen::Vector3d> points_; // 每一个点
         };
-        
-
-        struct State
-        {
-            std::string id_; 
-        };
         DEFINE_EXTEND_TYPE(ZTrajectory);
-        DEFINE_EXTEND_TYPE(State);
+
+
     }
 }

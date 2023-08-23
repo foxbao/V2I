@@ -7,6 +7,11 @@ add_subdirectory(HMM)
 add_subdirectory(TTC)
 add_subdirectory(Trajectory)
 
+file(GLOB CPPS [^.]*.cpp [^.]*.cc)
+file(GLOB HPPS [^.]*.hpp [^.]*.h)
+
+target_sources(${MODULE_NAME} PRIVATE ${HPPS} ${CPPS})
+
 target_include_directories(${MODULE_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}/
                                                  ${CMAKE_SOURCE_DIR})
 
