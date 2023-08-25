@@ -86,7 +86,10 @@ make install
 ```
 
 3. Boost
+```shell
 sudo apt-get install libboost-all-dev
+```
+
 
 4. Opencv (Optional)
 If we want to visualize something, we need to install OpenCV

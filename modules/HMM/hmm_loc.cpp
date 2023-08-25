@@ -94,19 +94,20 @@ namespace civ
             std::vector<sp_cState> HMMLoc::viterbiAlgorithm(sp_cZTrajectory observations)
             {
                 int T = observations->points_.size();
-
-                // generate states as the curves near the first observation point
+                // generate states which contain the curves near the first observation point
                 std::vector<sp_cZMapLineSegment> curves_near = sp_map_->get_lanes_near_enu(observations->points_[0], 5);
+                
                 std::vector<sp_cState> states;
                 for (const auto &curve : curves_near)
                 {
-                    std::shared_ptr<State> sp_state=std::make_shared<State>();
-                    sp_state->curve_=curve;
+                    std::shared_ptr<State> sp_state = std::make_shared<State>();
+                    sp_state->curve_ = curve;
                     states.push_back(sp_state);
                 }
 
                 // Initialization step
-                Eigen::MatrixXd transition_matrix = CalculateTransitionalProbability(curves_near);
+                // Calculate the transitional probability
+                Eigen::MatrixXd transition_matrix = CalculateTransitionalProbability(states);
                 int num_states = transition_matrix.cols();
 
                 // The maximum probability of a given node
@@ -131,7 +132,7 @@ namespace civ
                     Eigen::Vector3d cross_pt_curve_enu;
                     double distance = sp_map_->get_distance_pt_curve_enu(observations->points_[0], curves_near[s], cross_pt_curve_enu);
                     // viterbi[s,1]<-P(X0Z0)=P(X0)*P(Z0|X0)
-                    delta(0, s) = initial_probs(s) * EmissionProbability(curves_near[s], observations->points_[0]);
+                    delta(0, s) = initial_probs(s) * EmissionProbability(states[s], observations->points_[0]);
                     // backpointer[s,1]<-0
                     psi(0, s) = 0;
                 }
@@ -147,8 +148,11 @@ namespace civ
                         int max_state = 0;
                         for (int s_prev = 0; s_prev < num_states; ++s_prev)
                         {
-                            double prob;
-                            // todo
+                            // todo the calculation of transitional probability
+                            double transitional_prob = 1;
+                            // v(t+1)=max(v(t)*P(Xt+1|Xt)*P(Zt|Xt))
+                            // x(t+1)=argmax(v(t)*P(Xt+1|Xt)*P(Zt|Xt))
+                            double prob = delta(t - 1, s_prev) * transitional_prob * EmissionProbability(states[s], observations->points_[t]);
                             // double prob = delta(t - 1, s_prev) * transition_matrix_(s_prev, s) * emission_matrix_(s, observations[t]);
                             if (prob > max_prob)
                             {
@@ -187,7 +191,30 @@ namespace civ
                 return best_states;
             }
 
-            double HMMLoc::EmissionProbability(double w, double sigma, double d)
+
+            std::vector<State> HMMLoc::GenerateStateFromTrajectory(sp_cZTrajectory observations)
+            {
+                std::vector<State> states;
+
+                std::vector<sp_cZMapLineSegment> curves_near = sp_map_->get_lanes_near_enu(observations->points_[0], 5);
+                for (const auto &curve : curves_near)
+                {
+                    std::shared_ptr<State> sp_state = std::make_shared<State>();
+                    sp_state->curve_ = curve;
+                    states.push_back(*sp_state);
+                }
+                return states;
+            }
+
+            double HMMLoc::EmissionProbability(sp_cState state, Eigen::Vector3d pt_enu)
+            {
+                Eigen::Vector3d cross_pt_curve_enu;
+                double distance = sp_map_->get_distance_pt_curve_enu(pt_enu, state->curve_, cross_pt_curve_enu);
+                double prob = CDF(lane_width_, gps_sigma_, distance);
+                return prob;
+            }
+
+            double HMMLoc::CDF(double w, double sigma, double d)
             {
                 // using namespace civ::common::math;
                 if (w <= 0)
@@ -209,30 +236,20 @@ namespace civ
                 return cdf / w;
             }
 
-            double HMMLoc::EmissionProbability(civ::V2I::map::sp_cZMapLineSegment state, Eigen::Vector3d pt_enu)
-            {
-                Eigen::Vector3d cross_pt_curve_enu;
-                double distance = sp_map_->get_distance_pt_curve_enu(pt_enu, state, cross_pt_curve_enu);
-
-                double prob = EmissionProbability(lane_width_, gps_sigma_, distance);
-                return prob;
-            }
-
             void HMMLoc::ReadMap(std::string map_path)
             {
                 sp_map_->ReadData(map_path);
             }
 
-
-            Eigen::MatrixXd HMMLoc::CalculateTransitionalProbability(std::vector<sp_cZMapLineSegment> curves_near)
+            Eigen::MatrixXd HMMLoc::CalculateTransitionalProbability(std::vector<sp_cState> states)
             {
                 Eigen::MatrixXd transition_matrix;
-                int num_state = curves_near.size();
-                transition_matrix = Eigen::MatrixXd(num_state, num_state);
+                int num_states = states.size();
+                transition_matrix = Eigen::MatrixXd(num_states, num_states);
 
-                for (int i = 0; i < num_state; i++)
+                for (int i = 0; i < num_states; i++)
                 {
-                    for (int j = 0; j < num_state; j++)
+                    for (int j = 0; j < num_states; j++)
                     {
 
                         if (i == j)
@@ -242,18 +259,20 @@ namespace civ
                         else
                         {
                             // calculate the transitional probability between two lanes
-                            // double distance=0.5;
-
-                            transition_matrix(i, j) = 0.5;
+                            double distance=sp_map_->get_distance_curve_cuvre_enu(states[i]->curve_,states[j]->curve_);
+                            
+                            transition_matrix(i, j) = exp(-distance/5);
+                            // transition_matrix(i, j) = CDF(lane_width_,gps_sigma_,distance);
                         }
                     }
                     // normalize the transition probability of state to make the sum =1
                     double sum = transition_matrix.block<1, 4>(i, 0).sum();
                     transition_matrix.block<1, 4>(i, 0) /= sum;
                 }
-
+                std::cout<<transition_matrix<<std::endl;
                 return transition_matrix;
             }
+
         }
     }
 }

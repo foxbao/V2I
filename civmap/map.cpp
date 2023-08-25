@@ -54,8 +54,6 @@ namespace civ
                             continue;
                         }
                         line->points_.push_back(Eigen::Vector3d(lat, lon, alt));
-
-                        // line->id_=
                     }
                 }
                 file.close();
@@ -150,6 +148,21 @@ namespace civ
                     }
                 }
                 return closest_distance;
+            }
+
+            double CivMap::get_distance_curve_cuvre_enu(sp_cZMapLineSegment curve0, sp_cZMapLineSegment curve1)
+            {
+                double min_distance=MAXVAL;
+                for(const auto& pt_enu:curve0->points_)
+                {
+                    Eigen::Vector3d cross_pt_curve_enu;
+                    double distance = get_distance_pt_curve_enu(pt_enu, curve1, cross_pt_curve_enu);
+                    if(distance<min_distance)
+                    {
+                        min_distance=distance;
+                    }
+                }
+                return min_distance;
             }
 
             double CivMap::min_distance_point_to_line(const Eigen::Vector3d &pt_enu, const std::vector<Eigen::Vector3d> &line_segment_two_points, Eigen::Vector3d &pt_nearest_enu)

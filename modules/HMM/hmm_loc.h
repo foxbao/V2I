@@ -23,28 +23,36 @@ namespace civ
                 /// @param observations
                 /// @return
                 std::vector<int> viterbiAlgorithm(const std::vector<int> &observations);
+
+                /// @brief use viterbi algorithm to calculate the bess states of observations composed of a position trajectory
+                /// @param observations
+                /// @return
                 std::vector<sp_cState> viterbiAlgorithm(sp_cZTrajectory observations);
 
             private:
+
                 /// @brief 
+                /// @param observations 
+                /// @return 
+                std::vector<State> GenerateStateFromTrajectory(sp_cZTrajectory observations);
+                /// @brief calculate emission probability P(Z|X)
+                /// @param state  state
+                /// @param pt_enu observation
+                /// @return
+                double EmissionProbability(sp_cState state, Eigen::Vector3d pt_enu);
+
+                /// @brief Calculate the CDF integrating from -0.5w to 0.5w, with sigma and mean
                 /// @param w lane width
                 /// @param sigma sigma standard deviation of the GPS error
                 /// @param d perpendicular distance between the GPS coordinate and the lane centerline
                 /// @return
-                double EmissionProbability(double w, double sigma, double d);
+                double CDF(double w, double sigma, double d);
 
-                double EmissionProbability(civ::V2I::map::sp_cZMapLineSegment state, Eigen::Vector3d pt_enu);
+                /// @brief Calculate transitional probability matrix, containing P(Xj|Xi)
+                /// @param states
+                /// @return
+                Eigen::MatrixXd CalculateTransitionalProbability(std::vector<sp_cState> states);
 
-                // /// @brief Calculate the cummulative probability function
-                // /// @param low_limit low limit of integral
-                // /// @param up_limit up limit of integral
-                // /// @param sigma the sigmal
-                // /// @param mean the mean value
-                // /// @return
-                // double CDF_normal(double low_limit, double up_limit, double sigma, double mean);
-
-                Eigen::MatrixXd CalculateTransitionalProbability(std::vector<sp_cZMapLineSegment> curves_near);
-                
                 // Define HMM parameters
                 int num_states_;
                 int num_observations_;
