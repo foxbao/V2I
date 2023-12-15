@@ -43,6 +43,8 @@ namespace civ
                 /// @return distance
                 double get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, sp_cZMapLineSegment curve, Eigen::Vector3d &cross_pt_curve);
 
+
+                double get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, const std::vector<Eigen::Vector3d> curve, Eigen::Vector3d &cross_pt_curve);
                 /// @brief 
                 /// @param curve0 
                 /// @param curve1 

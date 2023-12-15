@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iostream>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
@@ -88,7 +89,6 @@ namespace civ
             {
                 unsigned int map_id_;
                 std::string id_; // string id
-
                 std::vector<Eigen::Vector3d> points_; // 每一个地图点
             };
             // 注意 ： 这里的linesegment

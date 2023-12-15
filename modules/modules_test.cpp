@@ -2,8 +2,9 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "HMM/hmm.h"
+// #include "HMM/hmm.h"
 #include "HMM/hmm_loc.h"
+
 #include "Gap/gap.h"
 #include "Gap/Optimizer.h"
 #include "Gap/math.h"
@@ -70,21 +71,21 @@ void test_gap()
     std::cout << "result:" << h.transpose() << std::endl;
 }
 
-void test_hmm()
-{
-    using namespace civ::V2I;
-    std::cout << "test hmm" << std::endl;
-    std::shared_ptr<civ::V2I::HMM> sp_model = std::make_shared<civ::V2I::HMM>();
-    std::vector<int> observations = {0, 1, 0, 1, 1}; // Sample observation sequence
-    double prob = sp_model->EmissionProbability(5, 1, 1);
-    std::vector<int> best_path = sp_model->viterbiAlgorithm(observations);
-    std::cout << "Most probable state sequence:" << std::endl;
-    for (int state : best_path)
-    {
-        std::cout << state << " ";
-    }
-    std::cout << std::endl;
-}
+// void test_hmm()
+// {
+//     using namespace civ::V2I;
+//     std::cout << "test hmm" << std::endl;
+//     std::shared_ptr<civ::V2I::HMM> sp_model = std::make_shared<civ::V2I::HMM>();
+//     std::vector<int> observations = {0, 1, 0, 1, 1}; // Sample observation sequence
+//     double prob = sp_model->EmissionProbability(5, 1, 1);
+//     std::vector<int> best_path = sp_model->viterbiAlgorithm(observations);
+//     std::cout << "Most probable state sequence:" << std::endl;
+//     for (int state : best_path)
+//     {
+//         std::cout << state << " ";
+//     }
+//     std::cout << std::endl;
+// }
 
 void test_hmm_loc()
 {

@@ -26,6 +26,11 @@ namespace civ
             /// @param trajectory_path
             /// @param map_path
             void PlotClosestPoints(std::string trajectory_path, std::string map_path);
+            /// @brief 
+            /// @param pt 
+            /// @param curve 
+            void PlotClosestPointsCurve(const Eigen::Vector3d &pt,const std::vector<Eigen::Vector3d> &curve);
+            void PlotCurveEnu(const std::vector<Eigen::Vector3d> &curve,cv::Scalar color=cv::Scalar(0, 256, 128));
             void SaveImage(cv::Mat *ptr_img);
 
         private:

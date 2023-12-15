@@ -77,6 +77,11 @@ namespace civ
             void IMGPROCESSOR::PlotTrajectoryEnu(cv::Mat *ptr_img, const sp_cZTrajectory &trajectory_enu)
             {
                 PlotCurveEnu(ptr_img, trajectory_enu->points_, cv::Scalar(0, 0, 255));
+                for(const auto& pt_enu:trajectory_enu->points_)
+                {
+                    PlotPointEnu(ptr_img,pt_enu,cv::Scalar(0, 0, 255));
+                }
+                
             }
 
             void IMGPROCESSOR::PlotPointEnu(cv::Mat *ptr_img, const Eigen::Vector3d &pt_enu, cv::Scalar color)
@@ -146,6 +151,21 @@ namespace civ
                     PlotPointEnu(&result_img_, pt_enu, cv::Scalar(0, 0, 255));
                     PlotPointEnu(&result_img_, cross_pt_map_enu);
                 }
+                SaveImage(&result_img_);
+            }
+
+            void IMGPROCESSOR::PlotClosestPointsCurve(const Eigen::Vector3d &pt, const std::vector<Eigen::Vector3d> &curve)
+            {
+                Eigen::Vector3d cross_pt_enu;
+                double closest_distance=sp_map_->get_distance_pt_curve_enu(pt,curve,cross_pt_enu);
+                std::cout<<cross_pt_enu.transpose()<<std::endl;
+                PlotPointEnu(&result_img_,cross_pt_enu,cv::Scalar(255, 0, 255));
+                SaveImage(&result_img_);
+            }
+
+            void IMGPROCESSOR::PlotCurveEnu(const std::vector<Eigen::Vector3d> &curve, cv::Scalar color)
+            {
+                PlotCurveEnu(&result_img_,curve,color);
                 SaveImage(&result_img_);
             }
 

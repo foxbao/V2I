@@ -10,6 +10,10 @@ namespace civ
         namespace modules
         {
             using namespace civ::V2I::map;
+            class Bao
+            {
+                int aaa=2;
+            };
             struct State
             {
                 std::string id_;

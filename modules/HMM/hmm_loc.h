@@ -3,7 +3,7 @@
 #include <vector>
 #include "common/inner_types.hpp"
 #include "civmap/map.h"
-#include "inner_types.hpp"
+#include "modules/inner_types.hpp"
 namespace civ
 {
     namespace V2I
@@ -16,6 +16,7 @@ namespace civ
             class HMMLoc
             {
             public:
+                Bao aaa;
                 HMMLoc();
                 ~HMMLoc();
                 void ReadMap(std::string map_path);
@@ -29,12 +30,16 @@ namespace civ
                 /// @return
                 std::vector<sp_cState> viterbiAlgorithm(sp_cZTrajectory observations);
 
+
+
+                std::vector<sp_cState> viterbiAlgorithm2(sp_cZTrajectory observations);
+
             private:
 
                 /// @brief 
                 /// @param observations 
                 /// @return 
-                std::vector<State> GenerateStateFromTrajectory(sp_cZTrajectory observations);
+                std::vector<sp_cState> GenerateStateFromTrajectory(sp_cZTrajectory observations);
                 /// @brief calculate emission probability P(Z|X)
                 /// @param state  state
                 /// @param pt_enu observation
@@ -58,6 +63,7 @@ namespace civ
                 int num_observations_;
                 double lane_width_ = 3.5;
                 double gps_sigma_ = 4;
+                int near_threshold_=5;
 
                 Eigen::MatrixXd transition_matrix_lane_;
                 // Transition probability matrix

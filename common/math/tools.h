@@ -12,6 +12,9 @@ namespace civ
             /// @param mean the mean value 
             /// @return 
             double CDF_normal(double low_limit, double up_limit, double sigma, double mean);
+        
+        
+        
         }
     }
 }

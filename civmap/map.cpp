@@ -67,6 +67,7 @@ namespace civ
                 for (const auto &line_llh : lines_)
                 {
                     ZMapLineSegment line;
+                    line.id_=line_llh->id_;
                     for (const auto &pt_llh : line_llh->points_)
                     {
                         Eigen::Vector3d pt_enu;
@@ -128,18 +129,45 @@ namespace civ
             double CivMap::get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, sp_cZMapLineSegment curve, Eigen::Vector3d &cross_pt_curve)
             {
                 using namespace civ::common;
-                if (curve->points_.size() < 2)
+
+                double closest_distance=get_distance_pt_curve_enu(pt_enu,curve->points_,cross_pt_curve);
+                // if (curve->points_.size() < 2)
+                // {
+                //     return MAXVAL;
+                // }
+
+                // Eigen::Vector3d crossing_pt_line;
+                // double closest_distance = MAXVAL;
+                // for (int i = 1; i < curve->points_.size(); i++)
+                // {
+                //     std::vector<Eigen::Vector3d> line_segment_two_points;
+                //     line_segment_two_points.push_back(curve->points_[i - 1]);
+                //     line_segment_two_points.push_back(curve->points_[i]);
+                //     double distance_to_line = min_distance_point_to_line(pt_enu, line_segment_two_points, crossing_pt_line);
+                //     if (distance_to_line < closest_distance)
+                //     {
+                //         closest_distance = distance_to_line;
+                //         cross_pt_curve = crossing_pt_line;
+                //     }
+                // }
+                return closest_distance;
+            }
+
+            double CivMap::get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, const std::vector<Eigen::Vector3d> curve, Eigen::Vector3d &cross_pt_curve)
+            {
+                using namespace civ::common;
+                if (curve.size() < 2)
                 {
                     return MAXVAL;
                 }
 
                 Eigen::Vector3d crossing_pt_line;
                 double closest_distance = MAXVAL;
-                for (int i = 1; i < curve->points_.size(); i++)
+                for (int i = 1; i < curve.size(); i++)
                 {
                     std::vector<Eigen::Vector3d> line_segment_two_points;
-                    line_segment_two_points.push_back(curve->points_[i - 1]);
-                    line_segment_two_points.push_back(curve->points_[i]);
+                    line_segment_two_points.push_back(curve[i - 1]);
+                    line_segment_two_points.push_back(curve[i]);
                     double distance_to_line = min_distance_point_to_line(pt_enu, line_segment_two_points, crossing_pt_line);
                     if (distance_to_line < closest_distance)
                     {

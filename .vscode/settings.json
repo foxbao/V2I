@@ -66,5 +66,6 @@
         "cfenv": "cpp",
         "typeindex": "cpp",
         "variant": "cpp"
-    }
+    },
+    "algorithm.codeLang": "Python3"
 }

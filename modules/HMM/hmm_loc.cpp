@@ -1,5 +1,6 @@
-#include "hmm_loc.h"
+#include "modules/HMM/hmm_loc.h"
 #include <iostream>
+#include <set>
 #include <math.h>
 #include "common/math/tools.h"
 
@@ -94,16 +95,8 @@ namespace civ
             std::vector<sp_cState> HMMLoc::viterbiAlgorithm(sp_cZTrajectory observations)
             {
                 int T = observations->points_.size();
-                // generate states which contain the curves near the first observation point
-                std::vector<sp_cZMapLineSegment> curves_near = sp_map_->get_lanes_near_enu(observations->points_[0], 5);
-                
-                std::vector<sp_cState> states;
-                for (const auto &curve : curves_near)
-                {
-                    std::shared_ptr<State> sp_state = std::make_shared<State>();
-                    sp_state->curve_ = curve;
-                    states.push_back(sp_state);
-                }
+                // generate states which contain the curves near the observation points
+                std::vector<sp_cState> states = GenerateStateFromTrajectory(observations);
 
                 // Initialization step
                 // Calculate the transitional probability
@@ -118,19 +111,21 @@ namespace civ
                 std::vector<int> best_path(T);
 
                 // calculate the initial probability
+                // unified distribution
                 Eigen::VectorXd initial_probs(num_states);
                 for (int s = 0; s < num_states; ++s)
                 {
                     initial_probs(s) = 1;
                 }
+                // normalize
                 initial_probs = initial_probs / initial_probs.sum();
-                std::cout << initial_probs << std::endl;
 
+                // use the first observed result to get the most pro
                 for (int s = 0; s < num_states; ++s)
                 {
                     // use the distance from position to lane center to calculate intitial prob
                     Eigen::Vector3d cross_pt_curve_enu;
-                    double distance = sp_map_->get_distance_pt_curve_enu(observations->points_[0], curves_near[s], cross_pt_curve_enu);
+                    double distance = sp_map_->get_distance_pt_curve_enu(observations->points_[0], states[s]->curve_, cross_pt_curve_enu);
                     // viterbi[s,1]<-P(X0Z0)=P(X0)*P(Z0|X0)
                     delta(0, s) = initial_probs(s) * EmissionProbability(states[s], observations->points_[0]);
                     // backpointer[s,1]<-0
@@ -148,8 +143,7 @@ namespace civ
                         int max_state = 0;
                         for (int s_prev = 0; s_prev < num_states; ++s_prev)
                         {
-                            // todo the calculation of transitional probability
-                            double transitional_prob = 1;
+                            double transitional_prob = transition_matrix(s_prev, s);
                             // v(t+1)=max(v(t)*P(Xt+1|Xt)*P(Zt|Xt))
                             // x(t+1)=argmax(v(t)*P(Xt+1|Xt)*P(Zt|Xt))
                             double prob = delta(t - 1, s_prev) * transitional_prob * EmissionProbability(states[s], observations->points_[t]);
@@ -191,19 +185,56 @@ namespace civ
                 return best_states;
             }
 
-
-            std::vector<State> HMMLoc::GenerateStateFromTrajectory(sp_cZTrajectory observations)
+            
+            std::vector<sp_cState> HMMLoc::viterbiAlgorithm2(sp_cZTrajectory observations)
             {
-                std::vector<State> states;
 
-                std::vector<sp_cZMapLineSegment> curves_near = sp_map_->get_lanes_near_enu(observations->points_[0], 5);
-                for (const auto &curve : curves_near)
+                int T = observations->points_.size();
+                
+            }
+            
+            // the comparator used in set to remove repetition of curves found
+            struct set_share_ptr_compptr
+            {
+                bool operator()(const sp_cZMapLineSegment &left, const sp_cZMapLineSegment &right) // 重载（）运算符
+                {
+                    if (std::stoi(left->id_) == std::stoi(right->id_))
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return std::stoi(left->id_) < std::stoi(right->id_);
+                    }
+                }
+            };
+
+            std::vector<sp_cState> HMMLoc::GenerateStateFromTrajectory(sp_cZTrajectory observations)
+            {
+                std::vector<sp_cState> sp_states;
+                std::vector<State> states;
+                std::vector<sp_cZMapLineSegment> curves;
+                std::set<sp_cZMapLineSegment, set_share_ptr_compptr> set_curves;
+                std::set<State> set_states;
+                for (const auto &pt : observations->points_)
+                {
+                    std::vector<sp_cZMapLineSegment> curves_near = sp_map_->get_lanes_near_enu(pt, near_threshold_);
+
+                    for (const auto &curve : curves_near)
+                    {
+                        curves.push_back(curve);
+                        set_curves.insert(curve);
+                    }
+                }
+
+                for (const auto &curve : set_curves)
                 {
                     std::shared_ptr<State> sp_state = std::make_shared<State>();
                     sp_state->curve_ = curve;
                     states.push_back(*sp_state);
+                    sp_states.push_back(sp_state);
                 }
-                return states;
+                return sp_states;
             }
 
             double HMMLoc::EmissionProbability(sp_cState state, Eigen::Vector3d pt_enu)
@@ -259,9 +290,8 @@ namespace civ
                         else
                         {
                             // calculate the transitional probability between two lanes
-                            double distance=sp_map_->get_distance_curve_cuvre_enu(states[i]->curve_,states[j]->curve_);
-                            
-                            transition_matrix(i, j) = exp(-distance/5);
+                            double distance = sp_map_->get_distance_curve_cuvre_enu(states[i]->curve_, states[j]->curve_);
+                            transition_matrix(i, j) = exp(-distance / 5);
                             // transition_matrix(i, j) = CDF(lane_width_,gps_sigma_,distance);
                         }
                     }
@@ -269,10 +299,9 @@ namespace civ
                     double sum = transition_matrix.block<1, 4>(i, 0).sum();
                     transition_matrix.block<1, 4>(i, 0) /= sum;
                 }
-                std::cout<<transition_matrix<<std::endl;
+                // std::cout << transition_matrix << std::endl;
                 return transition_matrix;
             }
-
         }
     }
 }
