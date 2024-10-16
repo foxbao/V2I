@@ -1,0 +1,35 @@
+{
+	"package" : "zas.system",
+	"version" : "1.2.3",
+	"apilevel" : 1,
+	"access_permission" : "private",
+	"services" : [
+		{
+			"name" : "rpc.service1",
+			"version" : "1.0.3",
+			"executive" : "service/service1.so",
+			"attributes" : {
+				"global_accessible" : true,
+				"apartment" : "shared",
+				"singleton" : "device-only"
+			}
+		},
+		{
+			"name" : "rpc.service2",
+			"version" : "1.0.3",
+			"executive" : "services/rpcservice.so",
+			"ipaddr" : "192.168.31.17",
+			"port" : 5555,
+			"attributes" : {
+				"global_accessible" : false,
+				"apartment" : "shared",
+				"singleton" : "device-only"
+			},
+			"naming":[
+				"serviceinst1",
+				"serviceinst2",
+				"serviceinst3"
+			]
+		}
+	]
+}

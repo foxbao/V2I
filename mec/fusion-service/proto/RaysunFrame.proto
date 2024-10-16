@@ -1,0 +1,35 @@
+syntax = "proto3";
+package coop.v2x;
+
+message RaysunTarget {
+    int32 class = 1;
+    int32 id = 2;
+    double lon=3;
+    double lat=4;
+    float hdg=5;
+    float lenght=6;
+    float width=7;
+    float length=8;
+    float sog=9;
+}
+message RaysunHead {
+    int32 flag=1;      //数据帧头, 取值为 0x7E7E
+    // OCByte devtype;    //设备类型
+    // OCLong devid;      //设备 ID
+    // OCLong timestamp;  //时间戳
+    // OCByte frame;      //传输帧号
+    // OCShort datalen;   //数据区长度
+    // OCShort targetnum; //目标数量
+    // OCDouble lon;      //经度, 雷达中心点经纬度 XY WGS84 /CGCS2000 坐标系
+    // OCDouble lat;      //纬度, 雷达中心点经纬度 XY WGS84 /CGCS2000 坐标系
+    // OCFloat rdir;      //雷达朝向,与正北的夹角,0.0 -360.0
+}
+
+
+message Raysunframe{
+    RaysunHead head=1;
+    int64 timestamp=2;
+    RaysunTarget targets=3;
+}
+
+

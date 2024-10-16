@@ -1,0 +1,71 @@
+# makefile for zas-rcp service test
+# vscode
+
+workspaceFolder = .
+targetName = rpcservice
+
+ifeq ($(ARM), 1)
+CC	= aarch64-linux-gcc
+CXX	= aarch64-linux-g++
+platform = arm64
+else
+CC	= gcc
+CXX	= g++
+platform = x86
+endif
+
+ifeq ($(DEBUG), 1)
+dbgrel = dbg
+else
+dbgrel = rel
+endif
+
+targetFolder = $(workspaceFolder)/targets
+OBJDIR_ROOT	= $(targetFolder)/$(platform)-objs-$(dbgrel)
+ZASSYS = $(workspaceFolder)/../zassys/$(platform)
+
+INCS	= -I$(workspaceFolder)/inc -I$(workspaceFolder)/test/inc -I$(workspaceFolder)/test/inc/rpc -I$(workspaceFolder)/test/inc/$(targetName) -I$(workspaceFolder)/test/inc/$(targetName)/protobuf -I$(ZASSYS)/include
+
+CFLAGS	= $(INCS)
+CXXFLAGS= $(CFLAGS)
+
+SRCDIR = $(workspaceFolder)/test/$(targetName)
+SRCDIR1 = $(workspaceFolder)/test/$(targetName)/protobuf
+DEPDIR = $(OBJDIR_ROOT)/$(SRCDIR)
+DEPDIR1 = $(OBJDIR_ROOT)/$(SRCDIR1)
+
+
+DEP =  $(patsubst %.cpp, %.d, $(wildcard $(SRCDIR)/*.cpp))
+DEP1 =  $(patsubst %.cc, %.d, $(wildcard $(SRCDIR1)/*.cc))
+
+DEPS = $(addprefix $(OBJDIR_ROOT)/, $(DEP))
+DEPS1 = $(addprefix $(OBJDIR_ROOT)/, $(DEP1))
+
+
+.PHONY: depmkdir clean
+
+all: depmkdir $(DEPS) $(DEPS1) 
+
+depmkdir:
+	@echo build dependency: $(targetName)
+	@mkdir -p $(DEPDIR)
+	@mkdir -p $(DEPDIR1)
+
+
+
+clean:
+	rm -rf $(DEPDIR)
+
+#	$(filter %.cpp,$(srcFiles))
+
+$(DEPDIR)/%.d: $(SRCDIR)/%.cpp
+	@set -e; rm -f $@; \
+	$(CXX) -MM $(CXXFLAGS) $< > $@.$$$$; \
+	sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+$(DEPDIR1)/%.d: $(SRCDIR1)/%.cc
+	@set -e; rm -f $@; \
+	$(CXX) -MM $(CXXFLAGS) $< > $@.$$$$; \
+	sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$

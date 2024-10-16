@@ -1,0 +1,5 @@
+RayunFilePaths:[
+"/home/baojiali/Downloads/radar_data_20220825/sensor_data/data/155"]
+MapFilePath:"data/map.txt"
+main_devid:102
+max_match_distance:2

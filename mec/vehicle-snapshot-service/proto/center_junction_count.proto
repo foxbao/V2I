@@ -1,0 +1,48 @@
+syntax = "proto3";
+package jos;
+
+enum movement_type
+{
+	mvt_type_unknown = 0;
+	mvt_type_turn_left = 1;		//左转
+	mvt_type_go_straight = 2;		//直行
+	mvt_type_turn_right = 3;		//右转
+	mvt_type_u_turn = 4;				//掉头
+};
+
+message count_vehicle_info
+{
+	uint32 id = 1;
+	double speed = 2;
+};
+
+message incomming_vehicle
+{
+	string name = 1;
+	string approachid = 2;
+	movement_type type = 3;
+	int32 laneid = 4;
+	uint32	time_interval = 5;
+	count_vehicle_info veh = 6;
+};
+
+message outgoing_vehicle
+{
+	string name = 1;
+	string outgoingid = 2;
+	string incommingid = 3;
+	movement_type type = 4;
+	int32 incomming_laneid = 5;
+	int32 outgoing_laneid = 6;
+	count_vehicle_info veh = 7;
+};
+
+message cnt_junction {
+	string name = 1;
+    uint32 junction_id = 2;
+	uint32 area = 3;
+	uint32 id = 4;
+	repeated incomming_vehicle invs = 5;
+	repeated outgoing_vehicle outvs = 6;
+	int64 timestamp = 7;
+};

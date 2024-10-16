@@ -1,0 +1,12 @@
+syntax = "proto3";
+package jos;
+
+import "proto/center_junction_info.proto";
+import "proto/vehicle_snapshot.proto";
+
+message distribute_package {
+	uint64 timestamp = 1;
+	repeated junction_info junctions = 2;
+	repeated vss.vehicle_info vehicles = 3;
+	vss.vehicle_snapshot vsspkg = 4;
+};

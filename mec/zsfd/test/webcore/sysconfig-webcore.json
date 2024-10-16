@@ -1,0 +1,20 @@
+{
+	"webcore" : {
+		"name" : "client",
+		"timer-min-interval" : 10,
+		"sock-thread-maxcnt" : 1,
+		"server-count" : 1,
+		"servers" : [
+			{
+				"port" : 5555
+			}
+		],
+		"endpoint-count" : 1,
+		"endpoints" : [
+			{
+				"addr" : "10.0.0.124",
+				"port" : 5556
+			}
+		]
+	}	
+}

@@ -1,0 +1,44 @@
+cmake_minimum_required(VERSION 3.5.1)
+
+message(STATUS "CMAKE version ${CMAKE_VERSION}")
+project(V2I)
+set(CMAKE_CXX_STANDARD 14)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
+set(CMAKE_CXX_FLAGS "-std=c++14 -g3 -rdynamic")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+
+#设置库文件输出目录
+if (NOT LIBRARY_OUTPUT_PATH) 
+    set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/libs)
+endif()
+
+if (NOT EXECUTABLE_OUTPUT_PATH)
+    set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build/bin)
+endif()
+# find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
+# find_package(Ceres REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${CERES_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+add_subdirectory(mec/zsfd/utils)
+add_subdirectory(mec/tools/osm-parser1/odrviewer)
+add_subdirectory(mec/mapcore)
+add_subdirectory(mec/test/mapcore)
+
+# set the default modules to be compiled
+set(compile_dirs common)
+# compile only the necessary modules
+list(APPEND compile_dirs civmap modules view)
+
+foreach(subdir ${compile_dirs})
+  if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/${subdir}")
+    add_subdirectory(${subdir})
+  endif()
+endforeach()
+

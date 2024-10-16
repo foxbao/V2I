@@ -1,0 +1,7 @@
+syntax = "proto3";
+package vss;
+
+message vehicle_request 
+{
+    repeated string vin = 1;
+};

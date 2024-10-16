@@ -1,0 +1,3 @@
+uuid,objId,sourceType,objType,confidence,longitude,latitude,posConfidence,elevation,elevConfidence,obj_length,obj_width,obj_height,laneID,speed,speedConfidence,heading,headConfidence
+10001,10001,1,1,0.98,121.160372,31.282179,0.99,0,0.99,5,2.5,2,4,10.1,0.98,0.5,0.99
+10002,10002,1,1,0.98,121.160432,31.282091,0.99,0,0.99,5,2.5,2,4,10.1,0.98,0.4,0.99

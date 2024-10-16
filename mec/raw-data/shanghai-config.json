@@ -1,0 +1,16 @@
+{
+	"osm-file" : "~/map/shanghai.xml",
+	"target-dir" : "~/map/target/sh",
+	"levels" : [
+		{
+			"level" : 0,
+			"block-max-nodes" : 100,
+			"road-types" : [
+				"motorway", "motorway_link", "trunk", "trunk_link"
+			]
+		},
+		{
+			"level" : 1
+		}
+	]
+}

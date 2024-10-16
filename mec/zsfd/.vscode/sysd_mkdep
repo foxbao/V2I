@@ -1,0 +1,53 @@
+# makefile for system_daemon
+# vscode
+
+workspaceFolder = .
+targetName = sysd
+
+ifeq ($(ARM), 1)
+CC	= aarch64-linux-gcc
+CXX	= aarch64-linux-g++
+platform = arm64
+else
+CC	= gcc
+CXX	= g++
+platform = x86
+endif
+
+ifeq ($(DEBUG), 1)
+dbgrel = dbg
+else
+dbgrel = rel
+endif
+
+targetFolder = $(workspaceFolder)/targets
+OBJDIR_ROOT	= $(targetFolder)/$(platform)-objs-$(dbgrel)
+
+INCS	= -I$(workspaceFolder)/inc -I$(workspaceFolder)/sys/coreapp/$(targetName)/inc
+
+CFLAGS	= $(INCS)
+CXXFLAGS= $(CFLAGS)
+
+SRCDIR = $(workspaceFolder)/sys/coreapp/$(targetName)
+DEPDIR = $(OBJDIR_ROOT)/$(SRCDIR)
+
+DEP = $(patsubst %.cpp, %.d, $(wildcard $(SRCDIR)/*.cpp))
+DEPS = $(addprefix $(OBJDIR_ROOT)/, $(DEP))
+
+.PHONY: depmkdir clean
+
+all: depmkdir $(DEPS)
+
+depmkdir:
+	@echo build dependency: $(targetName)
+	mkdir -p $(DEPDIR)
+
+clean:
+	rm -rf $(DEPDIR)
+
+$(DEPDIR)/%.d: $(SRCDIR)/%.cpp
+	@set -e; rm -f $@; \
+	$(CXX) -MM $(CXXFLAGS) $< > $@.$$$$; \
+	sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+

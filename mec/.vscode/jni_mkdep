@@ -1,0 +1,48 @@
+# makefile for zas-mapcore
+# vscode
+
+workspaceFolder = .
+targetName = jnihdmap
+
+CC	= gcc
+CXX	= g++
+platform = x86
+
+ifeq ($(DEBUG), 1)
+dbgrel = dbg
+else
+dbgrel = rel
+endif
+
+targetFolder = $(workspaceFolder)/targets
+
+OBJDIR_ROOT	= $(targetFolder)/$(platform)-objs-$(dbgrel)
+
+SRCDIR = $(workspaceFolder)/jni
+DEPDIR = $(OBJDIR_ROOT)/$(SRCDIR)
+
+INCS	= -I$(SRCDIR) -I$(workspaceFolder)/inc
+INCS	+= -I$(workspaceFolder)/tools/osm-parser1/odrviewer
+
+CFLAGS	= $(INCS)
+CXXFLAGS= $(CFLAGS)
+
+DEP = $(patsubst %.cpp, %.d, $(wildcard $(SRCDIR)/*.cpp))
+DEPS = $(addprefix $(OBJDIR_ROOT)/, $(DEP))
+
+.PHONY: depmkdir clean
+
+all: depmkdir $(DEPS)
+
+depmkdir:
+	@echo build dependency: $(targetName) $(DEPDIR)
+	@mkdir -p $(DEPDIR)
+
+clean:
+	rm -rf $(DEPDIR)
+
+$(DEPDIR)/%.d: $(SRCDIR)/%.cpp
+	@set -e; rm -f $@; \
+	$(CXX) -MM $(CXXFLAGS) $< > $@.$$$$; \
+	sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$

@@ -1,0 +1,83 @@
+{
+	"indexing-service" : {
+		"client-endpoint" : 5555,
+		"server-endpoint" : {
+			"port" : 5556
+		},
+		"route-rule" : {
+			"rule-cnt": 2,
+			"rule-0": {
+				"url-name" : "update",
+				"service" : {
+					"name":"snapshot",
+					"keyword" : "access-token",
+					"type" : "all"
+				}
+			},
+			"rule-1": {
+				"url-name" : "register",
+				"service" : {
+					"name": "register",
+					"keyword" : "uid",
+					"type" : "internal"
+				}
+			}
+		},
+		"service": {
+			"snapshot" : {
+				"name" : "update",
+				"max-vehicle-count" : 10000,
+				"keepalive" : {
+					"internal" : 2500,
+					"liveness" : 3
+				}
+			},
+			"register" : {
+				"name" : "register",
+				"max-vehicle-count" : 10000
+			}
+		}
+	},
+	"webcore" : {
+		"name" : "indexing-service",
+		"timer-min-interval" : 10,
+		"socket-max-count" : 20,
+		"server" : {
+			"port" : 5555,
+			"thread-count" : 1
+		},
+		"client" : {
+			"thread-count" : 1
+		}
+	},
+	"rabbitmq": {
+		"consuming" : {
+			"centermq" : {
+				"host" : "10.0.0.124",
+				"port" : 5672,
+				"channel" : 1,
+				"exchange" : "edge_cloud",
+				"exchangetype" : "topic",
+				"routingkey" : "edge_cloud.vehicle_snapshot",
+				"username" : "guest",
+				"password" : "guest"
+			}
+		},
+		"producing" : {
+			"snapshot" : {
+				"host" : "10.0.0.124",
+				"port" : 5672,
+				"channel" : 1,
+				"exchange" : "center_cloud_vmap",
+				"exchangetype" : "topic",
+				"routingkey" : "vin",
+				"username" : "guest",
+				"password" : "guest"
+			}
+		}
+	},
+	"log" : {
+		"rootdir" : "/home/jimview/mec/targets/x86-dbg/test/webcore-tmp",
+		"content-limit" : 4194304
+	}
+}

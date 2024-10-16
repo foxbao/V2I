@@ -1,0 +1,18 @@
+{
+	"package" : "zas.system",
+	"version" : "1.0.0",
+	"apilevel" : 1,
+	"access_permission" : "private",
+	"services" : [
+		{
+			"name" : "updater",
+			"version" : "1.0.0",
+			"executive" : "services/servicebundle.so",
+			"attributes" : {
+				"global_accessible" : false,
+				"apartment" : "shared",
+				"singleton" : "device-only"
+			}
+		}
+	]
+}

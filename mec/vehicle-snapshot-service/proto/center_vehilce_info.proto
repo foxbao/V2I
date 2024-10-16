@@ -1,0 +1,21 @@
+syntax = "proto3";
+package vss;
+
+import "proto/center_junction_detail.proto";
+import "proto/snapshot_package.proto";
+
+message around_vehicle {
+	string id = 1;
+	uint64 timestamp = 2;
+	positioning_system_info gpsinfo = 3;
+	float vehicle_speed = 4;
+};
+
+message edgecloud_package {
+	string  id = 1;
+	string  road_name = 2;
+	float   deviation = 3;
+	vsnapshot_package package = 4;
+	repeated jos.junction juction_info = 5;
+	repeated around_vehicle vehilces = 6;
+};

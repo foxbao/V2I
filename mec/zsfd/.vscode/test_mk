@@ -1,0 +1,86 @@
+# makefile for coreapp updater service
+# vscode
+
+workspaceFolder = .
+targetName = test
+subFolders = updater
+targetVersion = 1.0.0
+
+ifeq ($(ARM), 1)
+CC	= aarch64-linux-gcc
+CXX	= aarch64-linux-g++
+platform = arm64
+else
+CC	= gcc
+CXX	= g++
+platform = x86
+endif
+targetFolder = $(workspaceFolder)/targets
+
+ifeq ($(DEBUG), 1)
+dbgrel = dbg
+OPTS= -g -O0 -DDEBUG
+else
+dbgrel = rel
+OPTS= -O3
+endif
+
+OBJDIR_ROOT	= $(targetFolder)/$(platform)-objs-$(dbgrel)
+TARGET_ROOT	= $(targetFolder)/$(platform)-$(dbgrel)/test
+SYS_LIB	= $(targetFolder)/$(platform)-$(dbgrel)
+LINK_PATH = $(targetFolder)/$(platform)-$(dbgrel)
+ZASSYS = $(workspaceFolder)/../zassys/$(platform)
+
+INCS	= -I$(workspaceFolder)/inc -I$(ZASSYS)/include
+INCS	+= -I$(workspaceFolder)/targets/x86-dbg/tools/$(targetName)
+
+LIBS	= -lutils -lmware -lprotobuf
+LIBINC	= -L$(ZASSYS)/lib -L$(SYS_LIB) -Wl,-rpath-link $(LINK_PATH)
+
+CFLAGS	= -fPIC -fvisibility=hidden $(OPTS) $(INCS) -DLINUX -DLIBSERVICE
+CXXFLAGS= $(CFLAGS)
+
+Target = $(TARGET_ROOT)/$(targetName)
+SRCDIR = $(workspaceFolder)/targets/x86-dbg/tools/$(targetName)
+
+OBJDIR = $(OBJDIR_ROOT)/$(SRCDIR)
+
+LDFLAGS	= -shared -fvisibility=hidden
+
+OBJ = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)/*.cpp))
+OBJ += $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)/common/*.cpp))
+OBJ += $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)/proto/*.cpp))
+OBJ += $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)/proxy/*.cpp))
+OBJ += $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)/skeleton/*.cpp))
+
+OBJS = $(addprefix $(OBJDIR_ROOT)/, $(OBJ))
+
+DEPS = $(patsubst %.o, %.d, $(OBJS))
+TARGET_DIRS = $(addprefix $(TARGET_ROOT)/, common)
+TARGET_DIRS += $(addprefix $(TARGET_ROOT)/, proto)
+TARGET_DIRS += $(addprefix $(TARGET_ROOT)/, proxy)
+TARGET_DIRS += $(addprefix $(TARGET_ROOT)/, skeleton)
+
+all: objmkdir $(Target)
+
+include $(DEPS)
+
+$(Target): $(OBJS)
+	$(CXX) $(LDFLAGS) $^ -s -o $@ $(LIBS) $(LIBINC)
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@set -e; $(CXX) -MM $(INCS) $< > $(patsubst %o, %d, $@).$$$$; \
+	sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $(patsubst %o, %d, $@) : ,g' < $(patsubst %o, %d, $@).$$$$ > $(patsubst %o, %d, $@); \
+	rm -f $(patsubst %o, %d, $@).$$$$
+
+.PHONY: objmkdir clean
+
+objmkdir:
+	@echo build: $(targetName)
+	@mkdir -p $(TARGET_ROOT)
+
+clean:
+	rm -rf $(Target)
+	rm -rf $(OBJDIR)
+

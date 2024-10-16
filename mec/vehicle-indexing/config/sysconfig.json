@@ -1,0 +1,119 @@
+{
+	"indexing-service" : {
+		"mapdata": "/zassys/sysapp/others/fullmap",
+		"client" : {
+			"ipaddr" : "localhost",
+			"port" : 5556
+		},
+		"server" : {
+			"port" : 5557
+		},
+		"route-rule" : {
+			"rule-cnt": 3,
+			"rule-0": {
+				"url-name" : "/digdup/vss/v1/update",
+				"service" : {
+					"name":"snapshot",
+					"keyword" : "access-token",
+					"inter_change" : 1,
+					"type" : "all"
+				}
+			},
+			"rule-1": {
+				"url-name" : "/digdup/vss/v1/register",
+				"service" : {
+					"name": "register",
+					"keyword" : "uid",
+					"type" : "internal"
+				}
+			},
+			"rule-2": {
+				"url-name" : "/digdup/jos/v1/update",
+				"service" : {
+					"name": "snapshot",
+					"keyword" : "access-token",
+					"inter_change" : 1,
+					"type" : "forward"
+				}
+			}
+		},
+		"service": {
+			"snapshot" : {
+				"name" : "snapshot",
+				"max-vehicle-count" : 10000,
+				"keepalive" : {
+					"internal" : 2500,
+					"liveness" : 3
+				}
+			},
+			"register" : {
+				"name" : "register",
+				"max-vehicle-count" : 10000
+			}
+		}
+	},
+	"webcore" : {
+		"name" : "indexing-service",
+		"timer-min-interval" : 10,
+		"sock-thread-maxcnt" : 1,
+		"server-count" : 1,
+		"servers" : [
+			{
+				"port" : 5557
+			}
+		]
+	},
+	"rabbitmq": {
+		"consuming" : {
+			"centermq" : {
+				"host" : "222.71.128.20",
+				"port" : 56557,
+				"channel" : 1,
+				"exchange-count" : 1,
+				"exchange-info" : [
+					{
+						"exchange" : "vehicle_subscribe",
+						"exchangetype" : "topic",
+						"routing-count" : 2,
+						"routing-info" : [
+							{
+								"routingkey" : "subscribe_vehicle"
+							}, 
+							{
+								"routingkey" : "unsubscribe_vehicle"
+							}
+						]
+					}
+				],
+				"username" : "admin",
+				"password" : "admin"
+			}
+		},
+		"producing" : {
+			"snapshot" : {
+				"host" : "222.71.128.20",
+				"port" : 56557,
+				"channel" : 1,
+				"exchange-count" : 1,
+				"exchange-info" : [
+					{
+						"exchange" : "vehicle_information",
+						"exchangetype" : "topic",
+						"routing-count" : 1,
+						"routing-info" : [
+							{
+								"routingkey" : "vehicle_detail_"
+							}
+						]
+					}
+				],
+				"username" : "admin",
+				"password" : "admin"
+			}
+		}
+	},
+	"log" : {
+		"rootdir" : "/home/jimview/mec/targets/x86-dbg/test/webcore-tmp",
+		"content-limit" : 4194304
+	}
+}

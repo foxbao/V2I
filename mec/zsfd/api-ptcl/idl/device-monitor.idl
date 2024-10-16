@@ -1,0 +1,60 @@
+/** @file device-monitor.idl
+ * definition of interfaces for device monitor
+ * api level: 1
+ */
+
+module devmon_api {
+
+// mssdev: mass-storage device
+enum mssdev_evid
+{
+	mssdev_evid_unknown = 0,
+	mssdev_evid_connected,
+	mssdev_evid_ejected,
+};
+
+enum mssdev_type
+{
+	mssdev_type_unknown = 0,
+	mssdev_type_usb,
+};
+
+/**
+  We only enumulate all supported
+  file system type
+ */
+enum fs_type
+{
+	fs_type_unknown = 0,
+	fs_type_vfat,
+	fs_type_ntfs,
+	fs_type_ext,
+	fs_type_ext2,
+	fs_type_ext3,
+	fs_type_ext4,
+};
+
+struct mssdev_info
+{
+	// the trigger event type for this info
+	mssdev_evid evid;
+
+	// device name of the mass-storage device
+	string device_name;
+
+	// partition filesystem type
+	fs_type partition_type;
+
+	// the mounted full path if the partition
+	// is successfully mounted
+	string mounted_fullpath;
+};
+
+/**
+ * event triggered when mass-storage device state has changed
+ * @param info the info for this state change
+ */
+event on_mssdev_changed(mssdev_info info);
+
+}; // end of module devmon_capp
+/* EOF */

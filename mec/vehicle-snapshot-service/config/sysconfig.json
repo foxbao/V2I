@@ -1,0 +1,1424 @@
+{
+	"snapshot-service" : {
+		"mapdata": "/zassys/sysapp/others/fullmap",
+		"rendermap": "/zassys/sysapp/others/hdmap/rendermap",
+		"hdmap": "/zassys/sysapp/others/hdmap/hdmap",
+		"fusion-service":{
+			"ipaddr" : "localhost",
+			"port" : 5558
+		}
+	},
+	"webcore" : {
+		"name" : "snapshot-service",
+		"timer-min-interval" : 10,
+		"sock-thread-maxcnt" : 1,
+		"endpoint-count" : 2,
+		"endpoints" : [
+			{
+				"addr" : "localhost",
+				"port" : 5557
+			}
+		]
+	},
+	"kafka" : {
+		"producer" : {
+			"addr" : "39.104.172.209",
+			"port" : 9092,
+			"topic" : "osmmap"
+		},
+		"consumer" : {
+			"broker" : "116.236.72.174:55556",
+			"group_id" : "mec123.snapshotFADFA",
+			"topic" : "trafficlight_lightId"
+		}
+	},
+	"rabbitmq": {
+		"consuming" : {
+			"centermq" : {
+				"host" : "222.71.128.20",
+				"port" : 56557,
+				"channel" : 1,
+				"exchange-count" : 3,
+				"exchange-info" : [
+					{
+						"exchange" : "junction_subscribe",
+						"exchangetype" : "topic",
+						"routing-count" : 2,
+						"routing-info" : [
+							{
+								"routingkey" : "subscribe_junction"
+							}, 
+							{
+								"routingkey" : "unsubscribe_junction"
+							}
+						]
+					},
+					{
+						"exchange" : "device_subscribe",
+						"exchangetype" : "topic",
+						"routing-count" : 2,
+						"routing-info" : [
+							{
+								"routingkey" : "subscribe_device"
+							}, 
+							{
+								"routingkey" : "unsubscribe_device"
+							}
+						]
+					},
+					{
+						"exchange" : "vehicle_edge_subscribe",
+						"exchangetype" : "topic",
+						"routing-count" : 2,
+						"routing-info" : [
+							{
+								"routingkey" : "subscribe_edge_vehicle"
+							}, 
+							{
+								"routingkey" : "unsubscribe_edge_vehicle"
+							}
+						]
+					}
+				],
+				"username" : "admin",
+				"password" : "admin"
+			}
+		},
+		"producing" : {
+			"junciton" : {
+				"host" : "222.71.128.20",
+				"port" : 56557,
+				"channel" : 1,
+				"exchange-count" : 2,
+				"exchange-info" : [
+					{
+						"exchange" : "junction_information",
+						"exchangetype" : "topic",
+						"routing-count" : 1,
+						"routing-info" : [
+							{
+								"routingkey" : "junction_detail_"
+							}
+						]
+					},
+					{
+						"exchange" : "device_information",
+						"exchangetype" : "topic",
+						"routing-count" : 1,
+						"routing-info" : [
+							{
+								"routingkey" : "device_detail_"
+							}
+						]
+					}
+				],
+				"username" : "admin",
+				"password" : "admin"
+			}
+		}
+	},
+
+	"junctions" : {
+		"jun_cnt" : 3,
+		"junction_info" : [
+			{
+				"juntion_id" : 1110,
+				"incom_road_cnt" : 4,
+				"incom_road_info" : [
+					{
+						"road_id": 288,
+						"lane_cnt": 3,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 9,
+										"next_road_id" : 262, 
+										"next_lane_id" : -1 
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 9,
+										"next_road_id" : 262, 
+										"next_lane_id" : -3 
+									}
+								]
+							},
+							{
+								"id" : -3,
+								"next_road_cnt": 2,
+								"next_roads" : [
+									{
+										"light_id" : -1,
+										"next_road_id" : 260, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : 9,
+										"next_road_id" : 261, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 260, 
+										"next_lane_id" : -2
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 260, 
+										"next_lane_id" : -3
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 775,
+						"lane_cnt": 4,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 2,
+								"next_roads" : [
+									{
+										"light_id" : 1,
+										"next_road_id" : 253, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : 1,
+										"next_road_id" : 254, 
+										"next_lane_id" : -1 
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 2,
+										"next_road_id" : 252, 
+										"next_lane_id" : -1
+									}
+								]
+							},
+							{
+								"id" : -3,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 3,
+										"next_road_id" : 252, 
+										"next_lane_id" : -2
+									}
+								]
+							},
+							{
+								"id" : -4,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : -1,
+										"next_road_id" : 251, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 251, 
+										"next_lane_id" : -2
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 251, 
+										"next_lane_id" : -3
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 263,
+						"lane_cnt": 2,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 4,
+										"next_road_id" : 264, 
+										"next_lane_id" : -1
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 2,
+								"next_roads" : [
+									{
+										"light_id" : 5,
+										"next_road_id" : 265, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 266, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 266, 
+										"next_lane_id" : -2
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 266, 
+										"next_lane_id" : -3
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 776,
+						"lane_cnt": 4,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 2,
+								"next_roads" : [
+									{
+										"light_id" : 6,
+										"next_road_id" : 255, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : 6,
+										"next_road_id" : 255, 
+										"next_lane_id" : -2 
+									},
+									{
+										"light_id" : 6,
+										"next_road_id" : 255, 
+										"next_lane_id" : -3 
+									},
+									{
+										"light_id" : 6,
+										"next_road_id" : 256, 
+										"next_lane_id" : -1 
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 7,
+										"next_road_id" : 258, 
+										"next_lane_id" : -1
+									}
+								]
+							},
+							{
+								"id" : -3,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 7,
+										"next_road_id" : 258, 
+										"next_lane_id" : -2
+									}
+								]
+							},
+							{
+								"id" : -4,
+								"next_road_cnt": 2,
+								"next_roads" : [
+									{
+										"light_id" : 7,
+										"next_road_id" : 258, 
+										"next_lane_id" : -3
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 257, 
+										"next_lane_id" : -1
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			{
+				"juntion_id" : 1108,
+				"incom_road_cnt" : 5,
+				"incom_road_info" : [
+					{
+						"road_id": 790,
+						"lane_cnt": 2,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 3,
+								"next_roads" : [
+									{
+										"light_id" : 20,
+										"next_road_id" : 296, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : 20,
+										"next_road_id" : 297, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : 20,
+										"next_road_id" : 298, 
+										"next_lane_id" : -1 
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 20,
+										"next_road_id" : 296, 
+										"next_lane_id" : -2
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 633,
+						"lane_cnt": 2,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 14,
+										"next_road_id" : 308, 
+										"next_lane_id" : -1 
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : -1,
+										"next_road_id" : 309, 
+										"next_lane_id" : -1 
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 247,
+						"lane_cnt": 2,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 2,
+								"next_roads" : [
+									{
+										"light_id" : 16,
+										"next_road_id" : 294, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : 16,
+										"next_road_id" : 292, 
+										"next_lane_id" : -1 
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 2,
+								"next_roads" : [
+									{
+										"light_id" : 16,
+										"next_road_id" : 294, 
+										"next_lane_id" : -2
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 293, 
+										"next_lane_id" : -1 
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 285,
+						"lane_cnt": 1,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 4,
+								"next_roads" : [
+									{
+										"light_id" : -1,
+										"next_road_id" : 304, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : 17,
+										"next_road_id" : 306, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : 17,
+										"next_road_id" : 305, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : 17,
+										"next_road_id" : 303, 
+										"next_lane_id" : -1 
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 284,
+						"lane_cnt": 1,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 4,
+								"next_roads" : [
+									{
+										"light_id" : 17,
+										"next_road_id" : 302, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : 17,
+										"next_road_id" : 301, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 300, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : 17,
+										"next_road_id" : 299, 
+										"next_lane_id" : -1 
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			{
+				"juntion_id" : 1157,
+				"incom_road_cnt" : 3,
+				"incom_road_info" : [
+					{
+						"road_id": 475,
+						"lane_cnt": 3,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 25,
+										"next_road_id" : 583, 
+										"next_lane_id" : -1 
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 25,
+										"next_road_id" : 583, 
+										"next_lane_id" : -2
+									}
+								]
+							},							
+							{
+								"id" : -3,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : -1,
+										"next_road_id" : 584, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 584, 
+										"next_lane_id" : -2
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 584, 
+										"next_lane_id" : -3
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 490,
+						"lane_cnt": 3,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 21,
+										"next_road_id" : 589, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : 21,
+										"next_road_id" : 589, 
+										"next_lane_id" : -2
+									},
+									{
+										"light_id" : 21,
+										"next_road_id" : 589, 
+										"next_lane_id" : -3
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 22,
+										"next_road_id" : 590, 
+										"next_lane_id" : -1
+									}
+								]
+							},							
+							{
+								"id" : -3,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 22,
+										"next_road_id" : 590, 
+										"next_lane_id" : -2
+									}
+								]
+							}
+						]
+					},
+					{
+						"road_id": 979,
+						"lane_cnt": 3,
+						"lane_info" :[
+							{
+								"id" : -1,
+								"next_road_cnt": 2,
+								"next_roads" : [
+									{
+										"light_id" : 23,
+										"next_road_id" : 587, 
+										"next_lane_id" : -1 
+									},
+									{
+										"light_id" : 23,
+										"next_road_id" : 586, 
+										"next_lane_id" : -1 
+									}
+								]
+							},
+							{
+								"id" : -2,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : 23,
+										"next_road_id" : 587, 
+										"next_lane_id" : -2
+									}
+								]
+							},							
+							{
+								"id" : -3,
+								"next_road_cnt": 1,
+								"next_roads" : [
+									{
+										"light_id" : -1,
+										"next_road_id" : 585, 
+										"next_lane_id" : -1
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 585, 
+										"next_lane_id" : -2
+									},
+									{
+										"light_id" : -1,
+										"next_road_id" : 585, 
+										"next_lane_id" : -3
+									}
+								]
+							}
+						]
+					}
+				]
+			}
+		]
+	},
+	"count_info" : {
+		"count_jun_cnt" : 3,
+		"junction_info" : [
+			{
+				"name" : "墨玉南路",
+				"juntion_id" : 1110,
+				"area" : 3,
+				"id" : 11,
+				"incom_road_cnt" : 4,
+				"incom_road":[
+					{
+						"name":"东向",
+						"id" : "3_11_1",
+						"orien" : 1,
+						"movement_cnt" : 3,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":288,
+										"incom_lane": -1,
+										"lane_road": 262,
+										"lane_id":-1
+									},
+									{
+										"incom_road":288,
+										"incom_lane": -2,
+										"lane_road": 262,
+										"lane_id":-3
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":288,
+										"incom_lane": -3,
+										"lane_road": 261,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":288,
+										"incom_lane": -3,
+										"lane_road": 260,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					},
+					{
+						"name":"南向",
+						"id" : "3_11_3",
+						"orien" : 3,
+						"movement_cnt" : 4,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":755,
+										"incom_lane": -1,
+										"lane_road": 253,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":755,
+										"incom_lane": -2,
+										"lane_road": 252,
+										"lane_id":-1
+									},
+									{
+										"incom_road":755,
+										"incom_lane": -3,
+										"lane_road": 252,
+										"lane_id":-3
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":755,
+										"incom_lane": -4,
+										"lane_road": 251,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 4,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":755,
+										"incom_lane": -1,
+										"lane_road": 254,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					},
+					{
+						"name":"西向",
+						"id" : "3_11_5",
+						"orien" : 5,
+						"movement_cnt" : 3,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":263,
+										"incom_lane": -1,
+										"lane_road": 264,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":263,
+										"incom_lane": -2,
+										"lane_road": 265,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":263,
+										"incom_lane": -2,
+										"lane_road": 266,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					},
+					{
+						"name":"北向",
+						"id" : "3_11_7",
+						"orien" : 7,
+						"movement_cnt" : 4,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":776,
+										"incom_lane": -1,
+										"lane_road": 255,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 3,
+								"lanes" :[
+									{
+										"incom_road":776,
+										"incom_lane": -2,
+										"lane_road": 258,
+										"lane_id":-1
+									},
+									{
+										"incom_road":776,
+										"incom_lane": -3,
+										"lane_road": 258,
+										"lane_id":-2
+									},
+									{
+										"incom_road":776,
+										"incom_lane": -4,
+										"lane_road": 258,
+										"lane_id":-3
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":776,
+										"incom_lane": -4,
+										"lane_road": 257,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 4,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":776,
+										"incom_lane": -1,
+										"lane_road": 256,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					}
+				],
+				"outgoing_road_cnt": 4,
+				"outgoing_road": [
+					{
+						"name":"东向",
+						"id" : "3_11_2",
+						"orien" : 2,
+						"road_id" : 247
+					},
+					{
+						"name":"南向",
+						"id" : "3_11_4",
+						"orien" : 4,
+						"road_id" : 250
+					},
+					{
+						"name":"西向",
+						"id" : "3_11_6",
+						"orien" : 6,
+						"road_id" : 249
+					},
+					{
+						"name":"北向",
+						"id" : "3_11_8",
+						"orien" : 8,
+						"road_id" : 248
+					}
+				]
+			},
+			{
+				"name" : "博览中心",
+				"juntion_id" : 1108,
+				"area" : 3,
+				"id" : 12,
+				"incom_road_cnt" : 4,
+				"incom_road":[
+					{
+						"name":"东向",
+						"id" : "3_12_1",
+						"orien" : 1,
+						"movement_cnt" : 4,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":790,
+										"incom_lane": -1,
+										"lane_road": 297,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":790,
+										"incom_lane": -1,
+										"lane_road": 296,
+										"lane_id":-1
+									},
+									{
+										"incom_road":790,
+										"incom_lane": -2,
+										"lane_road": 296,
+										"lane_id":-2
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":790,
+										"incom_lane": -2,
+										"lane_road": 295,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 4,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":790,
+										"incom_lane": -1,
+										"lane_road": 298,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					},
+					{
+						"name":"南向",
+						"id" : "3_12_3",
+						"orien" : 3,
+						"movement_cnt" : 3,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":633,
+										"incom_lane": -1,
+										"lane_road": 308,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":633,
+										"incom_lane": -1,
+										"lane_road": 307,
+										"lane_id":-1
+									},
+									{
+										"incom_road":633,
+										"incom_lane": -2,
+										"lane_road": 307,
+										"lane_id":-2
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":633,
+										"incom_lane": -2,
+										"lane_road": 308,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					},
+					{
+						"name":"西向",
+						"id" : "3_12_5",
+						"orien" : 5,
+						"movement_cnt" : 4,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":247,
+										"incom_lane": -1,
+										"lane_road": 291,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":247,
+										"incom_lane": -1,
+										"lane_road": 294,
+										"lane_id":-1
+									},
+									{
+										"incom_road":247,
+										"incom_lane": -2,
+										"lane_road": 294,
+										"lane_id":-2
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":247,
+										"incom_lane": -2,
+										"lane_road": 293,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 4,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":247,
+										"incom_lane": -1,
+										"lane_road": 292,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					},
+					{
+						"name":"北向",
+						"id" : "3_12_7",
+						"orien" : 7,
+						"movement_cnt" : 4,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":285,
+										"incom_lane": -1,
+										"lane_road": 306,
+										"lane_id":-1
+									},
+									{
+										"incom_road":284,
+										"incom_lane": -1,
+										"lane_road": 302,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":285,
+										"incom_lane": -1,
+										"lane_road": 305,
+										"lane_id":-1
+									},
+									{
+										"incom_road":284,
+										"incom_lane": -1,
+										"lane_road": 301,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":285,
+										"incom_lane": -1,
+										"lane_road": 304,
+										"lane_id":-1
+									},
+									{
+										"incom_road":284,
+										"incom_lane": -1,
+										"lane_road": 300,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 4,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":285,
+										"incom_lane": -1,
+										"lane_road": 299,
+										"lane_id":-1
+									},
+									{
+										"incom_road":284,
+										"incom_lane": -1,
+										"lane_road": 303,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					}
+				],
+				"outgoing_road_cnt": 4,
+				"outgoing_road": [
+					{
+						"name":"东向",
+						"id" : "3_12_2",
+						"orien" : 2,
+						"road_id" : 290
+					},
+					{
+						"name":"南向",
+						"id" : "3_12_4",
+						"orien" : 4,
+						"road_id" : 289
+					},
+					{
+						"name":"西向",
+						"id" : "3_12_6",
+						"orien" : 6,
+						"road_id" : 288
+					},
+					{
+						"name":"北向",
+						"id" : "3_12_8",
+						"orien" : 8,
+						"road_id" : 283
+					}
+				]
+			},
+			{
+				"name" : "米泉南路",
+				"juntion_id" : 1157,
+				"area" : 3,
+				"id" : 1,
+				"incom_road_cnt" : 3,
+				"incom_road":[
+					{
+						"name":"东向",
+						"id" : "3_1_1",
+						"orien" : 1,
+						"movement_cnt" : 2,
+						"movements": [
+							{
+								"type" : 2,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":475,
+										"incom_lane": -1,
+										"lane_road": 583,
+										"lane_id":-1
+									},
+									{
+										"incom_road":475,
+										"incom_lane": -2,
+										"lane_road": 583,
+										"lane_id":-2
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":475,
+										"incom_lane": -3,
+										"lane_road": 584,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					},
+					{
+						"name":"西向",
+						"id" : "3_1_5",
+						"orien" : 5,
+						"movement_cnt" : 3,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":490,
+										"incom_lane": -1,
+										"lane_road": 589,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 2,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":490,
+										"incom_lane": -2,
+										"lane_road": 590,
+										"lane_id":-1
+									},
+									{
+										"incom_road":490,
+										"incom_lane": -3,
+										"lane_road": 590,
+										"lane_id":-2
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":490,
+										"incom_lane": -1,
+										"lane_road": 588,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					},
+					{
+						"name":"北向",
+						"id" : "3_1_7",
+						"orien" : 7,
+						"movement_cnt" : 3,
+						"movements": [
+							{
+								"type" : 1,
+								"lane_cnt": 2,
+								"lanes" :[
+									{
+										"incom_road":979,
+										"incom_lane": -1,
+										"lane_road": 587,
+										"lane_id":-1
+									},
+									{
+										"incom_road":979,
+										"incom_lane": -2,
+										"lane_road": 587,
+										"lane_id":-2
+									}
+								]
+							},
+							{
+								"type" : 3,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":979,
+										"incom_lane": -3,
+										"lane_road": 585,
+										"lane_id":-1
+									}
+								]
+							},
+							{
+								"type" : 4,
+								"lane_cnt": 1,
+								"lanes" :[
+									{
+										"incom_road":979,
+										"incom_lane": -1,
+										"lane_road": 586,
+										"lane_id":-1
+									}
+								]
+							}
+						]
+					}
+				],
+				"outgoing_road_cnt": 3,
+				"outgoing_road": [
+					{
+						"name":"东向",
+						"id" : "3_1_2",
+						"orien" : 2,
+						"road_id" : 449
+					},
+					{
+						"name":"西向",
+						"id" : "3_1_6",
+						"orien" : 6,
+						"road_id" : 438
+					},
+					{
+						"name":"北向",
+						"id" : "3_1_8",
+						"orien" : 8,
+						"road_id" : 448
+					}
+				]
+			}
+		]
+	},
+	
+	"log" : {
+		"rootdir" : "/home/jimview/mec/targets/x86-dbg/test/webcore-tmp",
+		"content-limit" : 4194304
+	}
+}

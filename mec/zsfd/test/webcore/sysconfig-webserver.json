@@ -1,0 +1,14 @@
+{
+	"webcore" : {
+		"name" : "server_test",
+		"timer-min-interval" : 10,
+		"socket-max-count" : 20,
+		"server" : {
+			"port" : 5556,
+			"thread-count" : 1
+		},
+		"client" : {
+			"thread-count" : 1
+		}
+	}	
+}

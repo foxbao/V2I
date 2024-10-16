@@ -1,0 +1,83 @@
+syntax = "proto2";
+import "hdmap-geometry.proto";
+import "hdmap-road.proto";
+import "hdmap-junction.proto";
+import "hdmap-lane.proto";
+package zas.hdmap_ptcl;
+
+message hdmap_info {
+	// 地图格式版本
+	required bytes rev_major = 1;
+	required bytes rev_minor = 2;
+
+	// PROJ.4 setting:
+	// "+proj=tmerc +lat_0={origin.lat} +lon_0={origin.lon} +k={scale_factor}
+	// +ellps=WGS84 +no_defs"
+	required string proj = 3;
+	
+	// 该高精地图的版本号
+	required uint32 version = 4;
+	
+	// 该高精地图覆盖的区域（包裹矩形）
+	optional double left = 5;
+	optional double top = 6;
+	optional double right = 7;
+	optional double bottom = 8;
+	
+	// 地图运营商
+	optional string operator = 9;
+	
+	// 地图采集商
+	optional string vendor = 10;
+};
+
+// 高精度地图对象格式
+// 一个高精度地图对象保存了一定范围内所有道路高精度地图数据的全集
+// 或一个子集
+message hdmap {
+	
+	// 保存了id-pair的关系表，此表按照unique ID进行升序排布
+	// 方便后续进一步检索使用
+	repeated fixed64 id_pairs = 1;
+	
+	// 保存了hdmap的关键信息，如：如何进行投影等
+	// 地图数据的范围等
+	required hdmap_info mapinfo = 2;
+	
+	// 本hdmap中所有的道路（road）的集合
+	repeated road roads = 3;
+	
+	// 本hdmap中所有车道（lane）的集合
+	repeated lane lanes = 4;
+	
+	// 本hdmap中所有边界的集合
+	repeated boundary boundaries = 5;
+	
+	// 本hdmap中所有边界的引用集合
+	repeated boundary_ref boundary_refs = 6;
+	
+	// 本hdmap中所有参考线引用集合
+	repeated reference_line reference_lines = 7;
+	
+	// 本hdmap中所有点的集合
+	repeated point points = 8;
+	
+	// 本hdmap中所有polyline
+	repeated polyline polylines = 9;
+	
+	// 本hdmap中所有的junction
+	repeated junction junctions = 10;
+	
+	// 本hdmap中所有junction中的道路对
+	repeated junction_roadpair readpairs = 11;
+	
+	// 本hdmap中所有junction中的路口连接
+	repeated junction_connection jconns = 12;
+	
+	// 以下两项是对高精地图分块能力的支持，这是可选的
+	// 本hdmap中block总体信息描述
+	//optional blockinfo blkinfo;
+	
+	// 本hdmap中所有block的信息存储
+	//optional block blocks;
+}

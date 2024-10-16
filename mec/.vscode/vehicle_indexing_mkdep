@@ -1,0 +1,60 @@
+# makefile for zas-vehicle-indexing
+# vscode
+
+workspaceFolder = .
+targetName = vehicle-indexing
+
+ifeq ($(ARM), 1)
+CC	= aarch64-linux-gcc
+CXX	= aarch64-linux-g++
+platform = arm64
+else
+CC	= gcc
+CXX	= g++
+platform = x86
+endif
+
+ifeq ($(DEBUG), 1)
+dbgrel = dbg
+else
+dbgrel = rel
+endif
+
+targetFolder = $(workspaceFolder)/targets
+OBJDIR_ROOT	= $(targetFolder)/$(platform)-objs-$(dbgrel)
+ZASSYS = $(workspaceFolder)/../zassys/$(platform)
+
+INCS = -I$(workspaceFolder)/inc
+INCS += -I$(workspaceFolder)/$(targetName)
+INCS += -I$(workspaceFolder)/$(targetName)/inc
+INCS += -I$(ZASSYS)/include/zmq
+INCS += -I$(ZASSYS)/include
+
+CFLAGS	= $(INCS)
+CXXFLAGS= $(CFLAGS)
+
+SRCDIR = $(workspaceFolder)/$(targetName)
+DEPDIR = $(OBJDIR_ROOT)/$(SRCDIR)
+
+DEP = $(patsubst %.cpp, %.d, $(wildcard $(SRCDIR)/*.cpp))
+DEP += $(patsubst %.cpp, %.d, $(wildcard $(SRCDIR)/protomsg/*.cpp))
+DEPS = $(addprefix $(OBJDIR_ROOT)/, $(DEP))
+
+.PHONY: depmkdir clean
+
+all: depmkdir $(DEPS)
+
+depmkdir:
+	@echo build dependency: $(targetName)
+	@mkdir -p $(DEPDIR)
+	@mkdir -p $(DEPDIR)/protomsg
+
+clean:
+	rm -rf $(DEPDIR)
+
+$(DEPDIR)/%.d: $(SRCDIR)/%.cpp
+	@set -e; rm -f $@; \
+	$(CXX) -MM $(CXXFLAGS) $< > $@.$$$$; \
+	sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+

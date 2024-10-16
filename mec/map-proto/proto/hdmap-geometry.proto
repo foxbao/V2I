@@ -1,0 +1,204 @@
+syntax = "proto2";
+package zas.hdmap_ptcl;
+
+// 定义一个二维点对象
+message point2d
+{
+	optional double x = 1 [default = nan];
+	optional double y = 2 [default = nan];
+}
+
+// 定义一个三维坐标
+message point3d
+{
+	optional double x = 1 [default = nan];
+	optional double y = 2 [default = nan];
+	optional double z = 3 [default = 0.0];
+}
+
+// 定义一个ENU坐标
+message pointENU
+{
+	optional double x = 1 [default = nan];
+	optional double y = 2 [default = nan];
+	optional double z = 3 [default = 0.0];
+}
+
+// 定义一个通用坐标
+message point
+{
+	// 这个point属于哪个polyline
+	// ref type: 
+	required fixed64 polyline = 1;
+	
+	// 这个point在polyline内部的索引值
+	required uint32 index = 2;
+
+	// 可以选择一个Point2D，Point3D或PointENU
+	oneof point_type {
+		point2d pt2d = 3;
+		point3d pt3d = 4;
+		pointENU ptENU = 5;
+	}
+	// todo：增加KD-Tree相关的结构
+	// point对象的全局ID
+	required fixed32 id = 6;
+}
+
+// 定义螺旋线方程的关键参数
+message curve_spline
+{
+	required double curv_start = 1;
+	required double curv_end = 2;
+}
+
+// 定义圆弧线方程的关键参数
+message curve_arc
+{
+	required double curvature = 1;
+}
+
+// 定义三次方程的关键参数
+message curve_poly3
+{
+	required double a = 1;
+	required double b = 2;
+	required double c = 3;
+	required double d = 4;
+}
+
+// 定义参数化三次方程的关键参数
+// 注意，参数都已经normalized，即在[0, 1]范围内变化
+message curve_ppoly3
+{
+	required double aU = 1;
+	required double bU = 2;
+	required double cU = 3;
+	required double dU = 4;
+	required double aV = 5;
+	required double bV = 6;
+	required double cV = 7;
+	required double dV = 8;	
+}
+
+message polyline
+{
+	oneof object_type {
+		// 该polyline的父节点为一个边界段
+		fixed64 boundary_seg = 1;
+
+		// 该polyline的父节点为一个参考线
+		fixed64 refline = 2;
+	}
+	repeated fixed64 points = 3;
+}
+
+// 定义一个曲线段
+message curve_segment
+{
+	// 在该地图投影系下的曲线段开始坐标
+	// ref type：point
+	required fixed64 pt_start = 1;
+
+	// 这个曲线段的长度及朝向
+	required double s = 2;
+	required double length = 3;
+	optional double heading = 4;
+
+	// 采用哪种类型的曲线来表达
+	// 有螺旋线（spline），弧线（arc），三次曲线（poly3）
+	// 及参数三次曲线（ppoly3）可供选择
+	// 如果不是上述任意一种，则代表使用直线表达
+	oneof curve_type {
+		curve_spline	spline = 5;
+		curve_arc	   arc = 6;
+		curve_poly3	 poly3 = 7;
+		curve_ppoly3	ppoly3 = 8;
+	}
+}
+
+// 边界段 - 若干个边界段可组成一个边界
+message boundary_segment {
+	// 这个边界线段中的曲线表达
+	required curve_segment curve = 1;
+	
+	// 这个边检线段
+	optional fixed64 polyline = 2;
+
+	// 参考线上那个曲线段对应本边界段
+	// 注意：一个边界段可能会跨越参考线上一个曲线段
+	// 这可以通过递推当前seg_id来得到下一个曲线段
+	required fixed64 refline_seg_id = 3;
+	
+	// 包含该边界段的边界对象的引用
+	// ref type: boundary
+	required fixed64 boundary = 4;
+}
+
+// 一个边界，是有若干个边界段（boundary segment）组成的
+message boundary {
+	// 该边界的唯一ID
+	required fixed64 id = 1;
+	
+	// 该边界使用的参考线
+	// ref type：reference_line
+	required fixed64 refline = 2;
+	
+	// 以一个集合形式保存当前边界的所有边界端
+	repeated boundary_segment segments = 3;
+	
+	// 所有引用这个边界的对象（boundary_ref）
+	repeated fixed64 referees = 4;
+}
+
+// 一个边界引用对象
+// 一个边界可能会被多个lane/road等进行引用
+message boundary_ref {
+	// 边界引用器的ID
+	required fixed64 id = 1;
+
+	// 引用的边界对象
+	// ref type: boundary
+	required fixed64 boundary = 2;
+
+	oneof object_type {
+		// 指向承载这个boundary的对象为road
+		// ref type: road
+		fixed64 road = 3;
+		// 指向承载这个boundary的对象为lane
+		// ref type：lane
+		fixed64 lane = 4;
+	}
+	
+	// 引用该边界是否已反方向进行引用
+	optional bool reverse = 5;
+}
+
+// 参考线 - 在road对象及junction对象中都需要表达参考线
+message reference_line
+{
+	// 该参考线的唯一ID
+	required fixed64 id = 1;
+
+	// 参考线的曲线段集合
+	repeated curve_segment segs = 2;
+	
+	// 对应参考线上每个曲线段，表征其是否需要被“先后颠倒”
+	repeated bool curve_reverse = 3;
+	
+	// 对应curve_segment的直线段
+	repeated fixed64 polylines = 4;
+	
+	// 该参考线的父节点对象
+	oneof object_type {
+		// road
+		fixed64 road = 5;
+		
+		// junction_connection
+		fixed64 jconn = 6;
+	}
+	
+	// 注意：
+	// 我们在此并不保存该参考线的前续及后继对象
+	// 可以通过其父对象在获取前续或后继参考线	
+}

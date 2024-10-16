@@ -1,0 +1,4 @@
+find_package(Protobuf REQUIRED)
+set(INNER_PROTO_INTERFACE_DIR ${PROJECT_SOURCE_DIR}/proto)
+# set(INNER_PROTO_TARGET_NAME ${PROJECT_SOURCE_DIR}/_proto_target)
+set(INNER_PROTO_TARGET_NAME ${PROJECT_NAME}_proto_target)

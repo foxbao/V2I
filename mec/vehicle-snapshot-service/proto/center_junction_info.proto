@@ -1,0 +1,17 @@
+syntax = "proto3";
+package jos;
+
+import "proto/center_device_detail.proto";
+import "proto/fusion_package.proto";
+import "proto/junction_package.proto";
+
+message junction_info 
+{
+    string junction_id = 1;
+    uint64 timestamp = 2; //路口感知数据生成时间
+    update_timeinfo timeinfo = 3;
+    double lat = 4;
+    double lon = 5;
+    repeated target targets = 6;
+    repeated device_detail devices = 7;
+};

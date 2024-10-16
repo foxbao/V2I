@@ -1,0 +1,82 @@
+# makefile for api-ptcl
+# vscode
+
+workspaceFolder = .
+targetName = api-ptcl
+targetVersion = 1.0.0
+
+subFolders = device-monitor
+mkdir_subFolders = device-monitor/proto device-monitor/proxy
+
+ifeq ($(ARM), 1)
+CC	= aarch64-linux-gcc
+CXX	= aarch64-linux-g++
+platform = arm64
+else
+CC	= gcc
+CXX	= g++
+platform = x86
+endif
+
+targetFolder = $(workspaceFolder)/targets
+
+ifeq ($(DEBUG), 1)
+dbgrel = dbg
+OPTS= -g -O0 -DDEBUG -DZIDL_EXPORT
+else
+dbgrel = rel
+OPTS= -O3 -DZIDL_EXPORT
+endif
+
+OBJDIR_ROOT	= $(targetFolder)/$(platform)-objs-$(dbgrel)
+TARGET_ROOT	= $(targetFolder)/$(platform)-$(dbgrel)
+LINK_PATH = $(targetFolder)/$(platform)-$(dbgrel)
+ZASSYS = $(workspaceFolder)/../zassys/$(platform)
+
+LIBS	= -lprotobuf
+LIBINC	= -L$(ZASSYS)/lib -L$(TARGET_ROOT) -Wl,-rpath-link $(LINK_PATH)
+
+CFLAGS	= -fPIC -fvisibility=hidden $(OPTS) $(INCS) -DLINUX -DLIBMWARE
+CXXFLAGS= $(CFLAGS)
+
+Target = $(TARGET_ROOT)/lib$(targetName).so
+SRCDIR = $(workspaceFolder)/$(targetName)/autogen
+OBJDIR = $(OBJDIR_ROOT)/$(SRCDIR)
+
+LDFLAGS	= -shared -fvisibility=hidden
+
+# device-monitor
+OBJ = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)/device-monitor/proto/*.cpp))
+OBJ += $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)/device-monitor/proxy/*.cpp))
+
+OBJS = $(addprefix $(OBJDIR_ROOT)/, $(OBJ))
+
+DEPS = $(patsubst %.o, %.d, $(OBJS))
+
+INCS = $(addprefix -I$(SRCDIR)/, $(subFolders))
+INCS += -I$(workspaceFolder)/inc -I$(ZASSYS)/include
+
+MKDIRS = $(addprefix $(DEPDIR)/, $(mkdir_subFolders))
+
+all: objmkdir $(Target)
+
+include $(DEPS)
+
+$(Target): $(OBJS)
+	$(CXX) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBINC)
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@set -e; $(CXX) -MM $(INCS) $< > $(patsubst %o, %d, $@).$$$$; \
+	sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $(patsubst %o, %d, $@) : ,g' < $(patsubst %o, %d, $@).$$$$ > $(patsubst %o, %d, $@); \
+	rm -f $(patsubst %o, %d, $@).$$$$
+
+.PHONY: objmkdir clean
+
+objmkdir:
+	@echo build: $(targetName)
+	@mkdir -p $(TARGET_ROOT)
+
+clean:
+	rm -rf $(Target)
+	rm -rf $(OBJDIR)

@@ -1,0 +1,28 @@
+syntax = "proto2";
+import "hdmap-geometry.proto";
+package zas.hdmap_ptcl;
+
+// 定义一个车道
+// 一个车道主要表达了该车道的左右边界，这些边界
+// 是使用边界（boundary）来表达的
+message lane {
+	// 车道的ID
+	required fixed64 id = 1;
+	
+	// 该车道所属的父节点对象
+	// 可以是road或junction。如果其父节点为road，则该lane为
+	// 普通车道，否则为connection lane（交叉路口中的连接车道）
+	oneof type {
+		fixed64 road_id = 2;
+		fixed64 junction_id = 3;
+	}
+	
+	// 该车道的前驱车道和后继车道
+	// 一个车道可能有多个前驱及后继车道
+	repeated fixed64 prev_lanes = 4;
+	repeated fixed64 next_lanes = 5;
+	
+	// 该车道的左侧车道边界及右侧车道边界
+	optional boundary_ref left = 6;
+	optional boundary_ref right = 7;
+}

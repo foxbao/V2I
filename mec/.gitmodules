@@ -1,0 +1,9 @@
+[submodule "tools/osm-parser1/odrviewer"]
+	path = tools/osm-parser1/odrviewer
+	url = ssh://git@10.5.1.51:2222/source/odrv.git
+[submodule "zsfd"]
+	path = zsfd
+	url = ssh://git@10.5.1.51:2222/source/zsfd.git
+[submodule "fusion-service"]
+	path = fusion-service
+	url = ssh://git@10.5.1.51:2222/source/fusion.git

@@ -1,0 +1,47 @@
+module mytest
+{
+
+enum light_color {
+	light_color_unknown = 0,
+	light_color_green,
+	light_color_red,
+	light_color_yellow,
+};
+
+struct test_struct2
+{
+	int var_1;
+	int var_3[];
+};
+
+struct test_struct1
+{
+	light_color var_a;
+	int var_b;
+	test_struct2 var_c;
+	test_struct2 var_d[];
+};
+
+interface myIF2_listener
+{
+	property observable = true;
+	int on_method1(in light_color val1, inout test_struct2 val2);
+};
+
+interface myIF1
+{
+    int method1(in light_color val1, inout test_struct2 val2);
+	int add_listener(in light_color val1, in myIF2_listener listener);
+};
+
+interface myIF3
+{
+	property singleton = true;
+	int method1(in int val1, inout int val2);
+	myIF1 method2(in int val1);
+};
+
+event rpc_event_no_param();
+event rpc_event_test_with_param(test_struct2 testdata);
+
+};

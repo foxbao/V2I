@@ -1,0 +1,27 @@
+{
+	"services" : {
+		"cert" : {
+			"injection-phase" : "plant"
+		},
+		"fota" : {
+			"need_backup" : true,
+			"backupcfg" : {
+				"dir" : "/home/jimview",
+				"compress_level" : 9,
+				"blocksize" : 1048576,
+				"version" : "1.0.1.0"
+			},
+			"allow-usb-upgrade" : true,
+			"usbpkg-prefix" : "AZ23KSIE8DT"
+		}
+	},
+	"mass-storage" : {
+		"supported-filesystems" :
+			"vfat ntfs ext ext2 ext3 ext4",
+		"mount-root" :
+			"/home/jimview/data/mntroot"
+	},
+	"spu" : {
+		"connection" : "wired"
+	}
+}

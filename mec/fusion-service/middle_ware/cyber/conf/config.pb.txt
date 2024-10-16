@@ -1,0 +1,5 @@
+cacher_cfg{
+    max_delay_ms:300
+    duration_s:1.5
+}
+

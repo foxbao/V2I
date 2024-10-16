@@ -1,0 +1,22 @@
+syntax = "proto3";
+package vss;
+
+import "proto/snapshot_package.proto";
+
+message vehicle_info {
+  string id = 1;
+  double lat = 2;
+  double lon = 3;
+  uint64 timestamp = 4;
+  float heading = 5;  //
+  float speed = 6;    // m/s
+  uint32 type = 7;    //
+  uint32 subtype = 8;
+};
+
+message vehicle_snapshot {
+  vsnapshot_package package = 1;
+  string road_name = 2;
+  float deviation = 3;
+  string vincode = 4;
+};

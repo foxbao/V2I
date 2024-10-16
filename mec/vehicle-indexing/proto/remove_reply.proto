@@ -1,0 +1,16 @@
+syntax = "proto3";
+package vss;
+
+enum remove_status
+{
+	remove_status_success = 0;
+
+	// the requested vehicle object doesn't exist
+	remove_status_not_exist = 1;
+};
+
+message remove_reply
+{
+	// remove request execution status
+	remove_status status = 1;
+};

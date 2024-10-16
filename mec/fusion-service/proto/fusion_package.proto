@@ -1,0 +1,50 @@
+syntax = "proto3";
+package jos;
+
+import "proto/junction_package.proto";
+
+enum target_type
+{
+    target_type_unkonw = 0;
+    target_type_pedestrian = 1;
+    target_type_bike = 2;
+    target_type_motobike = 3;
+    target_type_car = 4;
+    target_type_truck = 5;
+    target_type_bus = 6;
+    target_type_longtruck = 7;
+    target_type_max = 8;
+};
+
+message target {
+    //target type 
+    uint32 class = 1;
+    uint32 id = 2;
+    
+    // WGS84/CGCS2000）
+    double lon = 3;
+    // WGS84/CGCS2000）
+    double lat = 4;
+    // unit: deg（WGS84/CGCS2000）
+    float hdg = 5;
+    
+    // unit: m
+    float  height= 6;
+    // unit: m
+    float  width = 7;
+    // unit: m
+    float length = 8;
+    
+    //target speed， unit: km/h
+    float speed = 9;
+
+    string associate_vehicle_id = 10;
+    uint32 subtype = 11;
+};
+
+message fusion_package {
+	uint64 timestamp = 1;
+	update_timeinfo timeinfo = 2;
+	string junc_id = 3;
+	repeated target targets = 4;
+};

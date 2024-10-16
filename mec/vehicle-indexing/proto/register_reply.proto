@@ -1,0 +1,23 @@
+syntax = "proto3";
+package vss;
+
+enum register_status
+{
+	register_status_success = 0;
+	register_status_invalid_acstoken = 1;
+	register_status_acstoken_expired = 2;
+	register_status_error = 3;
+};
+
+message register_reply {
+	int32 status = 1;
+	// accsss token which identify the request object
+	string access_token = 2;
+
+	// indicate if a new object has been created in
+	// edge cloud / center cloud. In some cases (eg.,
+	// vehile running out of and coming back to the
+	// geo-scope that the edge cloud managed in a short
+	// time), the object may already created in the cloud
+	bool new_created = 3;
+};

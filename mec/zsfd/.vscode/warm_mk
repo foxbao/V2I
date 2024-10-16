@@ -1,0 +1,79 @@
+# makefile for zwarm
+# zwarm represents "zas wayland rendering manager"
+# vscode
+
+workspaceFolder = .
+targetName = warm
+targetVersion = 1.0.0
+
+ifeq ($(ARM), 1)
+CC	= aarch64-linux-gcc
+CXX	= aarch64-linux-g++
+platform = arm64
+else
+CC	= gcc
+CXX	= g++
+platform = x86
+endif
+
+targetFolder = $(workspaceFolder)/targets
+
+ifeq ($(DEBUG), 1)
+dbgrel = dbg
+OPTS= -g -O0 -DDEBUG
+else
+dbgrel = rel
+OPTS= -O3
+endif
+
+OBJDIR_ROOT	= $(targetFolder)/$(platform)-objs-$(dbgrel)
+TARGET_ROOT	= $(targetFolder)/$(platform)-$(dbgrel)/sys
+LINK_PATH = $(targetFolder)/$(platform)-$(dbgrel)
+ZASSYS = $(workspaceFolder)/../zassys
+
+INCS	= -I$(workspaceFolder)/inc
+INCS	+= $(shell pkg-config --cflags wlroots) \
+		$(shell pkg-config --cflags wayland-server)
+
+LIBS	= -lutils
+LIBS	+= $(shell pkg-config --libs wlroots) \
+	$(shell pkg-config --libs wayland-server)
+
+LIBINC	= -L$(ZASSYS)/lib -L$(LINK_PATH) -Wl,-rpath-link $(LINK_PATH)
+
+CFLAGS	= -fPIC $(OPTS) -DLINUX $(INCS)
+CXXFLAGS= $(CFLAGS)
+
+Target = $(TARGET_ROOT)/$(targetName)
+SRCDIR = $(workspaceFolder)/sys/$(targetName)
+OBJDIR = $(OBJDIR_ROOT)/$(SRCDIR)
+
+LDFLAGS	= $(LIBS) $(LIBINC)
+
+OBJ = $(patsubst %.cpp, %.o, $(wildcard $(SRCDIR)/*.cpp))
+OBJS = $(addprefix $(OBJDIR_ROOT)/, $(OBJ))
+
+DEPS = $(patsubst %.o, %.d, $(OBJS))
+
+all: objmkdir $(Target)
+
+include $(DEPS)
+
+$(Target): $(OBJS)
+	$(CXX) $^ -o $@ $(LIBS) $(LIBINC)
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@set -e; $(CXX) -MM $(INCS) $< > $(patsubst %o, %d, $@).$$$$; \
+	sed 's,\($(notdir $*)\)\.o[ :]*,$(dir $@)\1.o $(patsubst %o, %d, $@) : ,g' < $(patsubst %o, %d, $@).$$$$ > $(patsubst %o, %d, $@); \
+	rm -f $(patsubst %o, %d, $@).$$$$
+
+.PHONY: objmkdir clean
+
+objmkdir:
+	@echo build: $(targetName)
+	@mkdir -p $(TARGET_ROOT)
+
+clean:
+	rm -rf $(Target)
+	rm -rf $(OBJDIR)

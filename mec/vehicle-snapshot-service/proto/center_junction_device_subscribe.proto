@@ -1,0 +1,10 @@
+syntax = "proto3";
+package jos;
+
+message junction_request {
+    repeated string junction_id = 1;
+};
+
+message device_request {
+    repeated string device_id = 1;
+};

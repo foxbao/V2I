@@ -1,0 +1,13 @@
+syntax = "proto3";
+package vss;
+
+message upload_error_info {
+    // the timestamp of the upload with error
+    // _sec, _usec has the same meaning as the
+    // intersection_package 
+    int64 timestamp_sec = 1;
+    int64 timestamp_usec = 2;
+
+    // error reason  
+    int32 reason = 3;
+};

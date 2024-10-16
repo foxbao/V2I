@@ -1,0 +1,576 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558 
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "zas-utils (x64 debug)",
+			"command": "make -f ${workspaceFolder}/.vscode/utils_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/utils_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-uicore (x64 debug)",
+			"command": "make -f ${workspaceFolder}/.vscode/uicore_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/uicore_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"dependsOn": [
+				"zas-utils (x64 debug)",
+				"zas-hwgrph (x64 debug)"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-webcore (x64 debug)",
+			"command": "make -f ${workspaceFolder}/.vscode/webcore_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/webcore_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"dependsOn": [
+				"zas-utils (x64 debug)"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-hwgrph (x64 debug)",
+			"command": "make -f ${workspaceFolder}/.vscode/hwgrph_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/hwgrph_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "uicore-test (x64 debug)",
+			"dependsOn": [
+				"zas-utils (x64 debug)",
+				"zas-uicore (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/uicoretest_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/uicoretest_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "utils-test (x64 debug)",
+			"dependsOn": [
+				"zas-utils (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/utilstest_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/utilstest_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "devicecomm (x64 debug)",
+			"dependsOn": [
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/devicecomm_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/devicecomm_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-mware (x64 debug)",
+			"dependsOn": [
+				"zas-utils (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/mware_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/mware_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "mware-test (x64 debug)",
+			"dependsOn": [
+				"zas-mware (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/mwaretest_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/mwaretest_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zsysd (x64 debug)",
+			"dependsOn": [
+				"zas-mware (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/sysd_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/sysd_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "rpcc (x64 debug)",
+			"dependsOn": [
+
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/rpcc_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/rpcc_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "otapack (x64 debug)",
+			"dependsOn": [
+
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/otapack_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/otapack_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zlaunch (x64 debug)",
+			"dependsOn": [
+				"zas-mware (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/launch_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/launch_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zhost (x64 debug)",
+			"dependsOn": [
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/host_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/host_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-rpctest (x64 debug)",
+			"dependsOn": [
+				"zas-mware (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/rpctest_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/rpctest_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-remotetest (x64 debug)",
+			"dependsOn": [
+				"zas-mware (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/remote_client_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/remote_client_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-rpcservice (x64 debug)",
+			"dependsOn": [
+				"zas-mware (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/rpcservice_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/rpcservice_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+
+		{
+			"type": "shell",
+			"label": "zas_traffic (x64 debug)",
+			"dependsOn": [
+				"zas-utils (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/traffic_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/traffic_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+
+		{
+			"type": "shell",
+			"label": "zas_traffic_test (x64 debug)",
+			"dependsOn": [
+				"zas-utils (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/traffictest_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/traffictest_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "rpcbridge (x64 debug)",
+			"dependsOn": [
+				"zas-mware (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/rpcbridge_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/rpcbridge_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "coreapp-servicebundle (x64 debug)",
+			"dependsOn": [
+				"zas-utils (x64 debug)",
+				"zas-mware (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/coreapp_servicebundle_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/coreapp_servicebundle_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "test (x64 debug)",
+			"dependsOn": [
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/test_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/test_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-api_ptcl (x64 debug)",
+			"dependsOn": [
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/api_ptcl_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/api_ptcl_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-webapptest (x64 debug)",
+			"dependsOn": [
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/webapptest_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/webapptest_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+	
+		{
+			"type": "shell",
+			"label": "zas_ltetest(x64 debug)",
+			"dependsOn": [
+				"zas-utils (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/ltetest_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/ltetest_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-webapptestsvc (x64 debug)",
+			"dependsOn": [
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/webapptestsvc_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/webapptestsvc_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "evloopsvr (x64 debug)",
+			"dependsOn": [
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/evloopsvr_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/evloopsvr_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "evloopcli (x64 debug)",
+			"dependsOn": [
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/evloopcli_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/evloopcli_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		},
+		{
+			"type": "shell",
+			"label": "zas-warm (x64 debug)",
+			"dependsOn": [
+				"zas-utils (x64 debug)"
+			],
+			"command": "make -f ${workspaceFolder}/.vscode/warm_mkdep DEBUG=1 && make -f ${workspaceFolder}/.vscode/warm_mk DEBUG=1 -j8",
+			"args": [
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			}
+		}
+	]
+}

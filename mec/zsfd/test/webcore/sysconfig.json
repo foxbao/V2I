@@ -1,0 +1,13 @@
+{
+	"indexing-service" : {
+		"client-port" : 5555,
+		"snapshot-node" : {
+			"port" : 5556,
+			"vehicle_max_count" : 10000,
+			"keepalive" : {
+				"internal" : 2500,
+				"liveness" : 3
+			}
+		}
+	}	
+}

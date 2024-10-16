@@ -1,0 +1,12 @@
+syntax = "proto3";
+package jos;
+import "proto/vehicle_snapshot.proto";
+import "proto/center_junction_info.proto";
+import "proto/center_junction_count.proto";
+
+message center_kafka_data 
+{
+    repeated junction_info junction = 1;
+    repeated vss.vehicle_snapshot snapshot = 2;
+    repeated cnt_junction count = 3;
+};

@@ -1,0 +1,247 @@
+syntax = "proto3";
+package vss;
+
+enum ignition_state {
+	ignition_stat_unknown = 0;
+
+	// ignition state: off
+	ignition_off = 1;
+
+	// ignition state: accessory
+	ignition_acc = 2;
+
+	// ignition state: crank
+	ignition_crank = 3;
+
+	// ignition state: running
+	ignition_running = 4;
+
+	// ignition state: invalid
+	ignition_invalid = 5;
+};
+
+enum vehicle_state
+{
+	veh_state_unknown = 0;
+
+	// state: parked
+	veh_state_parked = 1;
+
+	// state: neutral
+	veh_state_neutral = 2;
+
+	// state: forward
+	veh_state_forward = 3;
+
+	// state: reverse
+	veh_state_reverse = 4;
+
+	// state: invalid
+	veh_state_invalid = 5;
+};
+
+enum vss_validities
+{
+	validities_placeholder = 0;
+
+	// validity of Accelerator Pedal Position Percent Full Range
+	acc_pedal_pos_percentage_validity = 1;
+
+	// validity of steering wheel angle
+	steering_wheel_angle_validity = 2;
+
+	// validity of vehicle speed (non-driven wheel)
+	vehicle_speed_validity = 4;
+
+	// validity of distance through this trip
+	distance_validity = 8;
+
+	// validity of positioning system
+	positioning_system_validity = 16;
+
+	// validity of Brake Pedal Driver Applied Pressure
+	brake_padel_driver_applied_pressure_validity = 32;
+
+	// validity of Master Cylinder Pressure
+	master_cylinder_pressure_validity = 64;
+};
+
+enum vss_flags
+{
+	vss_flags_placeholder = 0;
+	// if the vehicle hazard switch on
+	vss_flag_hazard_switch_active = 1;
+
+	// if the vehicle turn left switch active
+	vss_flag_turn_left_switch_active = 2;
+
+	// if the vehicle turn right switch active
+	vss_flag_turn_right_switch_active = 4;
+
+	// if the brake lights active
+	vss_flag_brake_lights_active = 8;
+
+	// if the front fog lamps in on
+	vss_flag_front_fog_lamps_active = 16;
+
+	// if the rear fog lamps in on
+	vss_flag_rear_fog_lamps_active = 32;
+
+	// if the low beam is active
+	vss_flag_low_beam_active = 64;
+
+	// if the high beam is active
+	vss_flag_high_beam_active = 128;
+
+	// if the collision happened
+	vss_flag_air_bag_deployed = 256;
+
+	// windshield wiper active
+	vss_flag_windshield_wiper_active = 512;
+
+	// Daytime Running Lamps Active
+	vss_flag_daytime_running_lamps_active = 1024;
+
+	// if the Traction Control System be disabled
+	vss_flag_TCS_disable_switch_active_validty = 2048;
+	vss_flag_TCS_disable_switch_active = 4096;
+
+	// Tire Pressure Low Warning
+	vss_flag_tire_pressure_low = 8192;
+};
+
+enum shift_lever_position
+{
+	shift_lever_position_unknown  = 0;
+
+	// transmission shift lever position: P
+	shift_lever_parked = 1;
+
+	// transmission shift lever position: D
+	shift_lever_drive = 2;
+
+	// transmission shift lever position: N
+	shift_lever_neutral = 3;
+
+	// transmission shift lever position: R
+	shift_lever_reverse = 4;
+
+	// transmission shift lever position: S
+	shift_lever_sport = 5;
+
+	// transmission shift lever position: M
+	shift_lever_Manual = 6;
+
+	// transmission shift lever position: L    
+	shift_lever_low = 7;
+
+	// transmission shift lever position: M1 - MR
+	shift_lever_M1 = 8;
+	shift_lever_M2 = 9;
+	shift_lever_M3 = 10;
+	shift_lever_M4 = 11;
+	shift_lever_M5 = 12;
+	shift_lever_M6 = 13;
+	shift_lever_MR = 14;
+};
+
+enum pos_system_info_validity
+{
+	pos_sys_info_validity_placeholder = 0;
+	// positioning system information validity
+	pos_sys_info_lat_validity = 1;
+	pos_sys_info_lon_validity = 2;
+	pos_sys_info_heading_validity = 4;
+	pos_sys_info_elevation_validity = 8;
+	pos_sys_info_velocity_validity = 16;
+
+	// indicate if this is a precise
+	// positioning system
+	pos_sys_flag_precise_positioning = 32;
+
+	// indicate if this information is
+	// estimated via dead reckoning
+	pos_sys_flag_estimated = 64;
+
+	// indicate if this information has
+	// map matched
+	pos_sys_flag_map_matched = 128;
+
+	// source: GPS
+	pos_sys_flag_source_GPS = 256;
+
+	// source: BEIDOU
+	pos_sys_flag_source_BEIDOU = 512;
+};
+
+message positioning_system_info
+{
+	fixed32 flags = 1;
+
+	// <latitude, longtitude>
+	double latitude = 2;
+	double longtitude = 3;
+
+	// heading, elevation and velcity
+	float heading = 4;
+	float elevation = 5;
+	float velcity = 6;
+
+	// todo: add lane id info or link info
+	// if necessary
+};
+
+message vsnapshot_package {
+	// the timestamp of the request
+	// _sec: escaped seconds since 1970/1/1
+	// _usec: usec of a second
+	int64 timestamp_sec = 1;
+	int64 timestamp_usec = 2;
+
+	// the timestamp of vsnapshot data update
+	// _sec: escaped seconds since 1970/1/1
+	// _usec: usec of a second
+	int64 update_timestamp_sec = 3;
+	int64 update_timestamp_usec = 4;
+
+	// containing all validity flags
+	fixed32 validities = 5;
+
+	// containing all flags
+	fixed32 flags = 6;
+
+	// positioning system information
+	positioning_system_info gpsinfo = 7;
+
+	// ignition state
+	int32 ignition_state = 8;
+
+	// transmission shift lever position
+	int32 shift_lever_position = 9;
+
+	// steering wheel angle
+	float steering_wheel_angle = 10;
+
+	// Accelerator Pedal Position Percent Full Range
+	float acc_pedal_pos_percentage = 11;
+
+	// vehicle state
+	int32 vehicle_state = 12;
+
+	// vehicle speed and distance through this trip
+	float vehicle_speed = 13;
+	float distance = 14;
+
+	// brake state
+	// Brake Padel Position Percent Full Range
+	float brake_pedal_pos_percentage = 15;
+
+	// Brake Padel driver applied pressure
+	float brake_padel_driver_applied_pressure = 16;
+
+	// Master Cylinder Pressure
+	float master_cylinder_pressure = 17;
+	
+	// Engine Speed
+	float engine_speed = 18;
+};

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+// junction objects snapshot
+package jos;
+
+import "proto/vehicle_snapshot.proto";
+import "proto/junction_package.proto";
+
+message junction_fusion_package {
+	uint64	fusion_endtime = 1;
+	junction_package jun_pkg = 2;
+	repeated vss.vehicle_info vehicles = 3;
+};

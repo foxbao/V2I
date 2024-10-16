@@ -1,0 +1,19 @@
+{
+	"fusion-service" : {
+	},
+	"webcore" : {
+		"name" : "fusion-service",
+		"timer-min-interval" : 10,
+		"sock-thread-maxcnt" : 1,
+		"server-count" : 1,
+		"servers" : [
+			{
+				"port" : 5558
+			}
+		]
+	},
+	"log" : {
+		"rootdir" : "/home/jimview/mec/targets/x86-dbg/test/webcore-tmp",
+		"content-limit" : 4194304
+	}
+}

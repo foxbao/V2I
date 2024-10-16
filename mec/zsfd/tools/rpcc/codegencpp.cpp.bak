@@ -1,0 +1,5271 @@
+#include <assert.h>
+#include <stdarg.h>
+#include <string.h>
+
+#include "error.h"
+#include "codegencpp.h"
+#include "utilities.h"
+#include "config.h"
+
+using namespace utilities;
+static bool GenerateVariableInitializor(TModuleObject *pModule, TVariableObject *pObj, string& cResult);
+
+static string GetBasicTypeString(EBasicObjectType eType);
+static bool SerializeTypedefedParameters(TModuleObject* obj, TVariableObject *pVar, string& name);
+static bool SerializeBasicParameters(ESrcFileType eSrcType, TModuleObject *obj, EBasicObjectType eType,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name);
+static bool SerializeEnumParameters(ESrcFileType eSrcType, TModuleObject *obj, TEnumDefObject* pEnumDef,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name);
+static bool SerializeUserDefParameters(ESrcFileType eSrcType, TModuleObject *obj, TUserDefTypeObject* pUserDefType,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name);
+static bool SerializeInterfaceParameters(ESrcFileType eSrcType, TModuleObject *obj, TInterfaceObject* pIFObject,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name);
+static bool SerializeParameters(ESrcFileType eSrcType, TModuleObject *obj, TVariableObject* pVar);
+
+
+static const char *GetJsonConvertorNameByBasicType(EBasicObjectType eType);
+static bool DeserializeBasicParameters(ESrcFileType eSrcType, TModuleObject *obj, EBasicObjectType eType,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name);
+static bool DeserializeEnumParameters(ESrcFileType eSrcType, TModuleObject *obj, TEnumDefObject* pEnumDef,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name);
+static bool DeserializeTypedefedParameters(ESrcFileType eSrcType, TModuleObject *obj, TTypedefObject* pTypedefObject,
+			TArrayTypeObject& FinalArrayType, const string& cVarName, const string& name);
+static bool DeserializeUserDefParameters(ESrcFileType eSrcType, TModuleObject *obj, TUserDefTypeObject* pUserDefType,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name);
+static bool DeserializeInterfaceParameters(ESrcFileType eSrcType, TModuleObject *obj, TInterfaceObject* pIFObject,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name);
+static bool DeserializeParameters(ESrcFileType eSrcType, TModuleObject *obj, TVariableObject *pVar);
+
+// todo: carefully check again
+static bool GenerateMethodParameter(TModuleObject *pModule, TVariableObject *pVarObj, string& ret)
+{
+	assert(NULL != pModule && NULL != pVarObj);
+
+	string TypeName;
+	ret.assign("");
+
+	bool bOutPrefix = pVarObj->TestFlags(eVarObjFlag_MethodParameterOut);
+	switch (pVarObj->m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, bool>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("bool");
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append("bool");	// fixed array
+		break;
+
+	case eBasicObjType_UInt8:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, unsigned char>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("unsigned char");
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append("unsigned char");	// fixed array
+		break;
+
+	case eBasicObjType_Int32:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, int>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("int");
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append("int");	// fixed array
+		break;
+
+	case eBasicObjType_Int16:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, short>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("short");
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append("short");	// fixed array
+		break;
+
+	case eBasicObjType_Int64:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, long>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("long");
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append("long");	// fixed array
+		break;
+
+	case eBasicObjType_UInt32:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, uint>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("unsigned int");
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append("unsigned int");	// fixed array
+		break;
+
+	case eBasicObjType_Enum:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("map<uint, ");
+			ret.append(pVarObj->m_pEnumDefType->GetFullName(pModule));
+			ret.append(">&");
+		}
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append(pVarObj->m_pEnumDefType->GetFullName(pModule));
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append(pVarObj->m_pEnumDefType->GetFullName(pModule));
+		break;
+
+	case eBasicObjType_Float:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, double>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("double");
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append("double");
+		break;
+
+	case eBasicObjType_String:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, string>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			if (bOutPrefix)
+				ret.append("string&");
+			else ret.append("const string&");
+		}
+		else ret.append("string");
+		break;
+
+	case eBasicObjType_Stream:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, TRPCStream>&");
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+			ret.append("TRPCStream&");
+		else ret.append("TRPCStream");
+		break;
+
+	case eBasicObjType_Typedefed:
+		assert(NULL != pVarObj->m_pRefType);
+		TypeName = pVarObj->m_pRefType->GetFullName(pModule);
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("map<uint, ");
+			ret.append(TypeName);
+			ret.append(">&");
+		}
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			// todo: for typedefed interface, need handle observable
+			ret.append(TypeName);
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append(TypeName);
+		break;
+
+	case eBasicObjType_UserDefined:
+		assert(NULL != pVarObj->m_pUserDefType);
+		TypeName = pVarObj->m_pUserDefType->GetFullName(pModule);
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("map<uint, ");
+			ret.append(TypeName);
+			ret.append(">&");
+		}
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append(TypeName);
+			if (bOutPrefix) ret.append("&");
+		}
+		else ret.append(TypeName);
+		break;
+
+	case eBasicObjType_Interface:
+		assert(NULL != pVarObj->m_pIFType);
+		TypeName = pVarObj->m_pIFType->GetFullName(pModule);
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("map<uint, ");
+			ret.append(TypeName);
+			ret.append(">&");
+		}
+		else if (eArrayType_NotArray == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append(TypeName);
+			if (bOutPrefix || pVarObj->m_pIFType->TestInterfaceFlags
+				(TInterfaceObject::eInterfaceFlag_Observable)) ret.append("&");
+		}
+		else ret.append(TypeName);
+		break;
+
+	default: return false;
+	}
+
+	ret.append(" ");
+	if (eArrayType_Fixed == pVarObj->m_ArrayType.eArrayType)
+	{
+		char tmp[32];
+		sprintf(tmp, "[%u]", pVarObj->m_ArrayType.ArraySize);
+		if (bOutPrefix)
+		{
+			// like: int (&a)[32]
+			ret.append("(&");
+			ret.append(pVarObj->m_cName);
+			ret.append(")");
+			ret.append(tmp);
+		}
+		else
+		{
+			// like int a[32]
+			ret.append(pVarObj->m_cName);
+			ret.append(tmp);
+		}
+	}
+	else ret.append(pVarObj->m_cName);
+	return true;
+}
+
+static bool GenerateMethodVariableDeclaration(TModuleObject *pModule, TVariableObject *pVarObj, string& ret)
+{
+	assert(NULL != pModule);
+
+	string TypeName;
+	ret.assign("");
+
+	switch (pVarObj->m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, bool>");
+		else ret.append("bool");
+		break;
+
+	case eBasicObjType_UInt8:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, unsigned char>");
+		else ret.append("unsigned char");
+		break;
+
+	case eBasicObjType_Int32:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, int>");
+		else ret.append("int");
+		break;
+
+	case eBasicObjType_Int16:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, short>");
+		else ret.append("short");
+		break;
+
+	case eBasicObjType_Int64:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, long>");
+		else ret.append("long");
+		break;
+
+	case eBasicObjType_UInt32:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, uint>");
+		else ret.append("unsigned int");
+		break;
+
+	case eBasicObjType_Enum:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("map<uint, ");
+			ret.append(pVarObj->m_pEnumDefType->GetFullName(pModule));
+			ret.append(">");
+		}
+		else ret.append(pVarObj->m_pEnumDefType->GetFullName(pModule));
+		break;
+
+	case eBasicObjType_Float:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, double>");
+		else ret.append("double");
+		break;
+
+	case eBasicObjType_String:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, string>");
+		else ret.append("string");
+		break;
+
+	case eBasicObjType_Stream:
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+			ret.append("map<uint, TRPCStream>");
+		else ret.append("TRPCStream");
+		break;
+
+	case eBasicObjType_Typedefed:
+		assert(NULL != pVarObj->m_pRefType);
+		TypeName = pVarObj->m_pRefType->GetFullName(pModule);
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("map<uint, ");
+			ret.append(TypeName);
+			ret.append(">");
+		}
+		else ret.append(TypeName);
+		break;
+
+	case eBasicObjType_UserDefined:
+		assert(NULL != pVarObj->m_pUserDefType);
+		TypeName = pVarObj->m_pUserDefType->GetFullName(pModule);
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("map<uint, ");
+			ret.append(TypeName);
+			ret.append(">");
+		}
+		else ret.append(TypeName);
+		break;
+
+	case eBasicObjType_Interface:
+		assert(NULL != pVarObj->m_pIFType);
+		TypeName = pVarObj->m_pIFType->GetFullName(pModule);
+		if (pVarObj->m_pIFType->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+		{
+			string::size_type pos = TypeName.find("Proxy");
+			if (pos != string::npos) TypeName.replace(pos, 5, "Skeleton");
+		}
+		if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		{
+			ret.append("map<uint, ");
+			ret.append(TypeName);
+			ret.append(">");
+		}
+		else ret.append(TypeName);
+		break;
+
+	default: return false;
+	}
+
+	ret.append(" ");
+	ret.append(pVarObj->m_cName);
+	if (eArrayType_Fixed == pVarObj->m_ArrayType.eArrayType)
+	{
+		char tmp[32];
+		sprintf(tmp, "[%u]", pVarObj->m_ArrayType.ArraySize);
+		ret.append(tmp);
+	}
+	return true;
+}
+
+// for TModuleObject
+TModuleObjectCodeGeneratorCpp::TModuleObjectCodeGeneratorCpp(const string& modulename, TConfig& cfg)
+: TModuleObject(modulename, cfg)
+, m_pxysrcfp(NULL)
+, m_sklsrcfp(NULL)
+, m_hdrfp(NULL)
+, m_inhdrfp(NULL)
+, m_srcfp(NULL)
+{
+}
+
+TModuleObjectCodeGeneratorCpp::~TModuleObjectCodeGeneratorCpp()
+{
+	DestroyIncludedModuleList();
+	if (m_pxysrcfp) fclose(m_pxysrcfp);
+	if (m_sklsrcfp) fclose(m_sklsrcfp);
+	if (m_srcfp) fclose(m_srcfp);
+	if (m_hdrfp) fclose(m_hdrfp);
+	if (m_inhdrfp) fclose(m_inhdrfp);
+	m_pxysrcfp = m_sklsrcfp = m_srcfp = m_hdrfp = m_inhdrfp = NULL;
+}
+
+bool TModuleObjectCodeGeneratorCpp::FinializeCodeGeneration(void)
+{
+	if (TestFlags(eGrammarObjectFlag_GlobalScope))
+	{
+		fprintf(SrcFileHdr, "#endif\t//__CXX_%s_H__\n\n", GetName().c_str());
+		fprintf(SrcFileInlineHdr, "#endif\t//__CXX_%s_INLINE_H__\n\n", GetName().c_str());
+	}
+	else
+	{
+		fprintf(SrcFileHdr, "}; // end of namespace %s\n\n", GetName().c_str());
+		fprintf(SrcFileHdr, "#endif\t// __CXX_%s_H__\n\n", GetName().c_str());
+		fprintf(SrcFileInlineHdr, "}; /* end of namespace %s */\n\n", GetName().c_str());
+		fprintf(SrcFileInlineHdr, "#endif\t// __CXX_%s_INLINE_H__\n\n", GetName().c_str());
+		fprintf(SrcFileProxy, "}; /* end of namespace %s */\n\n", GetName().c_str());
+		fprintf(SrcFileSkeleton, "}; /* end of namespace Skeleton */\n");
+		fprintf(SrcFileSkeleton, "}; /* end of namespace %s */\n\n", GetName().c_str());
+		fprintf(SrcFileUser, "}; /* end of namespace %s */\n\n", GetName().c_str());
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::IsModuleIncluded(TModuleObject *pModule)
+{
+	if (NULL == pModule)
+		return false;
+
+	TListItem *pItem = m_cIncludedModuleList.GetNext();
+	for (; pItem != &m_cIncludedModuleList; pItem = pItem->GetNext())
+	{
+		TIncludedModuleNode *pNode = LIST_ENTRY(TIncludedModuleNode, m_OwnerList, pItem);
+		if (pNode->pModule == pModule) return true;
+	}
+	return false;
+}
+
+void TModuleObjectCodeGeneratorCpp::SetModuleIncluded(TModuleObject *pModule)
+{
+	if (NULL == pModule)
+		return;
+
+	if (IsModuleIncluded(pModule))
+		return;
+
+	TIncludedModuleNode *pNode = new TIncludedModuleNode;
+	if (NULL == pNode) Panic_OutOfMemory();
+
+	pNode->pModule = pModule;
+	pNode->m_OwnerList.AddTo(m_cIncludedModuleList);
+}
+
+void TModuleObjectCodeGeneratorCpp::DestroyIncludedModuleList(void)
+{
+	while (!m_cIncludedModuleList.IsEmpty())
+	{
+		TListItem *pItem = m_cIncludedModuleList.GetNext();
+		TIncludedModuleNode *pNode = LIST_ENTRY(TIncludedModuleNode, m_OwnerList, pItem);
+		pItem->Delete();
+		delete pNode;
+	}
+}
+
+bool TModuleObjectCodeGeneratorCpp::CreateFiles(void)
+{
+	if (TestFlags(eGrammarObjectFlag_CodeFilsCreated))
+		return true;
+	SetFlags(eGrammarObjectFlag_CodeFilsCreated);
+
+	string name;
+    string desdir = GetConfig().GetDescDir()
+
+#ifdef WIN32
+		+ "\\";
+#else
+		+ '/';
+#endif
+
+	if (!TestFlags(eGrammarObjectFlag_GlobalScope))
+	{
+		name = GetName() + "_proxy.cpp";
+
+		if (NULL == (m_pxysrcfp = fopen((desdir + name).c_str(), "wb")))
+			return false;
+		WriteHeaderComments(m_pxysrcfp, name);
+		::fprintf(m_pxysrcfp, "#include \"%s_i.h\"\n\n", GetName().c_str());
+	}
+
+	// todo: more *_i.h files to be included
+
+	if (!TestFlags(eGrammarObjectFlag_GlobalScope))
+		::fprintf(m_pxysrcfp, "namespace %s {\n\n", GetName().c_str());
+
+	if (!TestFlags(eGrammarObjectFlag_GlobalScope))
+	{
+		name = GetName() + "_skeleton.cpp";
+
+		// todo: change to specific dir
+		if (NULL == (m_sklsrcfp = fopen((desdir + name).c_str(), "wb")))
+		{
+			fclose(m_pxysrcfp);
+			m_pxysrcfp = NULL;
+			return false;
+		}
+		WriteHeaderComments(m_sklsrcfp, name);
+		::fprintf(m_sklsrcfp, "#include \"%s_i.h\"\n\n", GetName().c_str());
+		::fprintf(m_sklsrcfp, "namespace %s {\n", GetName().c_str());
+		// generate the namespace
+		fputs(SrcFileSkeleton, "namespace Skeleton {\n\n");
+
+		name = GetName() + ".cpp";
+		if (NULL == (m_srcfp = fopen((desdir + name).c_str(), "wb")))
+		{
+			fclose(m_srcfp);
+			fclose(m_sklsrcfp);
+			m_srcfp = NULL;
+			m_sklsrcfp = NULL;
+			return false;
+		}
+		WriteHeaderComments(m_srcfp, name);
+		::fprintf(m_srcfp, "#include \"%s_i.h\"\n\n", GetName().c_str());
+		::fprintf(m_srcfp, "namespace %s {\n\n", GetName().c_str());
+	}
+
+	name = GetName() + ".h";
+
+	if (NULL == (m_hdrfp = fopen((desdir + name).c_str(), "wb")))
+	{
+		fclose(m_pxysrcfp);
+		fclose(m_sklsrcfp);
+		fclose(m_srcfp);
+		m_pxysrcfp = m_sklsrcfp = m_srcfp = NULL;
+		return false;
+	}
+	WriteHeaderComments(m_hdrfp, name);
+
+	// #ifndef - #define
+	::fprintf(m_hdrfp,
+		"#ifndef __CXX_TINYRPC_%s_H__\n"
+		"#define __CXX_TINYRPC_%s_H__\n\n"
+		"#include <map>\n"
+		"#include <assert.h>\n"
+		"#include \"TinyRPC/TinyRPC.h\"\n",
+		GetName().c_str(), GetName().c_str());
+
+	name = GetName() + "_i.h";
+
+	if (NULL == (m_inhdrfp = fopen((desdir + name).c_str(), "wb")))
+	{
+		fclose(m_pxysrcfp);
+		fclose(m_sklsrcfp);
+		fclose(m_srcfp);
+		fclose(m_hdrfp);
+		m_pxysrcfp = m_sklsrcfp = m_srcfp = m_hdrfp = NULL;
+	}
+	WriteHeaderComments(m_inhdrfp, name);
+
+	// all the file has been created
+	// #ifndef - #define
+	::fprintf(m_inhdrfp,
+		"#ifndef __CXX_TINYRPC_%s_INLINE_H__\n"
+		"#define __CXX_TINYRPC_%s_INLINE_H__\n\n"
+		"#include <string.h>\n"
+		"#include \"%s.h\"\n",
+		GetName().c_str(), GetName().c_str(), GetName().c_str());
+
+	// first generate the include statement
+	if (!GenerateIncludeFiles())
+		return false;
+
+	::fputs("using namespace std;\n"
+		"using namespace TinyRPC;\n\n", m_hdrfp);
+
+	// generate namespace declaration, if necessary	
+	if (!TestFlags(eGrammarObjectFlag_GlobalScope))
+	{
+		::fprintf(m_hdrfp, "namespace %s {\n\n", GetName().c_str());
+		::fprintf(m_inhdrfp, "namespace %s {\n\n", GetName().c_str());
+	}
+	return true;
+}
+
+void TModuleObjectCodeGeneratorCpp::WriteHeaderComments(FILE *fp, const string& filename)
+{
+	assert(NULL != fp);
+	string f = "/*\n * @(#)$Id: " + filename + "\n";
+	::fputs(f.c_str(), fp);
+	::fprintf(fp, "*/\n\n");
+}
+
+FILE** TModuleObjectCodeGeneratorCpp::GetFileHandler(ESrcFileType eType)
+{
+	FILE **ret = NULL;
+	switch (eType)
+	{
+	case SrcFileHdr:
+		ret = &m_hdrfp;
+		break;
+
+	case SrcFileInlineHdr:
+		ret = &m_inhdrfp;
+		break;
+
+	case SrcFileProxy:
+		ret = &m_pxysrcfp;
+		break;
+
+	case SrcFileSkeleton:
+		ret = &m_sklsrcfp;
+		break;
+
+	case SrcFileUser:
+		ret = &m_srcfp;
+		break;
+
+	default: break;
+	}
+	return ret;
+}
+
+bool TModuleObjectCodeGeneratorCpp::IsFileHandlerError(FILE **fp)
+{
+	assert(NULL != fp);
+
+	if (NULL != *fp)
+		return true;
+
+	if (!TestFlags(eGrammarObjectFlag_CodeFilsCreated))
+	{
+		if (!CreateFiles())
+			return false;
+
+		if (NULL == *fp || !TestFlags(eGrammarObjectFlag_CodeFilsCreated))
+			return false;
+		return true;
+	}
+	return false;
+}
+
+bool TModuleObjectCodeGeneratorCpp::fputs(ESrcFileType eType, const char *content)
+{
+	FILE** fp = GetFileHandler(eType);
+	if (NULL == fp) return false;
+
+	if (!IsFileHandlerError(fp) || NULL == content)
+		return false;
+
+	string tmp;
+	if (!m_cReplaceOriginal.empty())
+	{
+		size_t pos = 0;
+		const char *s = content, *p = s, *e = s + strlen(content);
+		while (s + m_cReplaceOriginal.length() <= e)
+		{
+			if (!strncmp(s, m_cReplaceOriginal.c_str(), m_cReplaceOriginal.length()))
+			{
+				tmp.append(p, s);
+				tmp.append(m_cReplaceNew);
+				p = s;
+				s += m_cReplaceOriginal.length();
+			}
+			else s++;
+		}
+		if (s < e) tmp.append(s);
+		content = tmp.c_str();
+	}
+
+	::fputs(content, *fp);
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::SetOutputReplacement(const char *org, const char *rep)
+{
+	m_cReplaceOriginal = (org) ? org : "";
+	m_cReplaceNew = (rep) ? rep : "";
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::fprintf(ESrcFileType eType, const char *content, ...)
+{
+	va_list ap;
+	va_start(ap, content);
+
+	FILE** fp = GetFileHandler(eType);
+	if (NULL == fp) return false;
+
+	if (!IsFileHandlerError(fp) || NULL == content)
+	{
+		va_end(ap);
+		return false;
+	}
+
+	string tmp;
+	if (!m_cReplaceOriginal.empty())
+	{
+		size_t pos = 0;
+		const char *s = content, *p = s, *e = s + strlen(content);
+		while (s + m_cReplaceOriginal.length() <= e)
+		{
+			if (!strncmp(s, m_cReplaceOriginal.c_str(), m_cReplaceOriginal.length()))
+			{
+				tmp.append(p, s);
+				tmp.append(m_cReplaceNew);
+				p = s;
+				s += m_cReplaceOriginal.length();
+			}
+			else s++;
+		}
+		if (s < e) tmp.append(s);
+		content = tmp.c_str();
+	}
+
+	vfprintf(*fp, content, ap);
+	va_end(ap);
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateCode(void)
+{
+	if (TestFlags(eGrammarObjectFlag_CodeGenerated))
+		return true;
+	SetFlags(eGrammarObjectFlag_CodeGenerated);
+
+	if (!CreateFiles())
+		return false;
+
+	// generate the code for typedefs
+	if (!GenerateTypedefs())
+		return false;
+
+	// generate the code for const
+	if (!GenerateConstItems())
+		return false;
+
+	if (!GenerateEnums())
+		return false;
+
+	// generate the user defined type
+	if (!GenerateUserDefTypes())
+		return false;
+
+	// generate the interfaces
+	if (!GenerateInterfaces())
+		return false;
+
+	// generate the events
+	if (!GenerateEvents())
+		return false;
+
+	if (!FinializeCodeGeneration())
+		return false;
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateTypedefs(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem &h = m_cTypedefHeader[i];
+		TListItem* next = h.GetNext();
+		for (; next != &h; next = next->GetNext())
+		{
+			TTypedefObject *obj = LIST_ENTRY(TTypedefObject, m_OwnerList, next);
+			if (!obj->GenerateCode())
+				return false;
+		}
+	}
+	fputs(SrcFileHdr, "\n");
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateEnums(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem &h = m_cEnumdefHeader[i];
+		TListItem* next = h.GetNext();
+		for (; next != &h; next = next->GetNext())
+		{
+			TEnumDefObject *obj = LIST_ENTRY(TEnumDefObject, m_OwnerList, next);
+			if (!obj->GenerateCode())
+				return false;
+		}
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateConstItems(void)
+{
+	bool bAny = false;
+
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem &h = m_cConstItemHeader[i];
+		TListItem* next = h.GetNext();
+		for (; next != &h; next = next->GetNext())
+		{
+			if (!bAny) bAny = true;
+			TConstItemObject *obj = LIST_ENTRY(TConstItemObject, m_OwnerList, next);
+			if (!obj->GenerateCode())
+				return false;
+		}
+	}
+	if (bAny) fputs(SrcFileHdr, "\n");
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateUserDefTypeIncludeFiles(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem& h = UserDefTypeItemHeader()[i];
+		TListItem *pItem = h.GetNext();
+		for (; pItem != &h; pItem = pItem->GetNext())
+		{
+			TUserDefTypeObject *pUserDefObj = LIST_ENTRY(TUserDefTypeObject, m_OwnerList, pItem);
+			TModuleObject **ppModuleObj = pUserDefObj->GetDependentModule(), **ppdel = ppModuleObj;
+			if (NULL == ppModuleObj) continue;
+
+			for (; *ppModuleObj; ppModuleObj++)
+			{
+				TModuleObject* pModuleObj = *ppModuleObj;
+				if (NULL == pModuleObj || pModuleObj == this
+					|| IsModuleIncluded(pModuleObj))
+					continue;
+
+				// generate the include statement
+				fprintf(SrcFileHdr, "#include \"%s.h\"\n", pModuleObj->GetName().c_str());
+				fprintf(SrcFileInlineHdr, "#include \"%s_i.h\"\n", pModuleObj->GetName().c_str());
+				SetModuleIncluded(pModuleObj);
+			}
+			delete [] ppdel;
+		}
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateInterfaceIncludeFiles(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem& h = InterfaceHeader()[i];
+		TListItem *pItem = h.GetNext();
+		for (; pItem != &h; pItem = pItem->GetNext())
+		{
+			TInterfaceObject *pIFObject = LIST_ENTRY(TInterfaceObject, m_OwnerList, pItem);
+			TModuleObject **ppModuleObj = pIFObject->GetDependentModule(), **ppdel = ppModuleObj;
+			if (NULL == ppModuleObj) continue;
+
+			for (; *ppModuleObj; ppModuleObj++)
+			{
+				TModuleObject* pModuleObj = *ppModuleObj;
+				if (NULL == pModuleObj || pModuleObj == this
+					|| IsModuleIncluded(pModuleObj))
+					continue;
+
+				// generate the include statement
+				fprintf(SrcFileHdr, "#include \"%s.h\"\n", pModuleObj->GetName().c_str());
+				fprintf(SrcFileInlineHdr, "#include \"%s_i.h\"\n", pModuleObj->GetName().c_str());
+				SetModuleIncluded(pModuleObj);
+			}
+			delete [] ppdel;
+		}
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateEventIncludeFiles(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem& h = EventHeader()[i];
+		TListItem *pItem = h.GetNext();
+		for (; pItem != &h; pItem = pItem->GetNext())
+		{
+			TEventObject *pEvObject = LIST_ENTRY(TEventObject, m_OwnerList, pItem);
+			TModuleObject **ppModuleObj = pEvObject->GetDependentModule(), **ppdel = ppModuleObj;
+			if (NULL == ppModuleObj) continue;
+
+			for (; *ppModuleObj; ppModuleObj++)
+			{
+				TModuleObject* pModuleObj = *ppModuleObj;
+				if (NULL == pModuleObj || pModuleObj == this
+					|| IsModuleIncluded(pModuleObj))
+					continue;
+
+				// generate the include statement
+				fprintf(SrcFileHdr, "#include \"%s.h\"\n", pModuleObj->GetName().c_str());
+				fprintf(SrcFileInlineHdr, "#include \"%s_i.h\"\n", pModuleObj->GetName().c_str());
+				SetModuleIncluded(pModuleObj);
+			}
+			delete [] ppdel;
+		}
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateConstItemIncludeFiles(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem& h = ConstItemHeader()[i];
+		TListItem *pItem = h.GetNext();
+		for (; pItem != &h; pItem = pItem->GetNext())
+		{
+			TConstItemObject *pConstObj = LIST_ENTRY(TConstItemObject, m_OwnerList, pItem);
+			TModuleObject *pModuleObj = pConstObj->GetDependentModule();
+			if (NULL == pModuleObj || pModuleObj == this
+				|| IsModuleIncluded(pModuleObj))
+				continue;
+
+			// generate the include statement
+			fprintf(SrcFileHdr, "#include \"%s.h\"\n", pModuleObj->GetName().c_str());
+			fprintf(SrcFileInlineHdr, "#include \"%s_i.h\"\n", pModuleObj->GetName().c_str());
+			SetModuleIncluded(pModuleObj);
+		}
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateTypedefIncludeFiles(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem& h = TypedefHeader()[i];
+		TListItem *pItem = h.GetNext();
+		for (; pItem != &h; pItem = pItem->GetNext())
+		{
+			TTypedefObject *pTypedefObj = LIST_ENTRY(TTypedefObject, m_OwnerList, pItem);
+			TModuleObject *pModuleObj = pTypedefObj->GetDependentModule();
+			if (NULL == pModuleObj || pModuleObj == this
+				|| IsModuleIncluded(pModuleObj))
+				continue;
+
+			// generate the include statement
+			fprintf(SrcFileHdr, "#include \"%s.h\"\n", pModuleObj->GetName().c_str());
+			fprintf(SrcFileInlineHdr, "#include \"%s_i.h\"\n", pModuleObj->GetName().c_str());
+			SetModuleIncluded(pModuleObj);
+		}
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateIncludeFiles(void)
+{
+	if (!GenerateTypedefIncludeFiles())
+		return false;
+
+	if (!GenerateConstItemIncludeFiles())
+		return false;
+
+	if (!GenerateInterfaceIncludeFiles())
+		return false;
+
+	if (!GenerateEventIncludeFiles())
+		return false;
+
+	if (!GenerateUserDefTypeIncludeFiles())
+		return false;
+
+	// generate space line
+	fputs(SrcFileHdr, "\n");
+	fputs(SrcFileInlineHdr, "\n");
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateUserDefTypes(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem &h = m_cUserDefTypeHeader[i];
+		TListItem* next = h.GetNext();
+		for (; next != &h; next = next->GetNext())
+		{
+			TUserDefTypeObject *obj = LIST_ENTRY(TUserDefTypeObject, m_OwnerList, next);
+			if (!obj->GenerateCode())
+				return false;
+		}
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateInterfaces(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem &h = m_cInterfaceHeader[i];
+		TListItem* next = h.GetNext();
+		for (; next != &h; next = next->GetNext())
+		{
+			TInterfaceObject *obj = LIST_ENTRY(TInterfaceObject, m_OwnerList, next);
+
+			// todo:
+			if (!obj->GenerateCode())
+				return false;
+		}
+	}
+	return true;
+}
+
+bool TModuleObjectCodeGeneratorCpp::GenerateEvents(void)
+{
+	for (int i = 0; i < HASH_MAX; ++i)
+	{
+		TListItem &h = m_cEventHeader[i];
+		TListItem* next = h.GetNext();
+		for (; next != &h; next = next->GetNext())
+		{
+			TEventObject *obj = LIST_ENTRY(TEventObject, m_OwnerList, next);
+			if (!obj->GenerateCode())
+				return false;
+		}
+	}
+	return true;
+}
+
+// for TUserDefTypeObject
+TUserDefTypeObjectCodeGeneratorCpp::TUserDefTypeObjectCodeGeneratorCpp(TModuleObject* pModule,
+	const string& cName)
+	: TUserDefTypeObject(pModule, cName)
+{
+}
+
+TUserDefTypeObjectCodeGeneratorCpp::~TUserDefTypeObjectCodeGeneratorCpp()
+{
+}
+
+bool TUserDefTypeObjectCodeGeneratorCpp::GenerateInlineHeaderFileCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fprintf(SrcFileInlineHdr, "inline %s::%s()\n", GetName().c_str(), GetName().c_str());
+
+	// generate the initializer
+	bool IsFirstOne = true;
+	TListItem *pItem = VariableListHeader().GetNext();
+	for (; pItem != &VariableListHeader(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pUserDefObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		string tmp;
+		if (!GenerateVariableInitializor(GetModule(), pUserDefObj, tmp))
+			return false;
+		
+		if (tmp != "")
+		{
+			if (IsFirstOne) { obj->fputs(SrcFileInlineHdr, ": "); IsFirstOne = false; }
+			else obj->fputs(SrcFileInlineHdr, ", ");
+			obj->fprintf(SrcFileInlineHdr, "%s\n", tmp.c_str());
+		}
+	}
+	obj->fputs(SrcFileInlineHdr, "{\n");
+
+	// generate the memset initializor for int/uint/float array
+	pItem = VariableListHeader().GetNext();
+	for (; pItem != &VariableListHeader(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pUserDefObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		string tmp;
+		if (!GenerateArrayInitializor(pUserDefObj, tmp))
+			return false;
+		
+		if (tmp != "") obj->fprintf(SrcFileInlineHdr, "\t%s\n", tmp.c_str());
+	}
+
+	obj->fputs(SrcFileInlineHdr, "}\n\n");
+
+	// the copy constructor
+	obj->fprintf(SrcFileInlineHdr, "inline %s::%s(const %s& ___c)\n", GetName().c_str(),
+		GetName().c_str(), GetName().c_str());
+	obj->fprintf(SrcFileInlineHdr, "{\n\t___assign(___c);\n}\n\n");
+
+	// the operator= function
+	obj->fprintf(SrcFileInlineHdr, "inline %s& %s::operator=(const %s& ___c)\n",
+		GetName().c_str(), GetName().c_str(), GetName().c_str());
+	obj->fprintf(SrcFileInlineHdr, "{\n\t___assign(___c);\n\treturn *this;\n}\n\n");
+
+	// the destructor
+	obj->fprintf(SrcFileInlineHdr, "inline %s::~%s()\n{\n}\n\n",
+		GetName().c_str(), GetName().c_str());
+
+	// ___assign function
+	obj->fprintf(SrcFileInlineHdr, "inline void %s::___assign(const %s& ___c)\n{\n",
+		GetName().c_str(), GetName().c_str());
+	obj->fprintf(SrcFileInlineHdr, "\tif (this == &___c)\n\t\treturn;\n\n");
+	pItem = VariableListHeader().GetNext();
+	for (; pItem != &VariableListHeader(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pUserDefObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		if (eArrayType_Fixed == pUserDefObj->m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileInlineHdr, "\tfor (int ___i = 0; ___i < %u; ++___i)\n\t\t%s[___i] = ___c.%s[___i];\n",
+				pUserDefObj->m_ArrayType.ArraySize,
+				pUserDefObj->m_cName.c_str(), pUserDefObj->m_cName.c_str());
+		else
+			obj->fprintf(SrcFileInlineHdr, "\t%s = ___c.%s;\n", pUserDefObj->m_cName.c_str(),
+				pUserDefObj->m_cName.c_str());
+	}
+	obj->fputs(SrcFileInlineHdr, "}\n\n");
+	return true;
+}
+
+bool TUserDefTypeObjectCodeGeneratorCpp::GenerateArrayInitializor(TVariableObject *pObj, string& cResult)
+{
+	if (NULL == pObj)
+		return false;
+
+	cResult.clear();
+
+	if (!IsArray(pObj->m_ArrayType))
+		return true;
+
+	EArrayType eType = pObj->m_ArrayType.eArrayType;
+
+	// a variable array will be initialized automatically
+	if (eArrayType_Fixed != eType)
+		return true;
+	
+	char tmp[128];
+	switch (pObj->m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		sprintf(tmp, "for (int ___i = 0; ___i < %u; ++___i) %s[___i] = false;",
+			pObj->m_ArrayType.ArraySize, pObj->m_cName.c_str());
+		break;
+
+	case eBasicObjType_UInt8:
+		sprintf(tmp, "memset(%s, 0, sizeof(unsigned char) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		break;
+
+	case eBasicObjType_Int32:
+		sprintf(tmp, "memset(%s, 0, sizeof(int) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		break;
+
+	case eBasicObjType_Int16:
+		sprintf(tmp, "memset(%s, 0, sizeof(short) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		break;
+
+	case eBasicObjType_Int64:
+		sprintf(tmp, "memset(%s, 0, sizeof(long) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		break;
+
+	case eBasicObjType_UInt32:
+		sprintf(tmp, "memset(%s, 0, sizeof(unsigned int) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != pObj->m_pEnumDefType && NULL != GetModule());
+		sprintf(tmp, "for (int ___i = 0; ___i < %u; ++___i) %s[___i] = %s;",
+			pObj->m_ArrayType.ArraySize, pObj->m_cName.c_str(),
+			pObj->m_pEnumDefType->GetDefault(GetModule()).c_str());
+		break;
+
+	case eBasicObjType_Float:
+		sprintf(tmp, "for (int ___i = 0; ___i < %u; ++___i) %s[___i] = 0.0;",
+			pObj->m_ArrayType.ArraySize, pObj->m_cName.c_str());
+		break;
+
+	case eBasicObjType_String:
+	case eBasicObjType_Stream:
+	case eBasicObjType_Interface:
+	case eBasicObjType_UserDefined:
+		tmp[0] = '\0';
+		break;
+
+	case eBasicObjType_Typedefed: {
+		assert(NULL != pObj->m_pRefType);
+		EBasicObjectType eType;
+		TEnumDefObject*  pEnumDef;
+		TArrayTypeObject ArrayType;
+		pObj->m_pRefType->GetOriginalType(eType, ArrayType, &pEnumDef, NULL);
+		
+		switch (eType)
+		{
+		case eBasicObjType_Boolean:
+			sprintf(tmp, "for (int ___i = 0; ___i < %u; ++___i) %s[___i] = false;",
+				pObj->m_ArrayType.ArraySize, pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_UInt8:
+			sprintf(tmp, "memset(%s, 0, sizeof(unsigned char) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+			break;
+
+		case eBasicObjType_Int32:
+			sprintf(tmp, "memset(%s, 0, sizeof(int) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+			break;
+
+		case eBasicObjType_Int16:
+			sprintf(tmp, "memset(%s, 0, sizeof(short) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+			break;
+
+		case eBasicObjType_Int64:
+			sprintf(tmp, "memset(%s, 0, sizeof(long) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+			break;
+
+		case eBasicObjType_UInt32:
+			sprintf(tmp, "memset(%s, 0, sizeof(unsigned int) * %u);", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+			break;
+
+		case eBasicObjType_Enum:
+			assert(NULL != pObj->m_pEnumDefType && NULL != GetModule());
+			sprintf(tmp, "for (int ___i = 0; ___i < %u; ++___i) %s[___i] = %s;",
+				pObj->m_ArrayType.ArraySize, pObj->m_cName.c_str(),
+				pObj->m_pEnumDefType->GetDefault(GetModule()).c_str());
+			break;
+
+		case eBasicObjType_Float:
+			sprintf(tmp, "for (int ___i = 0; ___i < %u; ++___i) %s[___i] = 0.0;",
+				pObj->m_ArrayType.ArraySize, pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_String:
+		case eBasicObjType_Stream:
+		case eBasicObjType_Interface:
+		case eBasicObjType_UserDefined:
+			tmp[0] = '\0';
+			break;
+		
+		default:
+		case eBasicObjType_Typedefed:
+			return false;
+		}
+	}	break;
+
+	default: return false;
+	}
+	cResult = tmp;
+	return true;
+}
+
+static bool GenerateVariableInitializor(TModuleObject *pModule, TVariableObject *pObj, string& cResult)
+{
+	if (NULL == pModule || NULL == pObj)
+		return false;
+
+	char tmp[128];
+	switch (pObj->m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+		else sprintf(tmp, "%s(false)", pObj->m_cName.c_str());
+		break;
+
+	case eBasicObjType_UInt8:
+		if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+		else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+		break;
+
+	case eBasicObjType_Int32:
+		if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+		else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+		break;
+		
+	case eBasicObjType_Int16:
+		if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+		else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+		break;
+		
+	case eBasicObjType_Int64:
+		if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+		else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+		break;
+
+	case eBasicObjType_UInt32:
+		if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+		else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+		break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != pObj->m_pEnumDefType && NULL != pModule);
+		if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+		else sprintf(tmp, "%s(%s)", pObj->m_cName.c_str(),
+			pObj->m_pEnumDefType->GetDefault(pModule).c_str());
+		break;
+
+	case eBasicObjType_Float:
+		if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+		else sprintf(tmp, "%s(0.0)", pObj->m_cName.c_str());
+		break;
+
+	case eBasicObjType_String:
+	case eBasicObjType_Stream:
+		// even a fixed array or a variable array of string
+		// is not necessary to be initialized manually
+	case eBasicObjType_Interface:
+	case eBasicObjType_UserDefined:
+		// interface and UserDefined is the same
+		tmp[0] = '\0';
+		break;
+
+	case eBasicObjType_Typedefed: {
+		assert(NULL != pObj->m_pRefType);
+		EBasicObjectType eType;
+		TEnumDefObject*  pEnumDef;
+		TArrayTypeObject ArrayType;
+		pObj->m_pRefType->GetOriginalType(eType, ArrayType, &pEnumDef, NULL);
+		
+		switch (eType)
+		{
+		case eBasicObjType_Boolean:
+			if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+			else sprintf(tmp, "%s(false)", pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_UInt8:
+			if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+			else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_Int32:
+			if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+			else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_Int16:
+			if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+			else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_Int64:
+			if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+			else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_UInt32:
+			if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+			else sprintf(tmp, "%s(0)", pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_Enum:
+			assert(NULL != pEnumDef);
+			if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+			else sprintf(tmp, "%s((%s)0)", pObj->m_cName.c_str(),
+				pEnumDef->GetDefault(pModule).c_str());
+			break;
+
+		case eBasicObjType_Float:
+			if (IsArray(pObj->m_ArrayType)) tmp[0] = '\0';
+			else sprintf(tmp, "%s(0.0)", pObj->m_cName.c_str());
+			break;
+
+		case eBasicObjType_String:
+		case eBasicObjType_Stream:
+			// even a fixed array or a variable array of string
+			// is not necessary to be initialized manually
+		case eBasicObjType_Interface:
+		case eBasicObjType_UserDefined:
+			// interface and UserDefined is the same
+			tmp[0] = '\0';
+			break;
+		
+		default:
+		case eBasicObjType_Typedefed:
+			return false;
+		}
+	}	break;
+
+	default: return false;
+	}
+	cResult = tmp;
+	return true;
+}
+
+bool TUserDefTypeObjectCodeGeneratorCpp::GenerateVariableDeclaration(TVariableObject *pObj, string& cResult)
+{
+	if (NULL == pObj)
+		return false;
+
+	char tmp[512];
+	switch (pObj->m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tbool %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, bool> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tbool %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_UInt8:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tunsigned char %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, unsigned char> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tunsigned char %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_Int32:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tint %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, int> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tint %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_Int16:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tshort %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, short> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tshort %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_Int64:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tlong %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, long> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tlong %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_UInt32:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tunsigned int %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, uint> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tunsigned int %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != pObj->m_pEnumDefType && NULL != GetModule());
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\t%s %s[%u];\n", pObj->m_pEnumDefType->GetFullName(GetModule()).c_str(),
+				pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, %s> %s;\n", pObj->m_pEnumDefType->GetFullName(GetModule()).c_str(),
+				pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\t%s %s;\n", pObj->m_pEnumDefType->GetFullName(GetModule()).c_str(),
+				pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_Float:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tdouble %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, double> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tdouble %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_String:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tstring %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, string> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tstring %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_Stream:
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tTRPCStream %s[%u];\n", pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, TRPCStream> %s;\n", pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tTRPCStream %s;\n", pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_Typedefed:
+		assert(NULL != pObj->m_pRefType);
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\t%s %s[%u];\n", pObj->m_pRefType->GetFullName(GetModule()).c_str(),
+				pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, %s> %s;\n", pObj->m_pRefType->GetFullName(GetModule()).c_str(),
+				pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\t%s %s;\n", pObj->m_pRefType->GetFullName(GetModule()).c_str(), pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_UserDefined:
+		assert(NULL != pObj->m_pUserDefType);
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\t%s %s[%u];\n", pObj->m_pUserDefType->GetFullName(GetModule()).c_str(),
+				pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, %s> %s;\n", pObj->m_pUserDefType->GetFullName(GetModule()).c_str(),
+				pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\t%s %s;\n", pObj->m_pUserDefType->GetFullName(GetModule()).c_str(),
+				pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	case eBasicObjType_Interface:
+		assert(NULL != pObj->m_pIFType);
+		if (eArrayType_Fixed == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\t%s %s[%u];\n", pObj->m_pIFType->GetFullName(GetModule()).c_str(),
+			pObj->m_cName.c_str(), pObj->m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\tmap<uint, %s> %s;\n", pObj->m_pIFType->GetFullName(GetModule()).c_str(),
+			pObj->m_cName.c_str());
+		else if (eArrayType_NotArray == pObj->m_ArrayType.eArrayType)
+			sprintf(tmp, "\t%s %s;\n", pObj->m_pIFType->GetFullName(GetModule()).c_str(),
+			pObj->m_cName.c_str());
+		else return false;
+		break;
+
+	default: return false;
+	}
+	cResult = tmp;
+	return true;
+}
+
+bool TUserDefTypeObjectCodeGeneratorCpp::GenerateSourceFileCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fprintf(SrcFileInlineHdr, "inline void %s::___serialize(Json::Value& ___output) const\n", GetName().c_str());
+	obj->fprintf(SrcFileInlineHdr, "{\n");
+	obj->fprintf(SrcFileInlineHdr, "\tJson::Value& ___par = ___output;\n");
+	
+	TListItem *pItem = VariableListHeader().GetNext();
+	for (; pItem != &VariableListHeader(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVar = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		::SerializeParameters(SrcFileInlineHdr, obj, pVar);
+	}
+
+	obj->fprintf(SrcFileInlineHdr, "}\n\n");
+
+	obj->fprintf(SrcFileInlineHdr, "inline void %s::___deserialize(Json::Value& ___input)\n", GetName().c_str());
+	obj->fprintf(SrcFileInlineHdr, "{\n");
+	obj->fprintf(SrcFileInlineHdr, "\tJson::Value& ___par = ___input;\n");
+
+	pItem = VariableListHeader().GetNext();
+	for (; pItem != &VariableListHeader(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVar = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		::DeserializeParameters(SrcFileInlineHdr, obj, pVar);
+	}
+
+	obj->fprintf(SrcFileInlineHdr, "}\n\n");
+	return true;
+}
+
+bool TUserDefTypeObjectCodeGeneratorCpp::GenerateHeaderFileCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fprintf(SrcFileHdr, "struct %s\n{\n", GetName().c_str());
+	obj->fprintf(SrcFileHdr, "public:\n");
+
+	// constructors
+	obj->fprintf(SrcFileHdr, "\t%s();\n", GetName().c_str());
+	obj->fprintf(SrcFileHdr, "\t%s(const %s&);\n", GetName().c_str(), GetName().c_str());
+	obj->fprintf(SrcFileHdr, "\t%s& operator=(const %s&);\n", GetName().c_str(), GetName().c_str());
+
+	// destructor
+	obj->fprintf(SrcFileHdr, "\t~%s();\n\n", GetName().c_str());
+
+	// assign function
+	obj->fprintf(SrcFileHdr, 
+		"\tvoid ___serialize(Json::Value& ___output) const;\n"
+		"\tvoid ___deserialize(Json::Value& ___input);\n\n"
+		"private:\n\tvoid ___assign(const %s&);\n\npublic:\n",
+		GetName().c_str(), GetName().c_str());
+
+	// variable list
+	TListItem *pItem = VariableListHeader().GetNext();
+	for (; pItem != &VariableListHeader(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pUserDefObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		string tmp;
+		if (!GenerateVariableDeclaration(pUserDefObj, tmp))
+			return false;
+		
+		obj->fputs(SrcFileHdr, tmp.c_str());
+	}
+	obj->fprintf(SrcFileHdr, "};\n\n");
+	return true;
+}
+
+bool TUserDefTypeObjectCodeGeneratorCpp::GenerateCode(void)
+{
+	if (TestFlags(eGrammarObjectFlag_CodeGenerated))
+		return true;
+	SetFlags(eGrammarObjectFlag_CodeGenerated);
+
+	if (!GenerateRelatedObjectCode())
+		return false;
+
+	if (!GenerateHeaderFileCode())
+		return false;
+
+	if (!GenerateInlineHeaderFileCode())
+		return false;
+
+	if (!GenerateSourceFileCode())
+		return false;
+
+	return true;
+}
+
+// for TTypedefObject
+TTypedefObjectCodeGeneratorCpp::TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, EBasicObjectType eType)
+		: TTypedefObject(pModule, cName, eType)
+{
+}
+
+TTypedefObjectCodeGeneratorCpp::TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, TTypedefObject *pRefType)
+		: TTypedefObject(pModule, cName, pRefType)
+{
+}
+
+TTypedefObjectCodeGeneratorCpp::TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, TUserDefTypeObject *pRefType)
+		: TTypedefObject(pModule, cName, pRefType)
+{
+}
+
+TTypedefObjectCodeGeneratorCpp::TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, TEnumDefObject *pEnumDef)
+		: TTypedefObject(pModule, cName, pEnumDef)
+{
+}
+
+TTypedefObjectCodeGeneratorCpp::TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, TInterfaceObject* pIFObject)
+		: TTypedefObject(pModule, cName, pIFObject)
+{
+}
+
+TTypedefObjectCodeGeneratorCpp::~TTypedefObjectCodeGeneratorCpp()
+{
+}
+
+bool TTypedefObjectCodeGeneratorCpp::GenerateCode(void)
+{
+	if (TestFlags(eGrammarObjectFlag_CodeGenerated))
+		return true;
+	SetFlags(eGrammarObjectFlag_CodeGenerated);
+
+	if (!GenerateRelatedObjectCode())
+		return false;
+
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	assert(eArrayType_Unknown != m_ArrayType.eArrayType);
+	switch (m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef bool %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, bool> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef bool %s;\n", GetName().c_str());
+		break;
+
+
+	case eBasicObjType_UInt8:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef unsigned char %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, unsigned char> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef unsigned char %s;\n", GetName().c_str());
+		break;
+
+	case eBasicObjType_Int32:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef int %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, int> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef int %s;\n", GetName().c_str());
+		break;
+
+	case eBasicObjType_Int16:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef short %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, short> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef short %s;\n", GetName().c_str());
+		break;
+
+	case eBasicObjType_Int64:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef long %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, long> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef long %s;\n", GetName().c_str());
+		break;
+
+	case eBasicObjType_UInt32:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef unsigned int %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, unsigned int> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef unsigned int %s;\n", GetName().c_str());
+		break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != m_pEnumDef);
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef %s %s[%u];\n",
+			m_pEnumDef->GetFullName(obj).c_str(),GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, %s> %s;\n",
+			m_pEnumDef->GetFullName(obj).c_str(), GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef %s %s;\n",
+			m_pEnumDef->GetFullName(obj).c_str(), GetName().c_str());
+		break;
+
+	case eBasicObjType_Float:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef double %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, double> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef double %s;\n", GetName().c_str());
+		break;
+
+	case eBasicObjType_String:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef string %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, string> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef string %s;\n", GetName().c_str());
+		break;
+
+	case eBasicObjType_Stream:
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef TRPCStream %s[%u];\n",
+			GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, TRPCStream> %s;\n",
+			GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef TRPCStream %s;\n", GetName().c_str());
+		break;
+
+	case eBasicObjType_Typedefed:
+		assert(NULL != m_pRefType);
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef %s %s[%u];\n",
+			m_pRefType->GetFullName(obj).c_str(), GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, %s> %s;\n",
+			m_pRefType->GetFullName(obj).c_str(), GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef %s %s;\n", m_pRefType->GetFullName(obj).c_str(), GetName().c_str());
+		break;
+
+	case eBasicObjType_UserDefined:
+		assert(NULL != m_pUserDefType);
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef %s %s[%u];\n",
+			m_pUserDefType->GetFullName(obj).c_str(), GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, %s> %s;\n",
+			m_pUserDefType->GetFullName(obj).c_str(), GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef %s %s;\n", m_pUserDefType->GetFullName(obj).c_str(), GetName().c_str());
+		break;
+
+	case eBasicObjType_Interface:
+		assert(NULL != m_pIFObject);
+		if (eArrayType_Fixed == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef %s %s[%u];\n",
+			m_pIFObject->GetFullName(obj).c_str(), GetName().c_str(), m_ArrayType.ArraySize);
+		else if (eArrayType_Variable == m_ArrayType.eArrayType)
+			obj->fprintf(SrcFileHdr, "typedef map<uint, %s> %s;\n",
+			m_pIFObject->GetFullName(obj).c_str(), GetName().c_str());
+		else obj->fprintf(SrcFileHdr, "typedef %s %s;\n", m_pIFObject->GetFullName(obj).c_str(), GetName().c_str());
+		break;
+
+	default: return false;
+	}
+	return true;
+}
+
+// for TConstItemObject
+TConstItemObjectCodeGeneratorCpp::TConstItemObjectCodeGeneratorCpp(TModuleObject* pModule,
+	const string& cName, ENumberType eType, double& value)
+	: TConstItemObject(pModule, cName, eType, value)
+{
+}
+
+TConstItemObjectCodeGeneratorCpp::~TConstItemObjectCodeGeneratorCpp()
+{
+}
+
+bool TConstItemObjectCodeGeneratorCpp::GenerateCode(void)
+{
+	if (TestFlags(eGrammarObjectFlag_CodeGenerated))
+		return true;
+
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (m_pRefType)
+	{
+		EBasicObjectType eType;
+		TArrayTypeObject eArrayType;
+		TUserDefTypeObject *pUsrDefObj = m_pRefType->GetOriginalType(eType, eArrayType, NULL, NULL);
+		if (pUsrDefObj || !IsBasicObjectType(eType) || IsArray(eArrayType))
+			return false;
+
+		obj->fprintf(SrcFileHdr, "const %s %s = ",
+			m_pRefType->GetName().c_str(), GetName().c_str());
+
+		switch (eType)
+		{
+		case eBasicObjType_Float:
+			obj->fprintf(SrcFileHdr, "%e;\n", m_Value);
+			break;
+
+		case eBasicObjType_Int32:
+			obj->fprintf(SrcFileHdr, "%d;\n", (int)m_Value);
+			break;
+
+		case eBasicObjType_Int16:
+			obj->fprintf(SrcFileHdr, "%u;\n", ((short)m_Value));
+			break;
+
+		case eBasicObjType_Int64:
+			obj->fprintf(SrcFileHdr, "%u;\n", ((long)m_Value));
+			break;
+
+		case eBasicObjType_UInt32:
+			obj->fprintf(SrcFileHdr, "%u;\n", (unsigned int)m_Value);
+			break;
+
+		case eBasicObjType_UInt8:
+			obj->fprintf(SrcFileHdr, "%u;\n", ((unsigned int)m_Value) & 0xFF);
+			break;
+
+		// boolean, enum is not supported by const
+		default: return false;
+		}
+	}
+	else
+	{
+		switch (m_ConstType)
+		{
+		case Float:
+			obj->fprintf(SrcFileHdr, "const %s %s = %e;\n",
+				"double", GetName().c_str(), m_Value);
+			break;
+
+		case Int:
+			obj->fprintf(SrcFileHdr, "const %s %s = %d;\n",
+				"int", GetName().c_str(), (int)m_Value);
+			break;
+
+		case UInt:
+			obj->fprintf(SrcFileHdr, "const %s %s = %u;\n",
+				"unsigned int", GetName().c_str(), (unsigned int)m_Value);
+			break;
+
+		case UChar:
+			obj->fprintf(SrcFileHdr, "const %s %s = %u;\n",
+				"unsigned char", GetName().c_str(), ((unsigned int)m_Value) & 0xFF);
+			break;
+		}
+	}
+	return true;
+}
+
+TInterfaceObjectCodeGeneratorCpp::TInterfaceObjectCodeGeneratorCpp(TModuleObject* pModule, const string& cName)
+: TInterfaceObject(pModule, cName)
+{
+}
+
+TInterfaceObjectCodeGeneratorCpp::~TInterfaceObjectCodeGeneratorCpp()
+{
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateCode(void)
+{
+	if (TestFlags(eGrammarObjectFlag_CodeGenerated))
+		return true;
+	SetFlags(eGrammarObjectFlag_CodeGenerated);
+
+	if (!GenerateRelatedObjectCode())
+		return false;
+
+	if (!GenerateHeaderFileProxyCode())
+		return false;
+
+	if (!GenerateHeaderFileSkeletonCode())
+		return false;
+
+	// the constructor / destructor defined in inline header file
+	// is not applicable for observable interfaces, since the ctor/dtor
+	// for these interfaces is too complicated to be directly defined
+	// in inline header file
+	if (!TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		if (!GenerateInlineHeaderFileProxyCode())
+			return false;
+	}
+
+	if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		if (!GenerateSourceFileProxyObservableCode())
+			return false;
+	}
+	else
+	{
+		if (!GenerateSourceFileProxyCode())
+			return false;
+	}
+
+	if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		if (!GenerateSourceFileObservableSkeletonCode())
+			return false;
+	}
+	else
+	{
+		if (!GenerateSourceFileSkeletonCode())
+			return false;
+	}
+
+	if (!TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		if (!GenerateSourceFileCode())
+			return false;
+	}
+
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateUserSrcFileConstructors(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	TListItem *pNext = NodeList().GetNext();
+	for (; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+
+		// omit all attribute definition
+		if (eIFNodeType_Method != pNode->GetType())
+			continue;
+
+		if (!pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+			continue;
+
+		// generate the constructor definition
+		if (!GenerateUserSrcFileMethodDef(pNode, false))
+			return false;
+
+		// generate the body of constructor
+		obj->fputs(SrcFileUser, "{\n\t// TODO: implement your constructor\n}\n\n");
+
+		// generate the CreateInstance definition
+		if (!GenerateUserSrcFileMethodDef(pNode, true))
+			return false;
+
+		obj->fprintf(SrcFileUser,
+			"{\n"
+			"\t// TODO: Check if this meets your need\n"
+			"\t// Change to any possible derived class if necessary\n"
+			"\treturn new %s(", GetName().c_str());
+
+		// generate all variable name
+		bool isFirst = true;
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileUser, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			obj->fputs(SrcFileUser, pObj->m_cName.c_str());
+		}
+		obj->fputs(SrcFileUser, ");\n}\n\n");
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// implement the default constructor and destructor
+	obj->fprintf(SrcFileUser, "%s::%s()\n",
+		GetName().c_str(), GetName().c_str());
+
+	// generate initializar
+	bool IsFirstOne = true;
+	TListItem* pSubItem = NodeList().GetNext();
+	for (; pSubItem != &NodeList(); pSubItem = pSubItem->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pSubItem);
+		EIFNodeType eType = pNode->GetType();
+		assert(eIFNodeType_Unknown != eType);
+
+		// generate attribute
+		if (eIFNodeType_Attribute != eType)
+			continue;
+		
+		TVariableObject cVarObject;
+		cVarObject.SetName(pNode->m_cName);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_eBasicType);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pIFObject);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pTypedefType);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pEnumDef);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pUserDefType);
+
+		string tmp;
+		if (!GenerateVariableInitializor(obj, &cVarObject, tmp))
+			return false;
+
+		if (tmp != "")
+		{
+			if (IsFirstOne) { obj->fputs(SrcFileUser, ": "); IsFirstOne = false; }
+			else obj->fputs(SrcFileUser, ", ");
+			obj->fprintf(SrcFileUser, "%s\n", tmp.c_str());
+		}
+	}
+	obj->fputs(SrcFileUser, "{\n\t// TODO: implement your constructor\n}\n\n");
+
+	obj->fprintf(SrcFileUser,
+		"%s::~%s()\n{\n\t// TODO: implement your destructor\n}\n\n",
+		GetName().c_str(), GetName().c_str());
+
+	// implement the default CreateInstance and DestroyInstance
+	obj->fprintf(SrcFileUser,
+		"%s* %s::CreateInstance(void)\n"
+		"{\n"
+		"\t// TODO: Check if this meets your need\n"
+		"\t// Change to any possible derived class if necessary\n"
+		"\treturn new %s;\n"
+		"}\n\n",
+		GetName().c_str(), GetName().c_str(), GetName().c_str());
+
+	obj->fprintf(SrcFileUser,
+		"void %s::DestroyInstance(%s* obj)\n"
+		"{\n"
+		"\tdelete obj;\n"
+		"}\n\n",
+		GetName().c_str(), GetName().c_str());
+
+	// generate other constructors and "CreateInstance"s
+	if (!GenerateUserSrcFileConstructors())
+		return false;
+
+	TListItem *pNext = NodeList().GetNext();
+	for (; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+
+		// omit attribute
+		if (eIFNodeType_Method != pNode->GetType())
+			continue;
+
+		// here just handle all non-constructor methods
+		if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+			continue;
+
+		// generate the function define like:
+		// void Interface::Method(int var);
+		if (!GenerateUserSrcFileMethodDef(pNode, false))
+			return false;
+
+		// generate the user empty body
+		obj->fputs(SrcFileUser, "{\n");
+		obj->fputs(SrcFileUser, "\t// TODO: write your code for implementation\n");
+	
+		// generate the return statement of function call
+		GenerateEmptyReturnStatements(SrcFileUser, pNode);
+		obj->fputs(SrcFileUser, "}\n\n");
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenSkeletonMethodVariableDeclaration(TVariableObject *pVarObj, string& ret)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+	return GenerateMethodVariableDeclaration(obj, pVarObj, ret);
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenHdrFileProxyMethodParameter(TVariableObject *pVarObj, string& ret)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+	return GenerateMethodParameter(obj, pVarObj, ret);
+}
+
+// write this function specifically for possible furture extension
+bool TInterfaceObjectCodeGeneratorCpp::GenHdrFileSkeletonMethodParameter(TVariableObject *pVarObj, string& ret)
+{
+	bool retval =  GenHdrFileProxyMethodParameter(pVarObj, ret);
+
+	// for a Observable interface, change the namespace prefix
+	// from "proxy" to "skeleton", since here we are generating
+	// skeleton header file code
+	if (eBasicObjType_Interface == pVarObj->m_eBasicType &&
+		pVarObj->m_pIFType->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		string::size_type pos = ret.find("Proxy");
+		if (pos != string::npos) ret.replace(pos, 5, "Skeleton");
+	}
+	return retval;
+}
+
+// generate the default return value (like: "false")
+bool TInterfaceObjectCodeGeneratorCpp::GenHdrFileProxyMethodDefReturnValue(TInterfaceNode *pNode, string& ret)
+{
+	ret.assign("");
+
+	EBasicObjectType eType = pNode->m_Data.method.m_eRetValType;
+	TEnumDefObject* pEnumDef = pNode->m_Data.method.m_pRetValEnumDef;
+
+recheck:
+	switch (eType)
+	{
+	case eBasicObjType_Boolean:
+		ret.append("false"); break;
+
+	case eBasicObjType_UInt8:
+		ret.append("0"); break;
+
+	case eBasicObjType_Int32:
+		ret.append("0"); break;
+
+	case eBasicObjType_Int16:
+		ret.append("0"); break;
+
+	case eBasicObjType_Int64:
+		ret.append("0"); break;
+
+	case eBasicObjType_UInt32:
+		ret.append("0"); break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != pEnumDef && NULL != GetModule());
+		ret.append(pEnumDef->GetDefault(GetModule()));
+		break;
+
+	case eBasicObjType_Float:
+		ret.append("0.0"); break;
+
+	case eBasicObjType_Typedefed: {
+		TTypedefObject* pTypeObject = pNode->m_Data.method.m_pRetValTypedefType;
+		assert(NULL != pTypeObject);
+		TArrayTypeObject ArrayType;
+		EBasicObjectType eOriginalType;
+		pTypeObject->GetOriginalType(eOriginalType, ArrayType, &pEnumDef, NULL);
+		assert(!IsArray(ArrayType) && eBasicObjType_Unknown != eOriginalType);
+		if (IsBasicObjectType(eOriginalType) || eBasicObjType_Enum == eOriginalType)
+		{
+			eType = eOriginalType;
+			goto recheck;
+		}
+	}	break;
+
+	case eBasicObjType_String:
+	case eBasicObjType_Stream:
+	case eBasicObjType_Interface:
+	case eBasicObjType_UserDefined:
+	default: break;
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenHdrFileProxyMethodDefReturnType(TInterfaceNode *pNode, string& ret)
+{
+	ret.assign("");
+
+	switch (pNode->m_Data.method.m_eRetValType)
+	{
+	case eBasicObjType_Unknown:
+		ret.append("void"); break;
+
+	case eBasicObjType_Boolean:
+		ret.append("bool"); break;
+
+	case eBasicObjType_UInt8:
+		ret.append("unsigned char"); break;
+
+	case eBasicObjType_Int32:
+		ret.append("int"); break;
+
+	case eBasicObjType_Int16:
+		ret.append("short"); break;
+
+	case eBasicObjType_Int64:
+		ret.append("long"); break;
+
+	case eBasicObjType_UInt32:
+		ret.append("unsigned int"); break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != pNode->m_Data.method.m_pRetValEnumDef && NULL != GetModule());
+		ret.append(pNode->m_Data.method.m_pRetValEnumDef->GetFullName(GetModule()));
+		break;
+
+	case eBasicObjType_Float:
+		ret.append("double"); break;
+
+	case eBasicObjType_String:
+		ret.append("string"); break;
+
+	case eBasicObjType_Stream:
+		ret.append("TRPCStream"); break;
+
+	case eBasicObjType_Typedefed: {
+		TTypedefObject* pTypeObject = pNode->m_Data.method.m_pRetValTypedefType;
+		assert(NULL != pTypeObject);
+		TArrayTypeObject ArrayType;
+		EBasicObjectType eOriginalType;
+		pTypeObject->GetOriginalType(eOriginalType, ArrayType, NULL, NULL);
+		assert(!IsArray(ArrayType) && eBasicObjType_Unknown != eOriginalType);
+		ret.append(pTypeObject->GetFullName(GetModule()));
+//		if (!IsBasicObjectType(eOriginalType))
+//			ret.append("&");
+// compiler will complain when return a reference of an internal variable
+	}	break;
+
+	case eBasicObjType_UserDefined: {
+		TUserDefTypeObject *pUserDefObject = pNode->m_Data.method.m_pRetValUserDefType;
+		assert(NULL != pUserDefObject && GetModule());
+		ret.append(pUserDefObject->GetFullName(GetModule()));
+//		ret.append("&");
+// compiler will complain when return a reference of an internal variable
+	}	break;
+
+	case eBasicObjType_Interface: {
+		TInterfaceObject *pIFObject = pNode->m_Data.method.m_pRetValIFObject;
+		assert(NULL != pIFObject && NULL != GetModule());
+		assert(!pIFObject->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable));
+		ret.append(pIFObject->GetFullName(GetModule()));
+	}	break;
+	default: return false;
+	}
+	return true;
+}
+
+// write a new version specifically for Skeleton for future possible extension
+bool TInterfaceObjectCodeGeneratorCpp::GenHdrFileSkeletonMethodDefReturnType(TInterfaceNode *pNode, string& ret)
+{
+	return GenHdrFileProxyMethodDefReturnType(pNode, ret);
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileSkeletonHandlerImp(TInterfaceNode *pNode)
+{
+	assert(NULL != pNode);
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+		return true;
+
+	// generate the function handler like:
+	// static void ___IF_method_handler(Value&, Value&);
+	TInterfaceObject *pIFObject = pNode->GetInterfaceObject();
+	if (NULL == pIFObject) return false;
+
+	if (eIFNodeType_Attribute == pNode->GetType())
+	{
+		// build a variable object
+		TVariableObject cVarObject;
+		cVarObject.SetName(string("_") + pNode->m_cName);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_eBasicType);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pIFObject);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pTypedefType);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pEnumDef);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pUserDefType);
+
+		// set
+		obj->fprintf(SrcFileSkeleton,
+		"static uint ___%s____%s_get_handler(void* ___obj, Json::Value& ___input, Json::Value& ___output)\n",
+			pIFObject->GetName().c_str(), pNode->m_cName.c_str());
+		if (!GenerateSkeletonStyleAttributeBody(SrcFileSkeleton, pNode, cVarObject, true))
+			return false;
+
+		// get
+		obj->fprintf(SrcFileSkeleton,
+		"static uint ___%s____%s_set_handler(void* ___obj, Json::Value& ___input, Json::Value& ___output)\n",
+			pIFObject->GetName().c_str(), pNode->m_cName.c_str());
+		if (!GenerateSkeletonStyleAttributeBody(SrcFileSkeleton, pNode, cVarObject, false))
+			return false;
+	}
+	else
+	{
+		obj->fprintf(SrcFileSkeleton,
+			"static uint ___%s_%s_handler(void* ___obj, Json::Value& ___input, Json::Value& ___output)\n",
+			pIFObject->GetName().c_str(), pNode->m_cName.c_str());
+
+		if (!GenerateSourceFileSkeletonMethodBody(pNode))
+			return false;
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenSrcFileProxyObservableIFCtor(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// generate ctor
+	obj->fprintf(SrcFileProxy,
+		"%s::%s(void)\n"
+		"{\n"
+		"\tTRPCInterface cInterface = TRPCHostMgr::Inst()->RegisterObservableInterface(\"%s.%s\");\n"
+		"\tstatic bool ___bRegistered = false;\n"
+		"\tif (!___bRegistered)\n"
+		"\t{\n"
+		"\t\t___bRegistered = true;\n",
+		GetName().c_str(), GetName().c_str(), GetModule()->GetName().c_str(), GetName().c_str());
+
+	TListItem *pNext = NodeList().GetNext();
+	for (int i = 0; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+
+		// todo: see if this meets the requirement (consider about "attribute")
+		if (eIFNodeType_Method != pNode->GetType())
+			continue;
+
+		if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+			continue;
+
+		i++;
+
+		// generate the uuid		
+		uint128 uuid;
+		string methodname = GetModule()->GetName() + "." + GetName() + "." + pNode->m_cName;
+		utilities::md5Encode(uuid, (void*)methodname.c_str(), methodname.length());
+
+		obj->fprintf(SrcFileProxy, "\t\tuint128_t ___u%u = {"
+			"0x%X, 0x%X, 0x%X, {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}};\n",
+			i, uuid.Data1, uuid.Data2, uuid.Data3, uuid.Data4[0], uuid.Data4[1], uuid.Data4[2],
+			uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]);
+		obj->fprintf(SrcFileProxy, "\t\tcInterface.AddMethod(___u%u, (void*)___%s_%s_obsvhdr);\n",
+			i, GetName().c_str(), pNode->m_cName.c_str());
+	}
+
+	obj->fputs(SrcFileProxy,"\t}\n");
+	obj->fprintf(SrcFileProxy, "\tcInterface.AddObservableInstance(\"%s.%s\", (void*)this);\n",
+		obj->GetName().c_str(), GetName().c_str());
+	obj->fputs(SrcFileProxy, "}\n\n");
+
+	// generate dtor
+	obj->fprintf(SrcFileProxy, "%s::~%s(void)\n"
+		"{\n"
+		"\ttry {\n"
+		"\t\tTRPCInterface cInterface = TRPCHostMgr::Inst()->GetObservableInterface(\"%s.%s\");\n"
+		"\t\tcInterface.ReleaseObservableInstance((void*)this);\n"
+		"\t}\n"
+		"\tcatch (rpc_error&) {dprintf(\"L1: warning: %s not released correctly.\\n\"); }\n"
+		"}\n\n", GetName().c_str(), GetName().c_str(),
+		obj->GetName().c_str(), GetName().c_str(), GetName().c_str());
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateEmptyReturnStatements(ESrcFileType eType, TInterfaceNode *pNode)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (eBasicObjType_Unknown == pNode->m_Data.method.m_eRetValType)
+		return true;
+	
+	string rettype, retval;
+	if (!GenHdrFileProxyMethodDefReturnType(pNode, rettype))
+		return false;
+	obj->fprintf(eType, "\t%s retval", rettype.c_str());
+	if (!GenHdrFileProxyMethodDefReturnValue(pNode, retval))
+		return false;
+	obj->fprintf(eType, "%s%s;\n", (retval.empty()) ? "" : " = ", retval.c_str());
+	obj->fputs(eType, "\treturn retval;\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileProxyObservableMethodImp(TInterfaceNode *pNode)
+{
+	assert(NULL != pNode);
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (eIFNodeType_Method != pNode->GetType())
+		return true;
+
+	// generate the function define like:
+	// void Interface::Method(int var);
+	// note that the ctor/dtor has already be omitted
+	if (!GenerateSourceFileProxyMethodDef(pNode))
+		return false;
+
+	// start function body generation
+	obj->fputs(SrcFileProxy, "{\n");
+
+	// generate the return statement of the method
+	GenerateEmptyReturnStatements(SrcFileProxy, pNode);
+	obj->fputs(SrcFileProxy, "}\n\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileProxyAttribute(TInterfaceNode *pNode)
+{
+	// build a variable object
+	TVariableObject cVarObject;
+	cVarObject.SetName(string("_") + pNode->m_cName);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_eBasicType);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_pIFObject);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_pTypedefType);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_pEnumDef);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_pUserDefType);
+
+	// generate "set"
+	// generate the (set) function define like:
+	// void Attribute(int _Attribute);
+	if (!GenerateAttributeSetDefinition(SrcFileProxy, pNode, cVarObject, true))
+		return false;
+	if (!GenerateProxyStyleAttributeBody(SrcFileProxy, pNode, cVarObject, true))
+		return false;
+
+	// generate "get"
+	// generate the (get) function fefine like:
+	// int Attribute(void);
+	if (!GenerateAttributeGetDefinition(SrcFileProxy, pNode, true))
+		return false;
+	if (!GenerateProxyStyleAttributeBody(SrcFileProxy, pNode, cVarObject, false))
+		return false;
+
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileProxyMethodImp(TInterfaceNode *pNode)
+{
+	assert(NULL != pNode);
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (eIFNodeType_Method != pNode->GetType())
+		return true;
+
+	// generate the function define like:
+	// void Interface::Method(int var);
+	if (!GenerateSourceFileProxyMethodDef(pNode))
+		return false;
+
+	// generate the body of function
+	if (!GenerateSourceFileProxyMethodBody(pNode))
+		return false;
+
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileSkeletonObservableMethodDef(TInterfaceNode* pNode)
+{	
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	TInterfaceObject *pIFObj = pNode->GetInterfaceObject();
+	assert(NULL != pIFObj);
+
+	string output;
+	bool bIsConstructor = pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor);
+
+	// generate the return value
+	if (!GenHdrFileProxyMethodDefReturnType(pNode, output))
+		return false;
+	obj->fputs(SrcFileSkeleton, output.c_str());
+
+	// generate the name
+	obj->fprintf(SrcFileSkeleton, " %s::%s(", pIFObj->GetName().c_str(), pNode->m_cName.c_str());
+
+	// generate each parameter
+	if (pNode->m_VariableList.IsEmpty())
+		obj->fputs(SrcFileSkeleton, "void");
+	else
+	{
+		bool isFirst = true;
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileSkeleton, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenHdrFileProxyMethodParameter(pObj, output))
+				return false;
+			obj->fputs(SrcFileSkeleton, output.c_str());
+		}
+	}
+	obj->fputs(SrcFileSkeleton, ")\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileProxyMethodDef(TInterfaceNode* pNode)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	TInterfaceObject *pIFObj = pNode->GetInterfaceObject();
+	assert(NULL != pIFObj);
+
+	string output;
+	bool bIsConstructor = pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor);
+	if (bIsConstructor)
+	{
+		// generate the name
+		obj->fprintf(SrcFileProxy, "%s::%s(", pIFObj->GetName().c_str(), pIFObj->GetName().c_str());
+	}
+	else
+	{
+		// generate the return value
+		if (!GenHdrFileProxyMethodDefReturnType(pNode, output))
+			return false;
+		obj->fputs(SrcFileProxy, output.c_str());
+
+		// generate the name
+		obj->fprintf(SrcFileProxy, " %s::%s(", pIFObj->GetName().c_str(), pNode->m_cName.c_str());
+	}
+
+	// generate each parameter
+	if (pNode->m_VariableList.IsEmpty())
+		obj->fputs(SrcFileProxy, "void");
+	else
+	{
+		bool isFirst = true;
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileProxy, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenHdrFileProxyMethodParameter(pObj, output))
+				return false;
+			obj->fputs(SrcFileProxy, output.c_str());
+		}
+	}
+	obj->fputs(SrcFileProxy, ")\n");
+	if (bIsConstructor)
+		obj->fprintf(SrcFileProxy, ": TRpcProxyBase(NULL, &s_s%sStaticData_)\n",
+			GetName().c_str());
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateHeaderFileSkeletonConstructorDef(TInterfaceNode* pNode)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (pNode->m_VariableList.IsEmpty())
+		return true;
+
+	TInterfaceObject *pIFObject = pNode->GetInterfaceObject();
+	assert(NULL != pIFObject);
+
+	for (int round = 0; round < 2; ++round)
+	{
+		// round 0: generate the constructor
+		// round 1: generate the "CreateInstance"
+
+		if (round == 0)
+		{
+			// generate the name
+			obj->fprintf(SrcFileHdr, "\t%s(", pIFObject->GetName().c_str());
+		}
+		else if (round == 1)
+		{
+			// generate the "CreateInstance"
+			obj->fprintf(SrcFileHdr, "\tstatic %s* CreateInstance(",
+				pIFObject->GetName().c_str());
+		}
+
+		// generate each parameter
+		string output;
+		bool isFirst = true;
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileHdr, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenHdrFileSkeletonMethodParameter(pObj, output))
+				return false;
+			obj->fputs(SrcFileHdr, output.c_str());
+		}
+		obj->fputs(SrcFileHdr, ");\n");
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateHeaderFileSkeletonMethodDef(TInterfaceNode *pNode)
+{	
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+		return true;
+
+	// generate the return value
+	string output;
+	if (!GenHdrFileSkeletonMethodDefReturnType(pNode, output))
+		return false;
+	obj->fprintf(SrcFileHdr, "\t%s%s",
+		pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Virtual)
+		? "virtual " : "", output.c_str());
+
+	// generate the name
+	obj->fprintf(SrcFileHdr, " %s(", pNode->m_cName.c_str());
+
+	// generate each parameter
+	if (pNode->m_VariableList.IsEmpty())
+		obj->fputs(SrcFileHdr, "void");
+	else
+	{
+		bool isFirst = true;
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileHdr, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenHdrFileSkeletonMethodParameter(pObj, output))
+				return false;
+			obj->fputs(SrcFileHdr, output.c_str());
+		}
+	}
+	obj->fputs(SrcFileHdr, ");\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateUserSrcFileMethodDef(
+	TInterfaceNode *pNode, bool bCreateInstace)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	string output;
+	if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+	{
+		// generate the constructor name
+		TInterfaceObject *pIFObject = pNode->GetInterfaceObject();
+		assert(NULL != pIFObject);
+
+		const char *method_name = "%s::%s(";
+		if (bCreateInstace)
+			method_name = "%s* %s::CreateInstance(";
+
+		obj->fprintf(SrcFileUser, method_name, pIFObject->GetName().c_str(),
+			pIFObject->GetName().c_str());
+	}
+	else
+	{
+		// generate the return value
+		if (!GenHdrFileProxyMethodDefReturnType(pNode, output))
+			return false;
+		obj->fputs(SrcFileUser, output.c_str());
+
+		// generate the name
+		obj->fprintf(SrcFileUser, " %s::%s(", GetName().c_str(), pNode->m_cName.c_str());
+	}
+
+	// generate each parameter
+	if (pNode->m_VariableList.IsEmpty())
+	{
+		if (!pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+			obj->fputs(SrcFileUser, "void");
+	}
+	else
+	{
+		bool isFirst = true;
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileUser, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenHdrFileSkeletonMethodParameter(pObj, output))
+				return false;
+			obj->fputs(SrcFileUser, output.c_str());
+		}
+	}
+	obj->fputs(SrcFileUser, ")\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateHeaderFileProxyConstructorDef(TInterfaceNode *pNode)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (pNode->m_VariableList.IsEmpty())
+		return true;
+
+	// generate the name
+	TInterfaceObject *pIFObject = pNode->GetInterfaceObject();
+	assert(NULL != pIFObject);
+	obj->fprintf(SrcFileHdr, "\t%s(", pIFObject->GetName().c_str());
+
+	// generate each parameter
+	if (pNode->m_VariableList.IsEmpty())
+		obj->fputs(SrcFileHdr, "void");
+	else
+	{
+		string output;
+		bool isFirst = true;
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileHdr, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenHdrFileProxyMethodParameter(pObj, output))
+				return false;
+			obj->fputs(SrcFileHdr, output.c_str());
+		}
+	}
+	obj->fputs(SrcFileHdr, ");\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateAttributeSetDefinition(ESrcFileType eType,
+				TInterfaceNode *pNode, TVariableObject &cVarObject, bool bSrcF)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	TInterfaceObject *pIFObj = pNode->GetInterfaceObject();
+	assert(NULL != pIFObj);
+
+	// generate "set"
+	string output;
+	if (!GenHdrFileProxyMethodParameter(&cVarObject, output))
+		return false;
+	obj->fprintf(eType, "%svoid %s%s(%s)%s\n",
+		(bSrcF) ? "" : "\t",
+		(bSrcF) ? string(pIFObj->GetName() + "::").c_str() : "",
+		pNode->m_cName.c_str(), output.c_str(),
+		(bSrcF) ? "" : ";");
+	return true;
+}
+
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateAttributeGetDefinition(ESrcFileType eType, TInterfaceNode *pNode, bool bSrcF)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	TInterfaceObject *pIFObj = pNode->GetInterfaceObject();
+	assert(NULL != pIFObj);
+
+	// generate "get"
+	string output;
+	if (!GenHdrFileProxyMethodDefReturnType(pNode, output))
+		return false;
+	obj->fprintf(eType, "%s%s %s%s(void)%s\n",
+		(bSrcF) ? "" : "\t", output.c_str(),
+		(bSrcF) ? string(pIFObj->GetName() + "::").c_str() : "",
+		pNode->m_cName.c_str(), (bSrcF) ? "" : ";");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateHeaderFileAttribute(ESrcFileType eType, TInterfaceNode *pNode, bool bSrcF)
+{
+	// build a variable object
+	TVariableObject cVarObject;
+	cVarObject.SetName(string("_") + pNode->m_cName);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_eBasicType);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_pIFObject);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_pTypedefType);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_pEnumDef);
+	cVarObject.SetObject(pNode->m_Data.attribute.m_pUserDefType);
+
+	if (!GenerateAttributeSetDefinition(eType, pNode, cVarObject, bSrcF))
+		return false;
+	return GenerateAttributeGetDefinition(eType, pNode, bSrcF);
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateHeaderFileProxyMethodDef(TInterfaceNode *pNode)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+		return true;
+
+	// generate the return value
+	string output;
+	if (!GenHdrFileProxyMethodDefReturnType(pNode, output))
+		return false;
+	obj->fprintf(SrcFileHdr, "\t%s%s",
+		pNode->GetInterfaceObject()->TestInterfaceFlags(
+		TInterfaceObject::eInterfaceFlag_Observable)
+		? "virtual " : "", output.c_str());
+
+	// generate the name
+	obj->fprintf(SrcFileHdr, " %s(", pNode->m_cName.c_str());
+
+	// generate each parameter
+	if (pNode->m_VariableList.IsEmpty())
+		obj->fputs(SrcFileHdr, "void");
+	else
+	{
+		bool isFirst = true;
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileHdr, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenHdrFileProxyMethodParameter(pObj, output))
+				return false;
+			obj->fputs(SrcFileHdr, output.c_str());
+		}
+	}
+	obj->fputs(SrcFileHdr, ");\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateAttributeValueInClsDef(ESrcFileType eFileType)
+{
+	if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+		return true;
+
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fprintf(eFileType, "public:\n");
+
+	TListItem* pSubItem = NodeList().GetNext();
+	for (; pSubItem != &NodeList(); pSubItem = pSubItem->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pSubItem);
+		EIFNodeType eType = pNode->GetType();
+		assert(eIFNodeType_Unknown != eType);
+
+		// generate attribute
+		if (eIFNodeType_Attribute != eType)
+			continue;
+
+		TVariableObject cVarObject;
+		cVarObject.SetName(pNode->m_cName);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_eBasicType);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pIFObject);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pTypedefType);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pEnumDef);
+		cVarObject.SetObject(pNode->m_Data.attribute.m_pUserDefType);
+
+		string output;
+		if (!GenHdrFileProxyMethodParameter(&cVarObject, output))
+			return false;
+
+		obj->fprintf(eFileType, "\t%s;\n", output.c_str());
+	}
+	obj->fputs(eFileType, "\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateHeaderFileSkeletonCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+		obj->fputs(SrcFileHdr, "namespace Skeleton {\n\n");
+
+	obj->fprintf(SrcFileHdr, "class %s%s\n",
+		TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable)
+		? "OBSERVABLE " : "",
+		GetName().c_str());
+
+	obj->fputs(SrcFileHdr, 
+		"{\n"
+		"public:\n");
+	
+	if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+		obj->fprintf(SrcFileHdr, 
+			"\t%s();\n"
+			"\t%s(unsigned int InstID, string uid);\n"
+			"\t%s(const %s&);\n"
+			"\t%s operator=(const %s&);\n"
+			"\tvirtual ~%s();\n",
+			GetName().c_str(), GetName().c_str(),
+			GetName().c_str(), GetName().c_str(),
+			GetName().c_str(), GetName().c_str(),
+			GetName().c_str());
+
+	else obj->fprintf(SrcFileHdr, 
+			"\t%s();\n"
+			"\tvirtual ~%s();\n",
+			GetName().c_str(), GetName().c_str());
+
+	// generate other constructor method
+	if (!TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		TListItem *pSubItem = NodeList().GetNext();
+		for (; pSubItem != &NodeList(); pSubItem = pSubItem->GetNext())
+		{
+			TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pSubItem);
+			EIFNodeType eType = pNode->GetType();
+			assert(eIFNodeType_Unknown != eType);
+
+			if (eIFNodeType_Attribute == eType
+				|| !pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+				continue;
+
+			// generate the method definition
+			if (!GenerateHeaderFileSkeletonConstructorDef(pNode))
+				return false;
+		}
+	}
+
+	if (!TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		obj->fprintf(SrcFileHdr, 
+			"\tstatic %s* CreateInstance(void);\n"
+			"\tstatic void DestroyInstance(%s* obj);\n",
+			GetName().c_str(), GetName().c_str());
+	}
+
+	obj->fputs(SrcFileHdr, "\npublic:\n");
+
+	// generate every interface method
+	TListItem* pSubItem = NodeList().GetNext();
+	for (; pSubItem != &NodeList(); pSubItem = pSubItem->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pSubItem);
+		EIFNodeType eType = pNode->GetType();
+		assert(eIFNodeType_Unknown != eType);
+
+		// generate attribute
+		if (eIFNodeType_Attribute == eType)
+			continue;
+
+		// generate the method definition
+		else if (!GenerateHeaderFileSkeletonMethodDef(pNode))
+			return false;
+	}
+
+	// generate the attribute variable
+	obj->fputs(SrcFileHdr, "\n");
+	if (!GenerateAttributeValueInClsDef(SrcFileHdr))
+		return false;
+
+	obj->fputs(SrcFileHdr, "private:\n");
+
+	if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+		obj->fputs(SrcFileHdr, "\tunsigned int m_InstID;\n"
+			"\tstring m_cUniqueID;\n");
+
+	else obj->fprintf(SrcFileHdr,
+		"\t/* disable evil constructors */\n"
+		"\t%s(const %s&);\n"
+		"\tvoid operator=(const %s&);\n",
+		GetName().c_str(), GetName().c_str(), GetName().c_str());
+
+	obj->fputs(SrcFileHdr, "};\n\n");
+
+	if (!TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		obj->fprintf(SrcFileHdr,
+			"namespace Skeleton { void Import_%s(void); };\n\n",
+			GetName().c_str());
+	}
+
+	if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+		obj->fputs(SrcFileHdr, "}; /* end of namespace Skeleton */\n\n");
+
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateInlineHeaderFileProxyCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fputs(SrcFileInlineHdr, "namespace Proxy {\n\n");
+	obj->fprintf(SrcFileInlineHdr, 
+		"inline %s::%s()\n"
+		": TRpcProxyBase(NULL, &s_s%sStaticData_)\n"
+		"{\n}\n\n", GetName().c_str(), GetName().c_str(),
+		GetName().c_str());
+
+	obj->fprintf(SrcFileInlineHdr, 
+		"inline %s::%s(const %s& ___c)\n"
+		": TRpcProxyBase(___c)\n"
+		"{\n}\n\n", GetName().c_str(), GetName().c_str(), GetName().c_str());
+
+	obj->fprintf(SrcFileInlineHdr, 
+		"inline %s& %s::operator=(const %s& ___c)\n"
+		"{\n"
+		"\tif (this != &___c)\n"
+		"\t\tAssign(___c);\n"
+		"\treturn *this;\n"
+		"}\n\n", GetName().c_str(), GetName().c_str(), GetName().c_str());
+
+	obj->fprintf(SrcFileInlineHdr, 
+		"inline %s::~%s()\n"
+		"{\n}\n\n", GetName().c_str(), GetName().c_str());
+
+	obj->fputs(SrcFileInlineHdr, "}; /* end of namespace Proxy */\n\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateHeaderFileProxyCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fputs(SrcFileHdr, "namespace Proxy {\n\n");
+	//generate constructor, copy constructors, destructor and Inst() for singleton only
+	if (TestInterfaceFlags(eInterfaceFlag_Observable))//observable interface has virtual destructor method
+	{
+		obj->fprintf(SrcFileHdr, "class OBSERVABLE %s\n"
+			"{\n"
+			"public:\n"
+			"\t%s();\n"
+			"\tvirtual ~%s();\n",
+			GetName().c_str(), GetName().c_str(),
+			GetName().c_str());
+	}
+	else if(TestInterfaceFlags(eInterfaceFlag_Singleton))//singleton interface has private constructor
+	{
+		obj->fprintf(SrcFileHdr, "class %s : public TRpcProxyBase\n", GetName().c_str());
+		obj->fprintf(SrcFileHdr, 
+			"{\n"
+			"private:\n"
+			"\t%s();\n"
+			"\t%s(const %s&);\n",
+			GetName().c_str(), GetName().c_str(),
+			GetName().c_str());
+	}
+	else//normal interface
+	{
+		obj->fprintf(SrcFileHdr, "class %s : public TRpcProxyBase\n", GetName().c_str());
+		obj->fprintf(SrcFileHdr, 
+			"{\n"
+			"public:\n"
+			"\t%s();\n"
+			"\t%s(const %s&);\n",
+			GetName().c_str(), GetName().c_str(),
+			GetName().c_str());
+	}
+
+	// generate other constructor method
+	// note that all the constructors and attributes in a observable
+	// interface will be ALL omit, here we handle this case
+	if (!TestInterfaceFlags(eInterfaceFlag_Observable))
+	{
+		TListItem *pSubItem = NodeList().GetNext();
+		for (; pSubItem != &NodeList(); pSubItem = pSubItem->GetNext())
+		{
+			TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pSubItem);
+			EIFNodeType eType = pNode->GetType();
+			assert(eIFNodeType_Unknown != eType);
+
+			if (eIFNodeType_Attribute == eType
+				|| !pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+				continue;
+
+			// generate the method definition
+			if (!GenerateHeaderFileProxyConstructorDef(pNode))
+				return false;
+		}
+	}
+	//for normal interface and singleton interface
+	if ( !TestInterfaceFlags(eInterfaceFlag_Observable) )
+	{
+		// if singleton, we need to generate an Inst() method,
+		// and private operator=() constructor
+		if (TestInterfaceFlags(eInterfaceFlag_Singleton))
+		{
+			obj->fprintf(SrcFileHdr, 
+				"public:\n"
+				"\tstatic %s& Inst(void);\n"
+				"\tvirtual ~%s();\n"
+				"private:\n"
+				"\t%s& operator=(const %s&);\n",
+				GetName().c_str(), GetName().c_str(), GetName().c_str(), GetName().c_str());
+		}
+		else
+		{
+			obj->fprintf(SrcFileHdr, 
+				"public:\n"
+				"\tvirtual ~%s();\n"
+				"\t%s& operator=(const %s&);\n",
+				GetName().c_str(), GetName().c_str(), GetName().c_str());
+		}
+	}
+
+	obj->fputs(SrcFileHdr, "\n");
+	obj->fputs(SrcFileHdr, "public:\n");
+
+	// generate every interface method
+	TListItem* pSubItem = NodeList().GetNext();
+	for (; pSubItem != &NodeList(); pSubItem = pSubItem->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pSubItem);
+		EIFNodeType eType = pNode->GetType();
+		assert(eIFNodeType_Unknown != eType);
+
+		// generate attribute
+		if (eIFNodeType_Attribute == eType)
+		{
+			if (!GenerateHeaderFileAttribute(SrcFileHdr, pNode, false))
+				return false;
+		}
+		
+		// generate the method definition
+		else if (!GenerateHeaderFileProxyMethodDef(pNode))
+			return false;
+	}
+
+	if (TestInterfaceFlags(eInterfaceFlag_Observable))
+		obj->fputs(SrcFileHdr, "};\n\n");
+	else obj->fprintf(SrcFileHdr, "\npublic:\n"
+			"\tstatic const char* s_p%sClsName_;\n"
+			"\tstatic TRPCProxyStaticData s_s%sStaticData_;\n"
+			"};\n\n",
+			GetName().c_str(), GetName().c_str());
+
+	obj->fputs(SrcFileHdr, "}; /* end of namespace Proxy */\n\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GetConstructorParameterUniqueName(TVariableObject *pVarObj, string& ret)
+{
+	switch (pVarObj->m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		ret.append("b");
+		break;
+
+	case eBasicObjType_UInt8:
+		ret.append("o");
+		break;
+
+	case eBasicObjType_Int32:
+		ret.append("i");
+		break;
+
+	case eBasicObjType_Int16:
+		ret.append("h");
+		break;
+
+	case eBasicObjType_Int64:
+		ret.append("l");
+		break;
+
+	case eBasicObjType_UInt32:
+		ret.append("u");
+		break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != pVarObj->m_pEnumDefType && NULL != GetModule());
+		ret.append(pVarObj->m_pEnumDefType->GetFullName(GetModule()));
+		break;
+
+	case eBasicObjType_Float:
+		ret.append("f");
+		break;
+
+	case eBasicObjType_String:
+		ret.append("s");
+		break;
+
+	case eBasicObjType_Stream:
+		ret.append("m");
+		break;
+
+	case eBasicObjType_Typedefed:
+		assert(NULL != pVarObj->m_pRefType && NULL != GetModule());
+		ret.append(pVarObj->m_pRefType->GetFullName(GetModule()));
+		break;
+
+	case eBasicObjType_UserDefined:
+		assert(NULL != pVarObj->m_pUserDefType && NULL != GetModule());
+		ret.append(pVarObj->m_pUserDefType->GetFullName(GetModule()));
+		break;
+
+	case eBasicObjType_Interface:
+		assert(NULL != pVarObj->m_pIFType && NULL != GetModule());
+		ret.append(pVarObj->m_pIFType->GetFullName(GetModule()));
+		break;
+
+	default: return false;
+	}
+
+	if (eArrayType_Fixed == pVarObj->m_ArrayType.eArrayType)
+	{
+		char tmp[32];
+		sprintf(tmp, "@fa%u", pVarObj->m_ArrayType.ArraySize);
+		ret.append(tmp);
+	}
+	else if (eArrayType_Variable == pVarObj->m_ArrayType.eArrayType)
+		ret.append("@va");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GetConstructorUniqueName(TInterfaceNode *pNode, string& ret)
+{
+	assert(NULL != pNode);
+	ret = "ci";
+	TListItem *pItem = pNode->m_VariableList.GetNext();
+	for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+	{
+		ret.append("@");
+		TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		string output;
+		if (!GetConstructorParameterUniqueName(pObj, output))
+			return false;
+		ret.append(output);
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileObservableSkeletonCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// generate the ctor/dtor
+	obj->fprintf(SrcFileSkeleton,
+		"%s::%s()\n"
+		": m_InstID(0)\n"
+		"{\n"
+		"}\n\n"
+		"%s::%s(unsigned int InstID, string uid)\n"
+		": m_InstID(InstID)\n"
+		", m_cUniqueID(uid)\n"
+		"{\n"
+		"\tassert(0 != m_InstID);\n"
+		"}\n\n"
+		"%s::%s(const %s& c)\n"
+		"{\n"
+		"\tif (this == &c) return;\n"
+		"\tm_InstID = c.m_InstID;\n"
+		"\tm_cUniqueID = c.m_cUniqueID;\n"
+		"}\n\n"
+		"%s %s::operator=(const %s& c)\n"
+		"{\n"
+		"\tif (this != &c) {\n"
+		"\t\tm_InstID = c.m_InstID;\n"
+		"\t\tm_cUniqueID = c.m_cUniqueID;\n"
+		"\t}\n"
+		"\treturn *this;\n"
+		"}\n\n"
+		"%s::~%s()\n"
+		"{\n"
+		"}\n\n",
+		GetName().c_str(), GetName().c_str(),
+		GetName().c_str(), GetName().c_str(),
+		GetName().c_str(), GetName().c_str(), GetName().c_str(),
+		GetName().c_str(), GetName().c_str(), GetName().c_str(),
+		GetName().c_str(), GetName().c_str());
+
+	TListItem *pNext = NodeList().GetNext();
+	for (; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+		if (eIFNodeType_Method != pNode->GetType())
+			continue;
+
+		// generate the method declaration
+		if (!GenerateSourceFileSkeletonObservableMethodDef(pNode))
+			return false;
+
+		// generate the body of method
+		if (!GenerateSourceFileSkeletonObservableMethodBody(pNode))
+			return false;
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileSkeletonCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// generate the class factory (first half)
+	obj->fprintf(SrcFileSkeleton,
+		"void* ___%s_factory(void *destroy, Json::Value& ___rawinput)\n"
+		"{\n"
+		"\tif (destroy)\n"
+		"\t{\n"
+		"\t\t%s::DestroyInstance((%s*)destroy);\n"
+		"\t\treturn NULL;\n"
+		"\t}\n",
+		GetName().c_str(), GetName().c_str(),
+		GetName().c_str());
+
+	// generate the class factory (middle half)
+	bool bFirstConstructor = true;
+	TListItem *pItem = NodeList().GetNext();
+	for (; pItem != &NodeList(); pItem = pItem->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pItem);
+		if (eIFNodeType_Method != pNode->GetType())
+			continue;
+
+		if (!pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+			continue;
+
+		if (pNode->m_VariableList.IsEmpty())
+			continue;
+
+		if (bFirstConstructor)
+		{
+			bFirstConstructor = false;
+			obj->fprintf(SrcFileSkeleton,
+				"\tJson::Value& ___input = ___rawinput;\n"
+				"\tif (!___input.isMember(\"ctor\"))\n"
+				"\t\treturn (void *)%s::CreateInstance();\n\n"
+				"\tJson::Value& ___par = ___input[\"args\"];\n"
+				"\tstring ___ctor = ___input[\"ctor\"].asString();\n",
+				GetName().c_str());
+		}
+
+		string cConstructorUniqueName;
+		if (!GetConstructorUniqueName(pNode, cConstructorUniqueName))
+			return false;
+
+		obj->fprintf(SrcFileSkeleton,
+			"\n"
+			"\tif (___ctor == \"%s\")\n\t{\n",
+			cConstructorUniqueName.c_str());
+
+		// generate the call to specific "CreateInstance"
+		TListItem* pVarItem = pNode->m_VariableList.GetNext();
+		for (; pVarItem != &(pNode->m_VariableList); pVarItem = pVarItem->GetNext())
+		{
+			TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pVarItem);
+
+			// declare the variable like: int a;
+			string declaration;
+			if (!GenSkeletonMethodVariableDeclaration(pVarObj, declaration))
+				return false;
+
+			obj->fprintf(SrcFileSkeleton, "\t%s;\n", declaration.c_str());
+			if (!DeserializeParameters(SrcFileSkeleton, obj, pVarObj))
+				return false;
+		}
+
+		// generate the call
+		obj->fprintf(SrcFileSkeleton, "\treturn (void *)%s::CreateInstance(",
+			GetName().c_str());
+
+		bool isFirst = true;
+		pVarItem = pNode->m_VariableList.GetNext();
+		for (; pVarItem != &(pNode->m_VariableList); pVarItem = pVarItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileSkeleton, ", ");
+
+			TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pVarItem);
+			obj->fputs(SrcFileSkeleton, pVarObj->m_cName.c_str());
+		}
+		obj->fputs(SrcFileSkeleton, "); }\n");
+	}
+
+	// end of factory generation (bottom half)
+	if (bFirstConstructor)
+	{
+		obj->fprintf(SrcFileSkeleton,
+			"\treturn (void *)%s::CreateInstance();\n}\n\n",
+			GetName().c_str());
+	}
+	else obj->fputs(SrcFileSkeleton, "\n\treturn NULL;\n}\n\n");
+
+	// generate each method handler
+	TListItem *pNext = NodeList().GetNext();
+	for (; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+		if (!GenerateSourceFileSkeletonHandlerImp(pNode))
+			return false;
+	}
+
+	// generate all import APIs
+	obj->fprintf(SrcFileSkeleton,
+		"void Import_%s(void)\n"
+		"{\n"
+		"\tTRPCInterface cInterface = TRPCHostMgr::Inst()->RegisterInterface(\"%s.%s\", (void*)___%s_factory);\n",
+		GetName().c_str(), GetModule()->GetName().c_str(), GetName().c_str(), GetName().c_str());
+
+	// see if it is a singleton class
+	if (TestInterfaceFlags(eInterfaceFlag_Singleton))
+		obj->fputs(SrcFileSkeleton, "\tcInterface.SetSingleton(true);\n");
+
+	pNext = NodeList().GetNext();
+	for (int i = 0; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+		if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+			continue;
+
+		i++;
+
+		// generate the uuid		
+		uint128 uuid;
+		string methodname;
+		if (eIFNodeType_Method == pNode->GetType())
+		{
+			methodname = GetModule()->GetName() + "." + GetName() + "." + pNode->m_cName;
+			utilities::md5Encode(uuid, (void*)methodname.c_str(), methodname.length());
+
+			obj->fprintf(SrcFileSkeleton, "\tuint128_t ___u%u = {"
+				"0x%X, 0x%X, 0x%X, {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}};\n",
+				i, uuid.Data1, uuid.Data2, uuid.Data3, uuid.Data4[0], uuid.Data4[1], uuid.Data4[2],
+				uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]);
+			obj->fprintf(SrcFileSkeleton, "\tcInterface.AddMethod(___u%u, (void*)___%s_%s_handler);\n",
+				i, GetName().c_str(), pNode->m_cName.c_str());
+		}		
+		else if (eIFNodeType_Attribute == pNode->GetType())
+		{
+			methodname = GetModule()->GetName() + "." + GetName() + ".___" + pNode->m_cName + ".Set";
+			utilities::md5Encode(uuid, (void*)methodname.c_str(), methodname.length());
+
+			obj->fprintf(SrcFileSkeleton, "\tuint128_t ___u%u = {"
+				"0x%X, 0x%X, 0x%X, {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}};\n",
+				i, uuid.Data1, uuid.Data2, uuid.Data3, uuid.Data4[0], uuid.Data4[1], uuid.Data4[2],
+				uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]);
+			obj->fprintf(SrcFileSkeleton, "\tcInterface.AddMethod(___u%u, (void*)___%s____%s_set_handler);\n",
+				i, GetName().c_str(), pNode->m_cName.c_str());
+
+			i++;
+			methodname = GetModule()->GetName() + "." + GetName() + ".___" + pNode->m_cName + ".Get";
+			utilities::md5Encode(uuid, (void*)methodname.c_str(), methodname.length());
+
+			obj->fprintf(SrcFileSkeleton, "\tuint128_t ___u%u = {"
+				"0x%X, 0x%X, 0x%X, {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}};\n",
+				i, uuid.Data1, uuid.Data2, uuid.Data3, uuid.Data4[0], uuid.Data4[1], uuid.Data4[2],
+				uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]);
+			obj->fprintf(SrcFileSkeleton, "\tcInterface.AddMethod(___u%u, (void*)___%s____%s_get_handler);\n",
+				i, GetName().c_str(), pNode->m_cName.c_str());
+		}
+	}
+
+	obj->fputs(SrcFileSkeleton,"}\n\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileProxyObservableCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// generate the namespace
+	obj->fputs(SrcFileProxy, "namespace Proxy {\n\n");
+
+	// generate all empty virtual functions
+	TListItem *pNext = NodeList().GetNext();
+	for (; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+
+		// all the ctor/dtor shall be omitted for a observable interface
+		if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+			continue;
+
+		if (!GenerateSourceFileProxyObservableMethodImp(pNode))
+			return false;
+	}
+
+	// generate the observable function static handlers
+	pNext = NodeList().GetNext();
+	for (; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+
+		// all the ctor/dtor shall be omitted for a observable interface
+		if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+			continue;
+
+
+		// generate the function handler like:
+		// static uint ___IF_method_obsvhdr(Value&, Value&);
+		TInterfaceObject *pIFObject = pNode->GetInterfaceObject();
+		if (NULL == pIFObject) return false;
+
+		obj->fprintf(SrcFileProxy,
+			"static uint ___%s_%s_obsvhdr(void* ___obj, Json::Value& ___input, Json::Value& ___output)\n",
+			pIFObject->GetName().c_str(), pNode->m_cName.c_str());
+
+		if (!GenSrcFileProxyObservableMethodBody(pNode))
+			return false;
+	}
+
+	// generate the observable ctor/dtor
+	GenSrcFileProxyObservableIFCtor();
+
+	// generate end of the namespace
+	obj->fputs(SrcFileProxy, "} /* end of namespace Proxy */\n\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileProxyCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// generate the namespace
+	obj->fputs(SrcFileProxy, "namespace Proxy {\n\n");
+
+	// generate class name
+	obj->fprintf(SrcFileProxy, "const char *%s::s_p%sClsName_ = \"%s.%s\";\n",
+		GetName().c_str(), GetName().c_str(), obj->GetName().c_str(), GetName().c_str());
+	obj->fprintf(SrcFileProxy, "TRPCProxyStaticData %s::s_s%sStaticData_ = {\n"
+		"\tNULL, (char *)s_p%sClsName_\n};\n\n", GetName().c_str(), GetName().c_str(), GetName().c_str());
+
+	// generate the Inst() method, if necessary
+	if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Singleton))
+	{
+		obj->fprintf(SrcFileProxy,
+			"%s& %s::Inst(void)\n"
+			"{\n"
+			"\tstatic %s s_cInst;\n"
+			"\tif (!s_cInst.IsValid())\n"
+			"\t{\n"
+			"\t\tbool ret = s_cInst.GetSingletonInstance(s_p%sClsName_);\n"
+			"\t\tassert(false != ret && s_cInst.IsValid());\n"
+			"\t}\n"
+			"\treturn s_cInst;\n"
+			"}\n\n",
+			GetName().c_str(), GetName().c_str(), GetName().c_str(),
+			GetName().c_str());
+	}
+
+	TListItem *pNext = NodeList().GetNext();
+	for (; pNext != &NodeList(); pNext = pNext->GetNext())
+	{
+		TInterfaceNode *pNode = LIST_ENTRY(TInterfaceNode, m_OwnerList, pNext);
+		if (eIFNodeType_Attribute == pNode->GetType())
+		{
+			if (!GenerateSourceFileProxyAttribute(pNode))
+				return false;
+		}
+		else if (!GenerateSourceFileProxyMethodImp(pNode))
+			return false;
+	}
+
+	// generate end of the namespace
+	obj->fputs(SrcFileProxy, "} /* end of namespace Proxy */\n\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenSrcFileProxyObservableMethodBody(TInterfaceNode* pNode)
+{
+	return GenerateSkeletonStyleMethodBody(SrcFileProxy, pNode);
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileSkeletonMethodBody(TInterfaceNode* pNode)
+{
+	return GenerateSkeletonStyleMethodBody(SrcFileSkeleton, pNode);
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::IsOutArgsExists(TInterfaceNode* pNode)
+{
+	assert(NULL != pNode);
+	if (eIFNodeType_Method != pNode->GetType())
+		return false;
+
+	if (pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor))
+		return false;
+
+	TListItem* pItem = pNode->m_VariableList.GetNext();
+	for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		if (pVarObj->TestFlags(eVarObjFlag_MethodParameterOut))
+			return true;
+	}
+	return false;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSkeletonStyleAttributeBody(ESrcFileType eSrcType, TInterfaceNode* pNode,
+					TVariableObject &cVarObject, bool bSet)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	assert(NULL != pNode);
+	TInterfaceObject *pIFObject = pNode->GetInterfaceObject();
+	assert(NULL != pIFObject);
+
+	obj->fputs(eSrcType, "{\n");
+	obj->fprintf(eSrcType, "\t#define _%s\t(((%s*)___obj)->%s)\n",
+		pNode->m_cName.c_str(), pIFObject->GetName().c_str(), pNode->m_cName.c_str());
+
+	if (bSet)
+		SerializeReturnValue(eSrcType, "___output", cVarObject.m_cName.c_str(), pNode);
+	else
+	{
+		obj->fputs(eSrcType, "\tJson::Value& ___par = ___input[\"parameters\"];\n\n");
+		if (!DeserializeParameters(eSrcType, obj, &cVarObject))
+			return false;
+	}
+	obj->fprintf(eSrcType, "\treturn 0;\n"
+		"\t#undef _%s\n"
+		"}\n\n", pNode->m_cName.c_str());
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSkeletonStyleMethodBody(ESrcFileType eSrcType, TInterfaceNode* pNode)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fputs(eSrcType, "{\n\tJson::Value& ___par = ___input[\"parameters\"];\n\n");
+
+	TListItem* pItem = pNode->m_VariableList.GetNext();
+	for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+	
+		// declare the variable like: int a;
+		string declaration;
+		if (!GenSkeletonMethodVariableDeclaration(pVarObj, declaration))
+			return false;
+
+		obj->fprintf(eSrcType, "\t%s;\n", declaration.c_str());
+		if (!DeserializeParameters(eSrcType, obj, pVarObj))
+			return false;
+	}
+
+	obj->fputs(eSrcType, "\t");
+	// generate the return statement of function call
+	if (eBasicObjType_Unknown != pNode->m_Data.method.m_eRetValType)
+	{
+		string rettype;
+		if (!GenHdrFileProxyMethodDefReturnType(pNode, rettype))
+			return false;
+		obj->fprintf(eSrcType, "%s ___retval = ", rettype.c_str());
+	}
+
+	// generate the actual call
+	TInterfaceObject *pIFObject = pNode->GetInterfaceObject();
+	assert(NULL != pIFObject);
+	obj->fprintf(eSrcType, "((%s*)___obj)->%s(",
+		pIFObject->GetName().c_str(), pNode->m_cName.c_str());
+	
+	bool bfirst = true;
+	pItem = pNode->m_VariableList.GetNext();
+	for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		if (!bfirst) obj->fputs(eSrcType, ", "); else bfirst = false;
+		obj->fputs(eSrcType, pVarObj->m_cName.c_str());
+	}
+	obj->fputs(eSrcType, ");\n");
+
+	bool bPendingEnter = true;
+	// generate possible [out] parameters
+	pItem = pNode->m_VariableList.GetNext();
+	for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		if (!pVarObj->TestFlags(eVarObjFlag_MethodParameterOut))
+			continue;
+
+		if (bPendingEnter) { obj->fputs(eSrcType, "\n"); bPendingEnter = false; }
+		if (!SerializeParameters(eSrcType, obj, pVarObj))
+			return false;
+	}
+	
+	// generate the possible return value
+	if (eBasicObjType_Unknown != pNode->m_Data.method.m_eRetValType)
+	{
+		if (bPendingEnter) { obj->fputs(eSrcType, "\n"); bPendingEnter = false; }
+		if (!SerializeReturnValue(eSrcType, "___output", "___retval", pNode))
+			return false;
+	}
+
+	// generate the return value
+	obj->fprintf(eSrcType, "\treturn %s;\n"
+		"}\n\n", IsOutArgsExists(pNode) ? "eMethodStaticHdrFlag_OutArgsExist" : "0");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::IsNeedTransmitClientID(TInterfaceNode* pNode)
+{
+	if (eIFNodeType_Method != pNode->GetType())
+		return false;
+
+	if (!pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor)
+		&& pNode->m_Data.method.m_eRetValType == eBasicObjType_Interface)
+		return true;
+
+	// check if there is any parameter requires for clientid
+	TListItem *pItem = pNode->m_VariableList.GetNext();
+	for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		if (eBasicObjType_Interface == pVarObj->m_eBasicType
+			&& pVarObj->TestFlags(eVarObjFlag_MethodParameterOut))
+		{
+			if (!pVarObj->m_pIFType->TestInterfaceFlags(eInterfaceFlag_Observable))
+				return true;
+		}
+	}
+	return false;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileSkeletonObservableMethodBody(TInterfaceNode* pNode)
+{
+	return GenerateProxyStyleMethodBody(SrcFileSkeleton, pNode);
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateSourceFileProxyMethodBody(TInterfaceNode* pNode)
+{
+	return GenerateProxyStyleMethodBody(SrcFileProxy, pNode);
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateProxyStyleAttributeBody(ESrcFileType eSrcType,
+		TInterfaceNode* pNode, TVariableObject &cVarObject, bool bSet)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	TInterfaceObject *pIFObj = pNode->GetInterfaceObject();
+	assert(NULL != pIFObj);
+
+	obj->fputs(eSrcType, "{\n");
+
+	// generate the uuid
+	uint128 uuid;
+
+	// we must build unique names for (Set) and (Get), the format is:
+	// (Set): namespace.Interface.___funcName.Set
+	// (Get): namespace.Interface.___funcName.Get
+	// every generator must follow the same regulation
+	string methodname = pIFObj->GetModule()->GetName()
+		+ "." + pIFObj->GetName() + ".___" + pNode->m_cName
+		+ ((bSet) ? ".Set" : ".Get");
+	utilities::md5Encode(uuid, (void*)methodname.c_str(), methodname.length());
+
+	obj->fprintf(eSrcType, "\tuint128_t ___u = {"
+		"0x%X, 0x%X, 0x%X, {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}};\n",
+		uuid.Data1, uuid.Data2, uuid.Data3, uuid.Data4[0], uuid.Data4[1], uuid.Data4[2],
+		uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]);
+
+	// generate serializer(only for (set))
+	if (bSet)
+	{
+		obj->fputs(eSrcType, "\tJson::Value ___par;\n");
+		if (!::SerializeParameters(eSrcType, obj, &cVarObject))
+			return false;
+	}
+
+	// invoke
+	obj->fprintf(eSrcType, "\n\tJson::Value out;\n");
+	obj->fprintf(eSrcType, "\tInvoke(___u, %s, out, %u);\n", (bSet) ? "___par" : "\"{}\"",
+		pNode->GetNodeID() + (bSet ? 0 : 1));
+
+	// get return value
+	if (!bSet)
+	{
+		obj->fputs(eSrcType, "\n");
+		if (!DeserializeReturnValue(eSrcType, pNode)) return false;
+		obj->fputs(eSrcType, "\treturn ___retval;\n");
+	}
+
+	obj->fputs(eSrcType, "}\n\n");
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::GenerateProxyStyleMethodBody(ESrcFileType eSrcType, TInterfaceNode* pNode)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	TInterfaceObject *pIFObj = pNode->GetInterfaceObject();
+	assert(NULL != pIFObj);
+
+	obj->fputs(eSrcType, "{\n");
+
+	bool bIsConstructor = pNode->m_Data.method.TestFlags(TInterfaceNode::eMethodFlag_Constructor);
+	if (!bIsConstructor)
+	{
+		// generate the uuid
+		uint128 uuid;
+		string methodname = pIFObj->GetModule()->GetName() + "." + pIFObj->GetName() + "." + pNode->m_cName;
+		utilities::md5Encode(uuid, (void*)methodname.c_str(), methodname.length());
+
+		obj->fprintf(eSrcType, "\tuint128_t ___u = {"
+			"0x%X, 0x%X, 0x%X, {0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X}};\n",
+			uuid.Data1, uuid.Data2, uuid.Data3, uuid.Data4[0], uuid.Data4[1], uuid.Data4[2],
+			uuid.Data4[3], uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]);
+	}
+
+	bool emptyline = false;
+	if (!bIsConstructor && pNode->m_VariableList.IsEmpty())
+	{
+		obj->fputs(eSrcType, "\tstring in(\"{}\");\n\n");
+		obj->fprintf(eSrcType, "\tJson::Value out;\n");
+		if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+			obj->fprintf(eSrcType, "\tInvokeObservableMethod((m_cUniqueID + \".%s.%s\").c_str(), m_InstID, ___u, in, out, %u);\n",
+			GetModule()->GetName().c_str(), GetName().c_str(), pNode->GetNodeID());
+		else obj->fprintf(eSrcType, "\tInvoke(___u, in, out, %u);\n", pNode->GetNodeID());
+	}
+	else
+	{
+		obj->fputs(eSrcType, "\tJson::Value ___par;\n");
+		TListItem *pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!::SerializeParameters(eSrcType, obj, pVarObj))
+				return false;
+		}
+
+		if (bIsConstructor)
+		{
+			obj->fputs(eSrcType, "\tJson::Value ___overall;\n");
+
+			string constructorUniqueName;
+			if (!GetConstructorUniqueName(pNode, constructorUniqueName))
+				return false;
+			obj->fputs(eSrcType, "\t___overall[\"args\"] = ___par;\n");
+			obj->fprintf(eSrcType, "\t___overall[\"ctor\"] = \"%s\";\n",
+				constructorUniqueName.c_str());
+
+			// get_instance
+			obj->fputs(eSrcType, "\n\tGetInstance(GetClsName(), NULL, ___overall);\n");
+			obj->fputs(eSrcType, "}\n\n");
+			return true;
+		}
+
+		// invoke
+		obj->fprintf(eSrcType, "\n\tJson::Value out;\n");
+		if (TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+			obj->fprintf(eSrcType, "\tInvokeObservableMethod((m_cUniqueID + \".%s.%s\").c_str(), m_InstID, ___u, ___par, out, %u);\n",
+			GetModule()->GetName().c_str(), GetName().c_str(), pNode->GetNodeID());
+		else obj->fprintf(eSrcType, "\tInvoke(___u, ___par, out, %u);\n", pNode->GetNodeID());
+
+		// handle the return value
+		pItem = pNode->m_VariableList.GetNext();
+		for (; pItem != &(pNode->m_VariableList); pItem = pItem->GetNext())
+		{
+			TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!pVarObj->TestFlags(eVarObjFlag_MethodParameterOut))
+				continue;
+
+			if (!emptyline) {obj->fputs(eSrcType, "\n"); emptyline = true; }
+			if (!DeserializeOutParameters(eSrcType, pVarObj))
+				return false;
+		}
+	}
+
+	// get return value
+	if (eBasicObjType_Unknown != pNode->m_Data.method.m_eRetValType)
+	{
+		if (!emptyline) obj->fputs(eSrcType, "\n");
+		if (!DeserializeReturnValue(eSrcType, pNode)) return false;
+		obj->fputs(eSrcType, "\treturn ___retval;\n");
+	}
+	obj->fputs(eSrcType, "}\n\n");
+	return true;
+}
+
+static string GetBasicTypeString(EBasicObjectType eType)
+{
+	string ret;
+	switch (eType)
+	{
+	case eBasicObjType_Boolean: ret = "bool"; break;
+	case eBasicObjType_UInt8: ret = "unsigned char"; break;
+	case eBasicObjType_Int32: ret = "int"; break;
+	case eBasicObjType_Int16: ret = "short"; break;	
+	case eBasicObjType_Int64: ret = "long"; break;
+	case eBasicObjType_UInt32: ret = "unsigned int"; break;
+	case eBasicObjType_Float: ret = "double"; break;
+	case eBasicObjType_String: ret = "string"; break;
+	case eBasicObjType_Stream: ret = "TRPCStream"; break;
+	default: break;
+	}
+	return ret;
+}
+
+static bool SerializeTypedefedParameters(ESrcFileType eSrcType, TModuleObject* obj, TVariableObject *pVar, string& name)
+{
+	assert(NULL != pVar && NULL != obj);
+
+	EBasicObjectType eType;
+	TEnumDefObject*  pEnumDef;
+	TInterfaceObject* pIFObject;
+	TArrayTypeObject ArrayType;
+	TUserDefTypeObject* pUserDefType = pVar->m_pRefType->GetOriginalType(eType, ArrayType, &pEnumDef, &pIFObject);
+
+	if (!IsArray(ArrayType) && IsArray(pVar->m_ArrayType))
+		ArrayType = pVar->m_ArrayType;
+
+	if (IsBasicObjectType(eType))
+		return SerializeBasicParameters(eSrcType, obj, eType, ArrayType, pVar->m_cName, name);
+	else if (eBasicObjType_Enum == eType)
+		return SerializeEnumParameters(eSrcType, obj, pEnumDef, ArrayType, pVar->m_cName, name);
+	else if (eBasicObjType_Interface == eType)
+		return SerializeInterfaceParameters(eSrcType, obj, pIFObject, ArrayType, pVar->m_cName, name);
+	else
+	{
+		if (NULL == pUserDefType) return false;
+		return SerializeUserDefParameters(eSrcType, obj, pUserDefType, ArrayType, pVar->m_cName, name);
+	}
+	return true;
+}
+
+static const char *GetJsonConvertorNameByBasicType(EBasicObjectType eType)
+{
+	switch (eType)
+	{
+	case eBasicObjType_Boolean:
+		return "asBool";
+
+	case eBasicObjType_UInt8:
+		return "asUInt";
+
+	case eBasicObjType_Int32:
+		return "asInt";
+
+	case eBasicObjType_Int16:
+		return "asInt";
+
+	case eBasicObjType_Int64:
+		return "asInt";
+
+	case eBasicObjType_UInt32:
+		return "asUInt";
+
+	case eBasicObjType_Enum:
+		return "asInt";
+
+	case eBasicObjType_Float:
+		return "asDouble";
+
+	case eBasicObjType_String:
+		return "asString";
+
+	case eBasicObjType_Stream:	// shall never be here
+		return "asString";
+
+	default: return NULL;
+	}
+}
+
+static bool DeserializeEnumParameters(ESrcFileType eSrcType, TModuleObject *obj, TEnumDefObject* pEnumDef,
+		TArrayTypeObject& ArrayType, const string& cVarName, const string& name)
+{
+	if (eArrayType_Variable == ArrayType.eArrayType)
+		obj->fprintf(eSrcType, 
+		"\t{ \n"
+		"\tint arraylen=___par[\"%s_len\"].asInt();\n"
+		"\tif(arraylen>0){\n"
+		"\tJson::Value& ___arrObj = ___par[\"%s\"];\n"
+		"\tint ___sz = ___arrObj.size();\n"
+		"\t%s.clear();\n"//[map clear]
+		"\tfor (int ___i = 0; ___i < ___sz; ++___i)\n"
+		"\t{\n"
+		"\t\tJson::Value& ___arrnode = ___arrObj[___i];\n"
+		"\t\t%s[___arrnode[\"i\"].asUInt()] = (%s)___arrnode[\"v\"].asInt();\n"
+		"\t}\n"
+		"\t}\n"
+		"\t}\n",
+		name.c_str(),
+		name.c_str(),
+		cVarName.c_str(),
+		cVarName.c_str(), pEnumDef->GetFullName(obj).c_str());
+
+	else if (eArrayType_Fixed == ArrayType.eArrayType)
+		obj->fprintf(eSrcType, 
+		"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+		"\tint ___sz = ___arrObj.size();\n"
+		"\tfor (int ___i = 0; ___i < ___sz; ++___i)\n"
+		"\t\t%s[___i] = (%s)___arrObj[___i].asInt();\n"
+		"\t}\n",
+		name.c_str(), cVarName.c_str(), pEnumDef->GetFullName(obj).c_str());
+
+	else obj->fprintf(eSrcType, "\t%s = (%s)___par[\"%s\"].asInt();\n",
+		cVarName.c_str(), pEnumDef->GetFullName(obj).c_str(), name.c_str());
+
+	return true;
+}
+
+static bool DeserializeBasicParameters(ESrcFileType eSrcType, TModuleObject *obj, EBasicObjectType eType,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name)
+{
+	string type = ::GetBasicTypeString(eType);
+	const char* pJsonConvertor = GetJsonConvertorNameByBasicType(eType);
+	const char* prefix = (eBasicObjType_UInt8 == eType)
+		? "(unsigned char)" : "";
+
+	if (eArrayType_Variable == ArrayType.eArrayType)
+	{
+		obj->fprintf(eSrcType, 
+			"\t{ \n"
+			"\tint arraylen=___par[\"%s_len\"].asInt();\n"
+			"\tif(arraylen>0){\n"
+			"\tJson::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\tint ___sz = ___arrObj.size();\n"
+			"\t%s.clear();\n"//[map clear]
+			"\tfor (int ___i = 0; ___i < ___sz; ++___i)\n",
+			name.c_str(),
+			name.c_str(),
+			cVarName.c_str()
+			);
+
+		if (eBasicObjType_Stream == eType)
+			obj->fprintf(eSrcType,
+			"\t{\n\t\tTRPCStream ___tmpstm;\n"
+			"\t\t___tmpstm.Deserialize(___arrObj[___i][\"v\"].asString());\n"
+			"\t\t%s[___arrObj[___i][\"i\"].asUInt()] = ___tmpstm;\n\t}\n"
+			"\t} \n"
+			"\t}\n",
+			cVarName.c_str());
+		else obj->fprintf(eSrcType,
+			"\t\t%s[___arrObj[___i][\"i\"].asUInt()] = %s___arrObj[___i][\"v\"].%s();\n"
+			"\t} \n"
+			"\t}\n",
+			cVarName.c_str(), prefix, pJsonConvertor);
+
+	}
+	else if (eArrayType_Fixed == ArrayType.eArrayType)
+	{
+		obj->fprintf(eSrcType, 
+			"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\tint ___sz = ___arrObj.size();\n"
+			"\tfor (int ___i = 0; ___i < ___sz; ++___i)\n", name.c_str());
+
+		if (eBasicObjType_Stream == eType)
+			obj->fprintf(eSrcType,
+			"\t\t%s[___i].Deserialize(___arrObj[___i].asString());\n",
+			cVarName.c_str());
+		else obj->fprintf(eSrcType,
+			"\t\t%s[___i] = %s___arrObj[___i].%s();\n",
+			cVarName.c_str(), prefix, pJsonConvertor);
+
+		obj->fputs(eSrcType, "\t}\n");
+	}
+	else
+	{
+		if (eBasicObjType_Stream == eType)
+			obj->fprintf(eSrcType, "\t%s.Deserialize(___par[\"%s\"].asString());\n",
+				cVarName.c_str(), name.c_str());
+		else obj->fprintf(eSrcType, "\t%s = %s___par[\"%s\"].%s();\n",
+				cVarName.c_str(), prefix, name.c_str(), pJsonConvertor);
+	}
+	return true;
+}
+
+static bool SerializeInterfaceParameters(ESrcFileType eSrcType, TModuleObject *obj, TInterfaceObject* pIFObject,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name)
+{
+	// transfer the client/host unique id as a parameter
+	string uid = pIFObject->GetFullName(obj) + "::uid";
+	obj->fprintf(eSrcType, "\t___par[\"%s\"] = GetUniqueIdentifier();\n", uid.c_str());
+
+	if (eArrayType_Variable == ArrayType.eArrayType)
+	{
+		if (pIFObject->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+			obj->fprintf(eSrcType,
+				"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+				"\t___arrObj.clear();\n"
+				"\tint arraylen = 0;\n"
+				"\tmap<uint, %s>::const_iterator ___i;\n"
+				"\tfor (___i = %s.begin(); ___i != %s.end(); ___i++)\n"
+				"\t{\n"
+				"\tarraylen++;\n"
+				"\t\tJson::Value ___arrNode;\n"
+				"\t\t___arrNode[\"i\"] = ___i->first;\n"
+				"\t\t___arrNode[\"v\"] = (unsigned int)&(___i->second);\n"
+				"\t\t___arrObj.append(___arrNode);\n"
+				"\t}\n"
+				"\t___par[\"%s_len\"]=arraylen;\n"
+				"\t}\n",
+				name.c_str(), pIFObject->GetFullName(obj).c_str(),
+				cVarName.c_str(), cVarName.c_str(), name.c_str());
+
+		else obj->fprintf(eSrcType,
+				"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+				"\t___arrObj.clear();\n"
+				"\tint arraylen = 0;\n"
+				"\tmap<uint, %s>::const_iterator ___i;\n"
+				"\tfor (___i = %s.begin(); ___i != %s.end(); ___i++)\n"
+				"\t{\n"
+				"\tarraylen++;\n"
+				"\t\tJson::Value ___arrNode;\n"
+				"\t\t___arrNode[\"i\"] = ___i->first;\n"
+				"\t\t___arrNode[\"v\"] = (unsigned int)___i->second.GetInstID();\n"
+				"\t\t___arrObj.append(___arrNode);\n"
+				"\t}\n"
+				"\t___par[\"%s_len\"]=arraylen;\n"
+				"\t}\n",
+				name.c_str(), pIFObject->GetFullName(obj).c_str(),
+				cVarName.c_str(), cVarName.c_str(), name.c_str());
+	}
+	else if (eArrayType_Fixed == ArrayType.eArrayType)
+	{
+		if (pIFObject->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+			obj->fprintf(eSrcType, 
+				"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+				"\t___arrObj.clear();\n"
+				"\tfor (int ___i = 0; ___i < %u; ++___i)\n"
+				"\t\t___arrObj.append((unsigned int)&(%s[___i]));\n\t}\n",
+				name.c_str(), ArrayType.ArraySize, cVarName.c_str());
+
+		else obj->fprintf(eSrcType, 
+				"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+				"\t___arrObj.clear();\n"
+				"\tfor (int ___i = 0; ___i < %u; ++___i)\n"
+				"\t\t___arrObj.append((unsigned int)%s[___i].GetInstID());\n\t}\n",
+				name.c_str(), ArrayType.ArraySize, cVarName.c_str());
+	}
+	else
+	{
+		if (pIFObject->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+			obj->fprintf(eSrcType, "\t___par[\"%s\"] = (unsigned int)&%s;\n",
+				name.c_str(), cVarName.c_str());
+		else obj->fprintf(eSrcType, "\t___par[\"%s\"] = (unsigned int)%s.GetInstID();\n",
+				name.c_str(), cVarName.c_str());
+	}
+	return true;
+}
+
+static bool SerializeEnumParameters(ESrcFileType eSrcType, TModuleObject *obj, TEnumDefObject* pEnumDef,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name)
+{
+	if (eArrayType_Variable == ArrayType.eArrayType)
+	{
+		obj->fprintf(eSrcType,
+			"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\t___arrObj.clear();\n"
+			"\tint arraylen = 0;\n"
+			"\tmap<uint, %s>::const_iterator ___i;\n"
+			"\tfor (___i = %s.begin(); ___i != %s.end(); ___i++)\n"
+			"\t{\n"
+			"\t\tarraylen++;\n"
+			"\t\tJson::Value ___arrNode;\n"
+			"\t\t___arrNode[\"i\"] = ___i->first;\n"
+			"\t\t___arrNode[\"v\"] = (int)___i->second;\n"
+			"\t\t___arrObj.append(___arrNode);\n"
+			"\t}"
+			"\t___par[\"%s_len\"]=arraylen;\n"
+			"\t}\n",
+			name.c_str(), pEnumDef->GetFullName(obj).c_str(),
+			cVarName.c_str(), cVarName.c_str(),name.c_str());
+	}
+	else if (eArrayType_Fixed == ArrayType.eArrayType)
+	{
+		obj->fprintf(eSrcType, 
+		"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+		"\t___arrObj.clear();\n"
+		"\tfor (int ___i = 0; ___i < %u; ++___i)\n"
+		"\t\t___arrObj.append((int)%s[___i]);\n\t}\n",
+		name.c_str(), ArrayType.ArraySize, cVarName.c_str());
+	}
+	else obj->fprintf(eSrcType, "\t___par[\"%s\"] = (int)%s;\n",
+		name.c_str(), cVarName.c_str());
+
+	return true; 
+}
+
+static bool SerializeBasicParameters(ESrcFileType eSrcType, TModuleObject *obj, EBasicObjectType eType,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name)
+{
+	string type = ::GetBasicTypeString(eType);
+
+	if (eArrayType_Variable == ArrayType.eArrayType)
+	{
+		obj->fprintf(eSrcType, 
+			"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\t___arrObj.clear();\n"
+			"\tint arraylen = 0;\n"
+			"\tmap<uint, %s>::const_iterator ___i;\n"
+			"\tfor (___i = %s.begin(); ___i != %s.end(); ___i++)\n"
+			"\t{\n"
+			"\tarraylen ++;\n"
+			"\t\tJson::Value ___arrNode;\n"
+			"\t\t___arrNode[\"i\"] = ___i->first;\n",
+			name.c_str(), type.c_str(), cVarName.c_str(), cVarName.c_str());
+
+		if (eBasicObjType_Stream == eType)
+			obj->fputs(eSrcType,
+				"\t\t___arrNode[\"v\"] = ___i->second.Serialize();\n");
+		else obj->fprintf(eSrcType, 
+			"\t\t___arrNode[\"v\"] = (%s)___i->second;\n",
+				type.c_str());
+
+		obj->fprintf(eSrcType, 
+			"\t\t___arrObj.append(___arrNode);\n"
+			"\t}"
+			"\t___par[\"%s_len\"]=arraylen;\n"
+			"}\n", name.c_str());
+	}
+	else if (eArrayType_Fixed == ArrayType.eArrayType)
+	{
+		obj->fprintf(eSrcType,
+			"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\t___arrObj.clear();\n"
+			"\tfor (int ___i = 0; ___i < %u; ++___i)\n",
+			name.c_str(), ArrayType.ArraySize);
+
+		if (eBasicObjType_Stream == eType)
+			obj->fprintf(eSrcType,
+				"\t\t___arrObj.append(%s[___i].Serialize());\n\t}\n",
+			cVarName.c_str());
+		else obj->fprintf(eSrcType,
+			"\t\t___arrObj.append((%s)%s[___i]);\n\t}\n",
+			type.c_str(), cVarName.c_str());
+	}
+	else
+	{
+		if (eBasicObjType_Stream == eType)
+			obj->fprintf(eSrcType, "\t___par[\"%s\"] = %s.Serialize();\n",
+			name.c_str(), cVarName.c_str());
+		else obj->fprintf(eSrcType, "\t___par[\"%s\"] = %s;\n",
+			name.c_str(), cVarName.c_str());
+	}
+	return true;
+}
+
+static bool DeserializeTypedefedParameters(ESrcFileType eSrcType, TModuleObject *obj, TTypedefObject* pTypedefObject,
+			TArrayTypeObject& FinalArrayType, const string& cVarName, const string& name)
+{
+	assert(NULL != pTypedefObject);
+	
+	EBasicObjectType eType;
+	TEnumDefObject* pEnumDef;
+	TInterfaceObject* pIFObject;
+	TArrayTypeObject ArrayType;
+	TUserDefTypeObject* pUserDefType = pTypedefObject->GetOriginalType(eType, ArrayType, &pEnumDef, &pIFObject);
+
+	if (!IsArray(ArrayType) && IsArray(FinalArrayType))
+		ArrayType = FinalArrayType;
+
+	if (IsBasicObjectType(eType))
+		return DeserializeBasicParameters(eSrcType, obj, eType, ArrayType, cVarName, name);
+	else if (eBasicObjType_Enum == eType)
+		return DeserializeEnumParameters(eSrcType, obj, pEnumDef, ArrayType, cVarName, name);
+	else if (eBasicObjType_Interface == eType)
+		return DeserializeInterfaceParameters(eSrcType, obj, pIFObject, ArrayType, cVarName, name);
+	else
+	{
+		if (NULL == pUserDefType) return false;
+		return DeserializeUserDefParameters(eSrcType, obj, pUserDefType, ArrayType, cVarName, name);
+	}
+	return true;
+}
+
+static bool DeserializeInterfaceParameters(ESrcFileType eSrcType, TModuleObject *obj, TInterfaceObject* pIFObject,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name)
+{
+	assert(NULL != pIFObject);
+
+	// prepare the observable class full name
+	string cObservableClsName, cObservableClsName_uid;
+	if (pIFObject->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+	{
+		cObservableClsName = pIFObject->GetFullName(obj);
+		cObservableClsName_uid = cObservableClsName + "::uid";
+		string::size_type pos = cObservableClsName.find("Proxy");
+		if (pos != string::npos) cObservableClsName.replace(pos, 5, "Skeleton");
+	}
+
+	if (eArrayType_Variable == ArrayType.eArrayType)
+	{
+		if (pIFObject->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+			obj->fprintf(eSrcType,
+				"\t{ \n"
+				"\tint arraylen = ___par[\"%s_len\"].asInt();\n"
+				"\tif (arraylen>0){\n"
+				"\tJson::Value& ___arrObj = ___par[\"%s\"];\n"
+				"\tstring ___%s_uid = ___par[\"%s\"].asString();\n"
+				"\tint ___sz = ___arrObj.size();\n"
+				"\t%s.clear();\n"//[map clear]
+				"\tfor (int ___i = 0; ___i < ___sz; ++___i)\n"
+				"\t{\n"
+				"\t\tJson::Value& ___arrnode = ___arrObj[___i];\n"
+				"\t\t%s[___arrnode[\"i\"].asUInt()] = %s(___arrnode[\"v\"].asUInt(), ___%s_uid);\n"
+				"\t}}}\n",
+				name.c_str(),
+				name.c_str(),
+				cVarName.c_str(),
+				cVarName.c_str(), cObservableClsName_uid.c_str(), cVarName.c_str(),
+				cObservableClsName.c_str(), cVarName.c_str());
+
+		else obj->fprintf(eSrcType, 
+			"\t{ \n"
+			"\tint arraylen = ___par[\"%s_len\"].asInt();\n"
+			"\tif (arraylen>0){\n"
+			"\tJson::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\tint ___sz = ___arrObj.size();\n"
+			"\t%s.clear();\n"//[map clear]
+			"\tfor (int ___i = 0; ___i < ___sz; ++___i)\n"
+			"\t{\n"
+			"\t\tpair<uint, %s> ___pobj;\n"
+			"\t\tJson::Value& ___arrnode = ___arrObj[___i];\n"
+			"\t\t___pobj.first = (uint)___arrnode[\"i\"];\n"
+			"\t\t___pobj.second.Bind(___arrnode[\"v\"].asUInt(), &%s::s_s%sStaticData_);\n"
+			"\t\t%s.insert(___pobj);\n"
+			"\t}}}\n",
+			name.c_str(), 
+			name.c_str(), 
+			cVarName.c_str(),
+			pIFObject->GetFullName(obj).c_str(),
+			pIFObject->GetFullName(obj).c_str(),
+			pIFObject->GetName().c_str(), cVarName.c_str());
+	}
+	else if (eArrayType_Fixed == ArrayType.eArrayType)
+	{
+		if (pIFObject->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+			obj->fprintf(eSrcType, 
+				"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+				"\tstring ___%s_uid = ___par[\"%s\"].asString();\n"
+				"\tfor (uint ___i = 0; ___i < %u; ++___i)\n"
+				"\t\t%s[___i] = %s(___arrObj[___i].asUInt(), ___%s_uid);\n"
+				"\t}\n",
+				name.c_str(), cVarName.c_str(), cObservableClsName_uid.c_str(),
+				ArrayType.ArraySize, cVarName.c_str(), cObservableClsName.c_str(),
+				cVarName.c_str());
+
+		else obj->fprintf(eSrcType, 
+			"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\tfor (uint ___i = 0; ___i < %u; ++___i)\n"
+			"\t\t%s[___i].Bind((unsigned int)___arrObj[___i], &%s::s_s%sStaticData_);\n"
+			"\t}\n",
+			name.c_str(), ArrayType.ArraySize,
+			cVarName.c_str(), pIFObject->GetFullName(obj).c_str(),
+			pIFObject->GetName().c_str());
+	}
+	else
+	{
+		if (pIFObject->TestInterfaceFlags(TInterfaceObject::eInterfaceFlag_Observable))
+			obj->fprintf(eSrcType, "\t%s = %s(___par[\"%s\"].asUInt(),\n"
+				"\t\t___par[\"%s\"].asString());\n",
+				cVarName.c_str(), cObservableClsName.c_str(), name.c_str(), cObservableClsName_uid.c_str());
+		else obj->fprintf(eSrcType, "\t%s.Bind((unsigned int)___par[\"%s\"].asUInt(),\n"
+				"\t\t&%s::s_s%sStaticData_);\n",
+				cVarName.c_str(), name.c_str(), pIFObject->GetFullName(obj).c_str(), pIFObject->GetName().c_str());
+	}
+	return true;
+}
+
+static bool DeserializeUserDefParameters(ESrcFileType eSrcType, TModuleObject *obj, TUserDefTypeObject* pUserDefType,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name)
+{
+	assert(NULL != pUserDefType);
+
+	if (eArrayType_Variable == ArrayType.eArrayType)
+		obj->fprintf(eSrcType, 
+			"\t{ \n"
+			"\tint arraylen = ___par[\"%s_len\"].asInt();\n"
+			"\tif (arraylen>0){\n"
+			"\tJson::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\tint ___sz = ___arrObj.size();\n"
+			"\t%s.clear();\n"//[map clear]
+			"\tfor (int ___i = 0; ___i < ___sz; ++___i)\n"
+			"\t{\n"
+			"\t\tpair<uint, %s> ___pobj;\n"
+			"\t\tJson::Value& ___arrnode = ___arrObj[___i];\n"
+			"\t\t___pobj.first = (uint)___arrnode[\"i\"].asUInt();\n"
+			"\t\t___pobj.second.___deserialize(___arrnode[\"v\"]);\n"
+			"\t\t%s.insert(___pobj);\n"
+			"\t}}}\n",
+			name.c_str(), 
+			name.c_str(), 
+			cVarName.c_str(),
+			pUserDefType->GetFullName(obj).c_str(), cVarName.c_str());
+	//*******************************************************************
+	//edited 2016.3.29 10:53 by csy, for insert() shall not be used in fixed type
+	//*******************************************************************
+	else if (eArrayType_Fixed == ArrayType.eArrayType)
+		obj->fprintf(eSrcType, 
+			"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\tfor (uint ___i = 0; ___i < %u; ++___i)\n"
+			"\t{\n"
+			"\t\tpair<uint, %s> ___pobj;"
+			"\t\t___pobj.first = ___i;\n"
+			"\t\t___pobj.second.___deserialize(___arrObj[___i]);\n"
+			"\t\t%s[___i] = ___pobj.second;\n"//this line's been changed from "\t\t%s.insert(___pobj);\n"
+			"\t}}\n",
+			name.c_str(), ArrayType.ArraySize,
+			pUserDefType->GetFullName(obj).c_str(), cVarName.c_str());
+	else obj->fprintf(eSrcType, "\t%s.___deserialize(___par[\"%s\"]);\n",
+		cVarName.c_str(), name.c_str());
+		
+	return true;
+}
+
+static bool SerializeUserDefParameters(ESrcFileType eSrcType, TModuleObject *obj, TUserDefTypeObject* pUserDefType,
+			TArrayTypeObject& ArrayType, const string& cVarName, const string& name)
+{
+	assert(NULL != pUserDefType);
+
+	if (eArrayType_Variable == ArrayType.eArrayType)
+		obj->fprintf(eSrcType, 
+			"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\t___arrObj.clear();\n"
+			"\tint arraylen = 0;\n"
+			"\tmap<uint, %s>::const_iterator ___i;\n"
+			"\tfor (___i = %s.begin(); ___i != %s.end(); ___i++)\n"
+			"\t{\n"
+			"\tarraylen++;\n"
+			"\t\tJson::Value ___arrNode;\n"
+			"\t\t___arrNode[\"i\"] = ___i->first;\n"
+			"\t\t___i->second.___serialize(___arrNode[\"v\"]);\n"
+			"\t\t___arrObj.append(___arrNode);\n"
+			"\t}\n"
+			"\t___par[\"%s_len\"]=arraylen;\n"
+			"\t}\n",
+			name.c_str(), pUserDefType->GetFullName(obj).c_str(),
+			cVarName.c_str(), cVarName.c_str(), name.c_str());
+	else if (eArrayType_Fixed == ArrayType.eArrayType)
+		obj->fprintf(eSrcType, 
+			"\t{ Json::Value& ___arrObj = ___par[\"%s\"];\n"
+			"\t___arrObj.clear();\n"
+			"\tfor (int ___i = 0; ___i < %u; ++___i)\n"
+			"\t{\n"
+			"\t\tJson::Value ___arrNode;\n"
+			"\t\t%s[___i].___serialize(___arrNode);\n"
+			"\t\t___arrObj.append(___arrNode);\n"
+			"\t}}\n",
+			name.c_str(), ArrayType.ArraySize, cVarName.c_str());
+	else obj->fprintf(eSrcType, "\t%s.___serialize(___par[\"%s\"]);\n",
+		cVarName.c_str(), name.c_str());
+
+	return true;
+}
+
+static bool DeserializeParameters(ESrcFileType eSrcType, TModuleObject *obj, TVariableObject *pVar)
+{
+	assert(NULL != pVar && NULL != obj);
+
+	string name;
+	switch (pVar->m_ArrayType.eArrayType)
+	{
+	case eArrayType_Fixed:
+		name.assign("F"); break;
+		
+	case eArrayType_Variable:
+		name.assign("V"); break;
+
+	case eArrayType_NotArray:
+		name.assign("N"); break;
+
+	default: return false;
+	}
+	name.append("_");
+	name.append(pVar->m_cName);
+
+	switch (pVar->m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		name = "bool" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_UInt8:
+		name = "uchar" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_Int32:
+		name = "int" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_Int16:
+		name = "short" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_Int64:
+		name = "long" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_UInt32:
+		name = "uint" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != pVar->m_pEnumDefType);
+		name = pVar->m_pEnumDefType->GetFullName(obj) + name;
+		if (!DeserializeEnumParameters(eSrcType, obj, pVar->m_pEnumDefType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_Float:
+		name = "double" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_String:
+		name = "string" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_Stream:
+		name = "stream" + name;
+		if (!DeserializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_Typedefed:
+		assert(NULL != pVar->m_pRefType);
+		name = pVar->m_pRefType->GetFullName(obj) + name;
+		if (!DeserializeTypedefedParameters(eSrcType, obj, pVar->m_pRefType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_UserDefined:
+		assert(NULL != pVar->m_pUserDefType);
+		name = pVar->m_pUserDefType->GetFullName(obj) + name;
+		if (!DeserializeUserDefParameters(eSrcType, obj, pVar->m_pUserDefType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	case eBasicObjType_Interface:
+		assert(NULL != pVar->m_pIFType);
+		name = pVar->m_pIFType->GetFullName(obj) + name;
+		if (!DeserializeInterfaceParameters(eSrcType, obj, pVar->m_pIFType, pVar->m_ArrayType, pVar->m_cName, name))
+			return false;
+		break;
+
+	default: return false;
+	}
+	return true;
+}
+
+static bool SerializeParameters(ESrcFileType eSrcType, TModuleObject *obj, TVariableObject* pVar)
+{
+	assert(NULL != pVar && NULL != obj);
+
+	string name;
+	switch (pVar->m_ArrayType.eArrayType)
+	{
+	case eArrayType_Fixed:
+		name.assign("F"); break;
+		
+	case eArrayType_Variable:
+		name.assign("V"); break;
+
+	case eArrayType_NotArray:
+		name.assign("N"); break;
+
+	default: return false;
+	}
+	name.append("_");
+	name.append(pVar->m_cName);
+
+	switch (pVar->m_eBasicType)
+	{
+	case eBasicObjType_Boolean:
+		name = "bool" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_UInt8:
+		name = "uchar" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_Int32:
+		name = "int" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_Int16:
+		name = "short" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_Int64:
+		name = "long" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_UInt32:
+		name = "uint" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_Enum:
+		assert(NULL != pVar->m_pEnumDefType);
+		name = pVar->m_pEnumDefType->GetFullName(obj) + name;
+		SerializeEnumParameters(eSrcType, obj, pVar->m_pEnumDefType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_Float:
+		name = "double" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_String:
+		name = "string" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_Stream:
+		name = "stream" + name;
+		SerializeBasicParameters(eSrcType, obj, pVar->m_eBasicType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_Typedefed:
+		assert(NULL != pVar->m_pRefType);
+		name = pVar->m_pRefType->GetFullName(obj) + name;
+		SerializeTypedefedParameters(eSrcType, obj, pVar, name);
+		break;
+
+	case eBasicObjType_UserDefined:
+		assert(NULL != pVar->m_pUserDefType);
+		name = pVar->m_pUserDefType->GetFullName(obj) + name;
+		SerializeUserDefParameters(eSrcType, obj, pVar->m_pUserDefType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	case eBasicObjType_Interface:
+		assert(NULL != pVar->m_pIFType);
+		name = pVar->m_pIFType->GetFullName(obj) + name;
+		SerializeInterfaceParameters(eSrcType, obj, pVar->m_pIFType, pVar->m_ArrayType, pVar->m_cName, name);
+		break;
+
+	default: return false;
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::SerializeReturnValue(ESrcFileType eSrcType, const char *retObj,
+				const char *pVarName, TInterfaceNode* pNode)
+{
+	assert(NULL != retObj && NULL != pVarName);
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// typename + type[fixed array/variable array/none/return value] + variable name
+	string name("R_return");
+	EBasicObjectType eType = (eIFNodeType_Method == pNode->GetType())
+		? pNode->m_Data.method.m_eRetValType : pNode->m_Data.attribute.m_eBasicType;
+	if (IsBasicObjectType(eType))
+	{
+		switch (eType)
+		{
+		case eBasicObjType_Boolean:
+			name = "bool" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+			break;
+
+		case eBasicObjType_UInt8:
+			name = "uchar" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+			break;
+
+		case eBasicObjType_Int32:
+			name = "int" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+			break;
+
+		case eBasicObjType_Int16:
+			name = "short" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+			break;
+
+		case eBasicObjType_Int64:
+			name = "long" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+			break;
+
+		case eBasicObjType_UInt32:
+			name = "uint" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+			break;
+
+		case eBasicObjType_Float:
+			name = "double" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+			break;
+
+		case eBasicObjType_String:
+			name = "string" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+			break;
+
+		case eBasicObjType_Stream:
+			name = "stream" + name;
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s.Serialize();\n", retObj, name.c_str(), pVarName);
+			break;
+
+		default: return false;
+		}
+	}
+	else if (eBasicObjType_Enum == eType)
+	{
+		TEnumDefObject *pRetValEnumDef = (eIFNodeType_Method == pNode->GetType())
+			? pNode->m_Data.method.m_pRetValEnumDef : pNode->m_Data.attribute.m_pEnumDef;
+		assert(NULL != pRetValEnumDef);
+		name = pRetValEnumDef->GetFullName(obj) + name;
+		string::size_type pos = name.find("::");
+		if (pos != string::npos) name.replace(pos, 2, "_");
+		obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+	}	
+	else if(eBasicObjType_Typedefed == eType)
+	{			
+		EBasicObjectType eRefType;
+		TArrayTypeObject ArrayType;
+		TTypedefObject *pRetValTypedefType = (eIFNodeType_Method == pNode->GetType())
+			? pNode->m_Data.method.m_pRetValTypedefType : pNode->m_Data.attribute.m_pTypedefType;
+		assert(NULL != pRetValTypedefType);
+		pRetValTypedefType->GetOriginalType(eRefType, ArrayType, NULL, NULL);
+		assert(!IsArray(ArrayType));
+
+		name = pRetValTypedefType->GetFullName(obj) + name;
+		string::size_type pos = name.find("::");
+		if (pos != string::npos) name.replace(pos, 2, "_");
+		if (IsBasicObjectType(eRefType))
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = %s;\n", retObj, name.c_str(), pVarName);
+		else if (eBasicObjType_Enum == eRefType)
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = (int)%s;\n", retObj, name.c_str(), pVarName);
+		else if (eBasicObjType_UserDefined == eRefType)
+			obj->fprintf(eSrcType, "\t%s.___serialize(%s[\"%s\"]);\n", pVarName, retObj, name.c_str());
+		else if (eBasicObjType_Interface == eRefType)
+		{
+			obj->fprintf(eSrcType, "\t%s.KeepInstance();\n", pVarName);
+			obj->fprintf(eSrcType, "\t%s[\"%s\"] = (unsigned int)%s.GetInstID();\n", retObj, name.c_str(), pVarName);
+		}
+	}
+	else if (eBasicObjType_UserDefined == eType)
+	{
+		TUserDefTypeObject *pRetValUserDefType = (eIFNodeType_Method == pNode->GetType())
+			? pNode->m_Data.method.m_pRetValUserDefType : pNode->m_Data.attribute.m_pUserDefType;
+		assert(NULL != pRetValUserDefType);
+		name = pRetValUserDefType->GetFullName(obj) + name;
+		string::size_type pos = name.find("::");
+		if (pos != string::npos) name.replace(pos, 2, "_");
+		obj->fprintf(eSrcType, "\t%s.___serialize(%s[\"%s\"]);\n", pVarName, retObj, name.c_str());
+	}
+	else if (eBasicObjType_Interface == eType)
+	{	
+		obj->fprintf(eSrcType, "\t%s.KeepInstance();\n", pVarName);
+		TInterfaceObject *pRetValIFObject = (eIFNodeType_Method == pNode->GetType())
+			? pNode->m_Data.method.m_pRetValIFObject : pNode->m_Data.attribute.m_pIFObject;
+		assert(NULL != pRetValIFObject);
+		name = pRetValIFObject->GetFullName(obj) + name;
+		string::size_type pos = name.find("::");
+		if (pos != string::npos) name.replace(pos, 2, "_");
+		obj->fprintf(eSrcType, "\t%s[\"%s\"] = (unsigned int)%s.GetInstID();\n", retObj, name.c_str(), pVarName);
+	}
+	else return false;
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::DeserializeReturnValue(ESrcFileType eSrcType, TInterfaceNode* pNode)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	bool isMethod = (eIFNodeType_Method == pNode->GetType());
+
+	// typename + type[fixed array/variable array/none/return value] + variable name
+	string name("R_return");
+	EBasicObjectType eType = (isMethod) ? pNode->m_Data.method.m_eRetValType
+		: pNode->m_Data.attribute.m_eBasicType;
+	if (IsBasicObjectType(eType))
+	{
+		switch (eType)
+		{
+		case eBasicObjType_Boolean:
+			name = "bool" + name;
+			obj->fputs(eSrcType, "\tbool ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval = out[\"%s\"].asBool();\n", name.c_str());
+			break;
+
+		case eBasicObjType_UInt8:
+			name = "uchar" + name;
+			obj->fputs(eSrcType, "\tunsigned char ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval = (unsigned char)out[\"%s\"].asUInt();\n", name.c_str());
+			break;
+
+		case eBasicObjType_Int32:
+			name = "int" + name;
+			obj->fputs(eSrcType, "\tint ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval = out[\"%s\"].asInt();\n", name.c_str());
+			break;
+
+		case eBasicObjType_Int16:
+			name = "short" + name;
+			obj->fputs(eSrcType, "\tshort ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval = out[\"%s\"].asInt();\n", name.c_str());
+			break;
+
+		case eBasicObjType_Int64:
+			name = "long" + name;
+			obj->fputs(eSrcType, "\tlong ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval = out[\"%s\"].asInt();\n", name.c_str());
+			break;
+
+		case eBasicObjType_UInt32:
+			name = "uint" + name;
+			obj->fputs(eSrcType, "\tunsigned int ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval = out[\"%s\"].asUInt();\n", name.c_str());
+			break;
+
+		case eBasicObjType_Float:
+			name = "double" + name;
+			obj->fputs(eSrcType, "\tdouble ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval = out[\"%s\"].asDouble();\n", name.c_str());
+			break;
+
+		case eBasicObjType_String:
+			name = "string" + name;
+			obj->fputs(eSrcType, "\tstring ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval = out[\"%s\"].asString();\n", name.c_str());
+			break;
+
+		case eBasicObjType_Stream:
+			name = "stream" + name;
+			obj->fputs(eSrcType, "\tTRPCStream ___retval;\n");
+			obj->fprintf(eSrcType, "\t___retval.Deserialize(out[\"%s\"].asString());\n", name.c_str());
+			break;
+
+		default: return false;
+		}
+	}
+	else if (eBasicObjType_Enum == eType)
+	{
+		TEnumDefObject *pRetValEnumDef = (isMethod) ?
+			pNode->m_Data.method.m_pRetValEnumDef : pNode->m_Data.attribute.m_pEnumDef;
+		assert(NULL != pRetValEnumDef);
+		name = pRetValEnumDef->GetFullName(obj) + name;
+		// todo: check if the following 2 lines is right
+		string::size_type pos = name.find("::");
+		if (pos != string::npos) name.replace(pos, 2, "_");
+		obj->fprintf(eSrcType, "\t%s ___retval;\n",
+			pRetValEnumDef->GetFullName(obj).c_str());
+		obj->fprintf(eSrcType, "\t___retval = (%s)out[\"%s\"].asInt();\n",
+			pRetValEnumDef->GetFullName(obj).c_str(),
+			name.c_str());
+	}
+	else if (eBasicObjType_Typedefed == eType)
+	{
+		TTypedefObject *pRetValTypedefType = (isMethod) ?
+			pNode->m_Data.method.m_pRetValTypedefType : pNode->m_Data.attribute.m_pTypedefType;
+		assert(NULL != pRetValTypedefType);
+		name = pRetValTypedefType->GetFullName(obj) + name;
+		// todo: check if the following 2 lines is right
+		string::size_type pos = name.find("::");
+		if (pos != string::npos) name.replace(pos, 2, "_");
+		obj->fprintf(eSrcType, "\t%s ___retval;\n",
+			pRetValTypedefType->GetFullName(obj).c_str());
+			
+		EBasicObjectType eRefType;
+		TArrayTypeObject ArrayType;
+		pRetValTypedefType->GetOriginalType(eRefType, ArrayType, NULL, NULL);
+		assert(!IsArray(ArrayType));
+
+		if (IsBasicObjectType(eRefType))
+		{
+			if (eBasicObjType_Stream == eRefType)
+				obj->fprintf(eSrcType, "\t___retval.Deserialize(out[\"%s\"].asString();\n",
+					name.c_str());
+			else obj->fprintf(eSrcType, "\t___retval = %sout[\"%s\"].%s();\n",
+				(eBasicObjType_UInt8 == eRefType) ? "(unsigned char)" : "",
+				name.c_str(), GetJsonConvertorNameByBasicType(eRefType));
+		}
+		else if (eBasicObjType_Enum == eRefType)
+			obj->fprintf(eSrcType, "\t___retval = (%s)out[\"%s\"].asInt();\n",
+				pRetValTypedefType->GetFullName(obj).c_str(), name.c_str());
+		else if (eBasicObjType_UserDefined == eRefType)
+			obj->fprintf(eSrcType, "\t___retval.___deserialize(out[\"%s\"]);\n", name.c_str());
+		else if (eBasicObjType_Interface == eRefType)
+			// note that Observable interface could not be return value
+			// so do not need to handle this here
+			obj->fprintf(eSrcType, "\t___retval.Bind(out[\"%s\"].asUInt(), &s_s%sStaticData_);\n",
+			name.c_str(), GetName().c_str());
+	}
+	else if (eBasicObjType_UserDefined == eType)
+	{
+		TUserDefTypeObject *pRetValUserDefType = (isMethod) ?
+			pNode->m_Data.method.m_pRetValUserDefType : pNode->m_Data.attribute.m_pUserDefType;
+		assert(NULL != pRetValUserDefType);
+		name = pRetValUserDefType->GetFullName(obj) + name;
+		// todo: check if the following 2 lines is right
+		string::size_type pos = name.find("::");
+		if (pos != string::npos) name.replace(pos, 2, "_");
+		obj->fprintf(eSrcType, "\t%s ___retval;\n",
+			pRetValUserDefType->GetFullName(obj).c_str());
+		obj->fprintf(eSrcType, "\t___retval.___deserialize(out[\"%s\"]);\n", name.c_str());
+	}
+	else if (eBasicObjType_Interface == eType)
+	{
+		TInterfaceObject *pRetValIFObject = (isMethod) ?
+			pNode->m_Data.method.m_pRetValIFObject : pNode->m_Data.attribute.m_pIFObject;
+		assert(NULL != pRetValIFObject);
+		name = pRetValIFObject->GetFullName(obj) + name;
+		string::size_type pos = name.find("::");
+		if (pos != string::npos) name.replace(pos, 2, "_");
+		obj->fprintf(eSrcType, "\t%s ___retval;\n",
+			pRetValIFObject->GetFullName(obj).c_str());
+
+		// note that Observable interface could not be return value
+		// so do not need to handle this here
+		obj->fprintf(eSrcType, "\t___retval.Bind(out[\"%s\"].asUInt(), &s_s%sStaticData_);\n",
+			name.c_str(), GetName().c_str());
+	}
+	return true;
+}
+
+bool TInterfaceObjectCodeGeneratorCpp::DeserializeOutParameters(ESrcFileType eSrcType, TVariableObject* pVarObject)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	return ::DeserializeParameters(eSrcType, obj, pVarObject);
+}
+
+TEnumDefObjectCodeGeneratorCpp::TEnumDefObjectCodeGeneratorCpp(TModuleObject *pModule,
+	const string cName)
+	: TEnumDefObject(pModule, cName)
+{
+}
+
+TEnumDefObjectCodeGeneratorCpp::~TEnumDefObjectCodeGeneratorCpp()
+{
+}
+
+bool TEnumDefObjectCodeGeneratorCpp::GenerateCode(void)
+{
+	if (TestFlags(eGrammarObjectFlag_CodeGenerated))
+		return true;
+	SetFlags(eGrammarObjectFlag_CodeGenerated);
+
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fprintf(SrcFileHdr, "enum %s\n{\n", GetName().c_str());
+	TListItem *pItem = m_cEnumNodeList.GetNext();
+	for (; pItem != &m_cEnumNodeList; pItem = pItem->GetNext())
+	{
+		TEnumNode *pNode = LIST_ENTRY(TEnumNode, m_cEnumOwnerList, pItem);
+		obj->fprintf(SrcFileHdr, "\t%s = %d,\n", pNode->m_cEnumNodeName.c_str(),
+			pNode->m_Value);
+	}
+	obj->fputs(SrcFileHdr, "};\n\n");
+	return true;
+}
+
+TEventObjectCodeGeneratorCpp::TEventObjectCodeGeneratorCpp(TModuleObject *pModule, const string cName)
+: TEventObject(pModule, cName)
+{
+}
+
+TEventObjectCodeGeneratorCpp::~TEventObjectCodeGeneratorCpp()
+{
+}
+
+bool TEventObjectCodeGeneratorCpp::GenerateCode(void)
+{
+	if (TestFlags(eGrammarObjectFlag_CodeGenerated))
+		return true;
+	SetFlags(eGrammarObjectFlag_CodeGenerated);
+
+	if (!GenerateRelatedObjectCode())
+		return false;
+
+	if (!GenerateHeaderFileCode())
+		return false;
+
+	// generate the inline methods
+	if (!GenerateInlineHeaderFileCode())
+		return false;
+
+	// generate the OnTriggered method in proxy
+	// generate the OnXXXTriggered method in cpp file
+	if (!GenerateSourceFileProxyCode())
+		return false;
+
+	if (!GenerateSourceFileSkeletonCode())
+		return false;
+
+	return true;
+}
+
+bool TEventObjectCodeGeneratorCpp::GenerateHeaderFileCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fprintf(SrcFileHdr, "class RPCEVENT %s : public TRpcEventBase\n"
+		"{\n"
+		"public:\n"
+		"\t%s(bool = false);\n"
+		"\tvirtual ~%s();\n\n",
+		GetName().c_str(), GetName().c_str(),
+		GetName().c_str());
+
+	obj->fprintf(SrcFileHdr,
+		"public:\n"
+		"\tvoid StartListen(void);\n"
+		"\tvoid EndListen(void);\n"
+		"\tvoid ForceTriggerLastEvent(void);\n"
+		"\tvirtual void On%sTriggered(", GetName().c_str());
+
+	if (!GenerateHeaderFileMethodDef())
+		return false;
+
+	// disable evil constructors
+	obj->fprintf(SrcFileHdr,
+		"\nprotected:\n"
+		"\tvoid OnTriggered(Json::Value& ___input);\n\n"
+		"private:\n"
+		"\t/* disable evil constructors */\n"
+		"\t%s(const %s&);\n"
+		"\tvoid operator=(const %s&);\n"
+		"};\n\n",
+		GetName().c_str(), GetName().c_str(), GetName().c_str());
+
+	// generate the host side code
+	obj->fputs(SrcFileHdr, "namespace Skeleton {\n\n");
+	obj->fprintf(SrcFileHdr, "class %s\n"
+		"{\n"
+		"public:\n"
+		"\t%s();\n"
+		"\t~%s();\n\n"
+		"\tvoid Trigger(", GetName().c_str(),
+		GetName().c_str(), GetName().c_str());
+
+	if (!GenerateHeaderFileMethodDef())
+		return false;
+
+	obj->fputs(SrcFileHdr, "};\n\n"
+		"}; // end of namespace Skeleton\n\n");
+	return true;
+}
+
+bool TEventObjectCodeGeneratorCpp::GenerateHeaderFileMethodDef(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	string output;
+
+	// generate each parameter
+	if (NodeList().IsEmpty())
+		obj->fputs(SrcFileHdr, "void");
+	else
+	{
+		bool isFirst = true;
+		TListItem *pItem = NodeList().GetNext();
+		for (; pItem != &NodeList(); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileHdr, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenerateMethodParameter(obj, pObj, output))
+				return false;
+			obj->fputs(SrcFileHdr, output.c_str());
+		}
+	}
+	obj->fputs(SrcFileHdr, ");\n");
+	return true;
+}
+
+bool TEventObjectCodeGeneratorCpp::GenerateSourceFileProxyCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// generate the event handle: OnTriggered
+	obj->fprintf(SrcFileProxy,
+		"void %s::OnTriggered(Json::Value& ___input)\n",
+		GetName().c_str());
+
+	if (!GenerateOnTriggeredMethodBody(SrcFileProxy))
+		return false;
+
+	// generate the method definition
+	obj->fprintf(SrcFileProxy, "void %s::On%sTriggered(",
+		GetName().c_str(), GetName().c_str());
+
+	// generate each parameter
+	string output;
+	if (NodeList().IsEmpty())
+		obj->fputs(SrcFileProxy, "void");
+	else
+	{
+		bool isFirst = true;
+		TListItem *pItem = NodeList().GetNext();
+		for (; pItem != &NodeList(); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileProxy, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenerateMethodParameter(obj, pObj, output))
+				return false;
+			obj->fputs(SrcFileProxy, output.c_str());
+		}
+	}
+
+	obj->fputs(SrcFileProxy, ")\n{\n}\n\n");
+	return true;
+}
+
+bool TEventObjectCodeGeneratorCpp::GenerateOnTriggeredMethodBody(ESrcFileType eSrcType)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fputs(eSrcType, "{\n\tJson::Value& ___par = ___input[\"parameters\"];\n\n");
+
+	TListItem* pItem = NodeList().GetNext();
+	for (; pItem != &NodeList(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+
+		// declare the variable like: int a;
+		string declaration;
+		if (!GenerateMethodVariableDeclaration(obj, pVarObj, declaration))
+			return false;
+
+		obj->fprintf(eSrcType, "\t%s;\n", declaration.c_str());
+		if (!DeserializeParameters(eSrcType, obj, pVarObj))
+			return false;
+	}
+
+	// generate the actual call
+	obj->fprintf(eSrcType, "\tOn%sTriggered(", GetName().c_str());
+
+	bool bfirst = true;
+	pItem = NodeList().GetNext();
+	for (; pItem != &NodeList(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		if (!bfirst) obj->fputs(eSrcType, ", "); else bfirst = false;
+		obj->fputs(eSrcType, pVarObj->m_cName.c_str());
+	}
+	obj->fputs(eSrcType, ");\n}\n\n");
+	return true;
+}
+
+bool TEventObjectCodeGeneratorCpp::GenerateInlineHeaderFileCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	// ctor
+	obj->fprintf(SrcFileInlineHdr,
+		"inline %s::%s(bool bRegist)\n"
+		"{\n"
+		"\tif (bRegist)\n"
+		"\t\tTRpcEventBase::StartListen(\"%s\");\n"
+		"}\n\n",
+		GetName().c_str(), GetName().c_str(),
+		(obj->GetName() + "." + GetName()).c_str());
+
+	// dtor
+	obj->fprintf(SrcFileInlineHdr,
+		"inline %s::~%s()\n"
+		"{\n"
+		"\tTRpcEventBase::EndListen(\"%s\");\n"
+		"}\n\n",
+		GetName().c_str(), GetName().c_str(),
+		(obj->GetName() + "." + GetName()).c_str());
+
+	// StartListen
+	obj->fprintf(SrcFileInlineHdr,
+		"inline void %s::StartListen(void)\n"
+		"{\n"
+		"\tTRpcEventBase::StartListen(\"%s\");\n"
+		"}\n\n",
+		GetName().c_str(),
+		(obj->GetName() + "." + GetName()).c_str());
+
+	// EndListen
+	obj->fprintf(SrcFileInlineHdr,
+		"inline void %s::EndListen(void)\n"
+		"{\n"
+		"\tTRpcEventBase::EndListen(\"%s\");\n"
+		"}\n\n",
+		GetName().c_str(),
+		(obj->GetName() + "." + GetName()).c_str());
+
+	// ForceTriggerLastEvent
+	obj->fprintf(SrcFileInlineHdr,
+		"inline void %s::ForceTriggerLastEvent(void)\n"
+		"{\n"
+		"\tTRpcEventBase::ForceTriggerLastEvent(\"%s\");\n"
+		"}\n\n",
+		GetName().c_str(),
+		(obj->GetName() + "." + GetName()).c_str());
+
+	return true;
+}
+
+bool TEventObjectCodeGeneratorCpp::GenerateSourceFileSkeletonCode(void)
+{
+	TModuleObject *obj = GetModule();
+	if (NULL == obj) return false;
+
+	obj->fprintf(SrcFileSkeleton, "%s::%s()\n"
+		"{\n}\n\n",
+		GetName().c_str(), GetName().c_str(),
+		GetName().c_str(), m_cName.c_str());
+
+	obj->fprintf(SrcFileSkeleton, "%s::~%s()\n"
+		"{\n}\n\n",
+		GetName().c_str(), GetName().c_str());
+
+	obj->fprintf(SrcFileSkeleton, "void %s::Trigger(", GetName().c_str());
+
+	// generate each parameter
+	string output;
+	if (NodeList().IsEmpty())
+		obj->fputs(SrcFileSkeleton, "void");
+	else
+	{
+		bool isFirst = true;
+		TListItem *pItem = NodeList().GetNext();
+		for (; pItem != &NodeList(); pItem = pItem->GetNext())
+		{
+			if (isFirst) isFirst = false;
+			else obj->fputs(SrcFileSkeleton, ", ");
+
+			TVariableObject *pObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+			if (!GenerateMethodParameter(obj, pObj, output))
+				return false;
+			obj->fputs(SrcFileSkeleton, output.c_str());
+		}
+	}
+
+	obj->fputs(SrcFileSkeleton, ")\n{\n\tJson::Value ___par;\n\n");
+	TListItem *pItem = NodeList().GetNext();
+	for (; pItem != &NodeList(); pItem = pItem->GetNext())
+	{
+		TVariableObject *pVarObj = LIST_ENTRY(TVariableObject, m_OwnerList, pItem);
+		if (!::SerializeParameters(SrcFileSkeleton, obj, pVarObj))
+			return false;
+	}
+	obj->fprintf(SrcFileSkeleton, "\n\tTriggerEvent(\"%s\", ___par);\n",
+		(obj->GetName() + "." + GetName()).c_str());
+	obj->fputs(SrcFileSkeleton, "}\n\n");
+	return true;
+}

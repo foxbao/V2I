@@ -1,0 +1,25 @@
+syntax = "proto3";
+package jos;
+
+import "proto/fusion_package.proto";
+import "proto/junction_package.proto";
+
+message device
+{
+    string device_id = 1;
+    // (WGS84/CGCS2000）
+    double lon = 2;
+    // (WGS84/CGCS2000）
+    double lat = 3;
+    // unit: deg（WGS84/CGCS2000）
+    float hdg = 4;
+};
+
+message junction
+{
+    string junction_id = 1;
+    uint64 timestamp = 2; //感知数据生成时间
+    update_timeinfo timeinfo = 3;
+    repeated target targets = 4;
+    repeated device devices = 5;
+};

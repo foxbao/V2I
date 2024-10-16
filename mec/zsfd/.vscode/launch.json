@@ -1,0 +1,433 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "(gdb) zlaunch attach",
+			"type": "cppdbg",
+			"request": "attach",
+			"program": "/zassys/bin/zlaunch",
+			"processId": "${command:pickProcess}",
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) Launch",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/sys/zlaunch",
+			"args": [
+				"--reset",
+				"exec://zas.system"	
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/sys",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) mwaretest",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/mware",
+			"args": [
+				"-l",
+				"exec://zas.system?host=service/zsysd"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) utilstest",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/utils",
+			"args": [
+				"--reset",
+				"-l",
+				"exec://test.appl",
+				"json",
+				"file:///home/jimview/zsfd/test/mware/test_config.json",
+				"bin",
+				"file://test.bin"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) rpcc",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/tools/rpcc",
+			"args": [
+				"--java",
+				"--input-file=traffic_signal.idl",
+				"--output-dir=./test",
+				"--package-name=zas.traffic",
+				"--service-name=traffic_signal"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/tools",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) otapack",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/tools/otapack",
+			"args": [
+				"--src-dir=~/zsfd-bak",
+				"--dst-dir=~/zsfd",
+				"--pkg-name=~/ota-test",
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/tools",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) sysd",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/sys/coreapp/zsysd",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/sys/coreapp",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) zhost",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/sys/zhost",
+			"args": [
+				"-l",
+				"\"exec://zas.digdup?hostid=_zas.digdup_datacollect&service=datacollect&executive=services/libdigdup_datacollect.so&ipaddr=192.168.31.226&listenport=5557&mode=startrequest\""
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/sys",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) rpcbridge",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/sys/coreapp/rpcbridge",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/sys/coreapp",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) zrpctest",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/client",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) remote_client",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/remote_client",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) zhost attach",
+			"type": "cppdbg",
+			"request": "attach",
+			"program": "/zassys/bin/zhost",
+			"processId": "${command:pickProcess}",
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) rpcbridge attach",
+			"type": "cppdbg",
+			"request": "attach",
+			"program": "/zassys/sysapp/zas.system/daemons/rpcbridge",
+			"processId": "${command:pickProcess}",
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) zsysd attach",
+			"type": "cppdbg",
+			"request": "attach",
+			"program": "/zassys/sysapp/zas.system/daemons/zsysd",
+			"processId": "${command:pickProcess}",
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) trafficerec",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/traffic",
+			"args": [
+				"-l",
+				"exec://zas.system.daemons?host=service/zsysd"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) webapptest",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/webapptest",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) webapptestsvc",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/webapptestsvc",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) ltetest",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/ltetest",
+			"args": [
+				"-l",
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) evloopserver",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/evloopsvr",
+			"args": [
+				"-l",
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) evloopclient",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/evloopcli",
+			"args": [
+				"-l",
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) warm",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/sys/warm",
+			"args": [
+				"--reset",
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/sys",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		}
+	]
+}

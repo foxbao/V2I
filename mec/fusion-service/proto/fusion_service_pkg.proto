@@ -1,0 +1,10 @@
+syntax = "proto3";
+package jos;
+
+import "proto/fusion_package.proto";
+
+message fusion_service_pkg {
+	fusion_package fus_pkg = 1;
+	uint64 timestamp = 2;
+	repeated target rm_item = 3;
+};

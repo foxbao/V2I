@@ -1,0 +1,205 @@
+
+#ifndef __CXX_RPCC_CODEGENCPP_H__
+#define __CXX_RPCC_CODEGENCPP_H__
+
+#include <stdio.h>
+#include "grammar.h"
+
+struct TIncludedModuleNode
+{
+	TListItem m_OwnerList;
+	TModuleObject *pModule;
+};
+
+class TModuleObjectCodeGeneratorCpp : public TModuleObject
+{
+public:
+	TModuleObjectCodeGeneratorCpp(const string& modulename, TConfig& cfg);
+	~TModuleObjectCodeGeneratorCpp();
+
+	bool GenerateCode(void);
+	bool SetOutputReplacement(const char *org, const char *rep);
+	bool fputs(ESrcFileType eType, const char *content);
+	bool fprintf(ESrcFileType eType, const char *content, ...);
+
+private:
+	void WriteHeaderComments(FILE *fp, const string& filename);
+	bool CreateFiles(void);
+	bool GenerateEnums(void);
+	bool GenerateEvents(void);
+	bool GenerateTypedefs(void);
+	bool GenerateConstItems(void);
+	bool GenerateInterfaces(void);
+	bool GenerateUserDefTypes(void);
+	bool GenerateIncludeFiles(void);
+	bool GenerateEventIncludeFiles(void);
+	bool GenerateTypedefIncludeFiles(void);
+	bool GenerateConstItemIncludeFiles(void);
+	bool GenerateInterfaceIncludeFiles(void);
+	bool GenerateUserDefTypeIncludeFiles(void);
+
+	bool FinializeCodeGeneration(void);
+
+	bool IsFileHandlerError(FILE **fp);
+	FILE** GetFileHandler(ESrcFileType eType);
+
+	bool IsModuleIncluded(TModuleObject *pModule);
+	void SetModuleIncluded(TModuleObject *pModule);
+	void DestroyIncludedModuleList(void);
+
+private:
+	FILE *m_pxysrcfp;
+	FILE *m_sklsrcfp;
+	FILE *m_hdrfp;
+	FILE *m_inhdrfp;
+	FILE *m_srcfp;
+
+	string m_cReplaceOriginal;
+	string m_cReplaceNew;
+
+	TListItem m_cIncludedModuleList;
+};
+
+class TTypedefObjectCodeGeneratorCpp : public TTypedefObject
+{
+public:
+	TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, EBasicObjectType eType);
+	TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, TTypedefObject *pRefType);
+	TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, TUserDefTypeObject *pRefType);
+	TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, TEnumDefObject* pEnumDef);
+	TTypedefObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, TInterfaceObject* pIFObject);
+	~TTypedefObjectCodeGeneratorCpp();
+
+	bool GenerateCode(void);
+};
+
+class TConstItemObjectCodeGeneratorCpp : public TConstItemObject
+{
+public:
+	TConstItemObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName, ENumberType eType, double& value);
+	~TConstItemObjectCodeGeneratorCpp();
+
+	bool GenerateCode(void);
+};
+
+class TEnumDefObjectCodeGeneratorCpp : public TEnumDefObject
+{
+public:
+	TEnumDefObjectCodeGeneratorCpp(TModuleObject *pModule,
+		const string cName);
+	~TEnumDefObjectCodeGeneratorCpp();
+
+	bool GenerateCode(void);
+};
+
+class TUserDefTypeObjectCodeGeneratorCpp : public TUserDefTypeObject
+{
+public:
+	TUserDefTypeObjectCodeGeneratorCpp(TModuleObject* pModule,
+		const string& cName);
+	~TUserDefTypeObjectCodeGeneratorCpp();
+
+	bool GenerateCode(void);
+
+private:
+	bool GenerateHeaderFileCode(void);
+	bool GenerateSourceFileCode(void);
+	bool GenerateInlineHeaderFileCode(void);
+
+	bool GenerateArrayInitializor(TVariableObject *pObj, string& cResult);
+	bool GenerateVariableDeclaration(TVariableObject *pObj, string& cResult);
+};
+
+class TInterfaceObjectCodeGeneratorCpp : public TInterfaceObject
+{
+public:
+	TInterfaceObjectCodeGeneratorCpp(TModuleObject* pModule, const string& cName);
+	~TInterfaceObjectCodeGeneratorCpp();
+
+	bool GenerateCode(void);
+
+private:
+	bool GenerateSourceFileCode(void);
+	bool GenerateHeaderFileProxyCode(void);
+	bool GenerateSourceFileProxyCode(void);
+	bool GenSrcFileProxyObservableIFCtor(void);
+	bool GenerateSourceFileProxyObservableCode(void);
+	bool GenerateSourceFileObservableSkeletonCode(void);
+	bool GenerateHeaderFileSkeletonCode(void);
+	bool GenerateSourceFileSkeletonCode(void);
+	bool GenerateInlineHeaderFileProxyCode(void);
+	bool GetConstructorUniqueName(TInterfaceNode *pNode, string& ret);
+	bool GenHdrFileProxyMethodParameter(TVariableObject *pObj, string& ret);
+	bool GetConstructorParameterUniqueName(TVariableObject *pVarObj, string& ret);
+
+	bool GenerateUserSrcFileConstructors(void);
+	bool GenerateUserSrcFileMethodDef(TInterfaceNode* pNode, bool bCreateInstance);
+	bool GenerateHeaderFileProxyConstructorDef(TInterfaceNode* pNode);
+	bool GenerateHeaderFileProxyMethodDef(TInterfaceNode* pNode);
+	bool GenerateSourceFileProxyMethodDef(TInterfaceNode* pNode);
+	bool GenerateSourceFileProxyMethodBody(TInterfaceNode* pNode);
+	bool GenerateProxyStyleMethodBody(ESrcFileType eSrcType, TInterfaceNode* pNode);
+	bool GenSrcFileProxyObservableMethodBody(TInterfaceNode* pNode);
+	bool IsNeedTransmitClientID(TInterfaceNode* pNode);
+
+	bool GenerateHeaderFileSkeletonConstructorDef(TInterfaceNode* pNode);
+	bool GenerateHeaderFileSkeletonMethodDef(TInterfaceNode* pNode);
+	bool GenerateSourceFileSkeletonObservableMethodDef(TInterfaceNode* pNode);
+	bool GenerateSourceFileSkeletonObservableMethodBody(TInterfaceNode* pNode);
+	bool GenHdrFileSkeletonMethodParameter(TVariableObject *pObj, string& ret);
+	bool GenHdrFileSkeletonMethodDefReturnType(TInterfaceNode *pNode, string& ret);
+	bool GenSkeletonMethodVariableDeclaration(TVariableObject *pVarObj, string& ret);
+	bool GenerateSourceFileSkeletonHandlerImp(TInterfaceNode *pNode);
+	bool GenerateSkeletonStyleMethodBody(ESrcFileType eSrcType, TInterfaceNode* pNode);
+	bool GenerateSourceFileSkeletonMethodBody(TInterfaceNode *pNode);
+
+	bool GenHdrFileProxyMethodDefReturnValue(TInterfaceNode *pNode, string& ret);
+	bool GenHdrFileProxyMethodDefReturnType(TInterfaceNode *pNode, string& ret);
+	bool GenerateSourceFileProxyMethodImp(TInterfaceNode *pNode);
+	bool GenerateSourceFileProxyObservableMethodImp(TInterfaceNode *pNode);
+
+	bool GenerateEmptyReturnStatements(ESrcFileType eType, TInterfaceNode *pNode);
+
+	bool SerializeReturnValue(ESrcFileType eSrcType, const char *retObj, const char *pVarName, TInterfaceNode* pNode);
+	bool DeserializeReturnValue(ESrcFileType eSrcType, TInterfaceNode* pNode);
+	bool DeserializeOutParameters(ESrcFileType eSrcType, TVariableObject* pVarObject);
+
+	bool IsOutArgsExists(TInterfaceNode* pNode);
+
+	bool GenerateSourceFileProxyAttribute(TInterfaceNode *pNode);
+	bool GenerateProxyStyleAttributeBody(ESrcFileType eSrcType, TInterfaceNode* pNode,
+		TVariableObject &cVarObject, bool bSet);
+	bool GenerateAttributeSetDefinition(ESrcFileType eType, TInterfaceNode *pNode,
+		TVariableObject &cVarObject, bool bSrcF);
+	bool GenerateAttributeGetDefinition(ESrcFileType eType, TInterfaceNode *pNode, bool bSrcF);
+	bool GenerateHeaderFileAttribute(ESrcFileType eType, TInterfaceNode *pNode, bool bSrcF);
+	bool GenerateSkeletonStyleAttributeBody(ESrcFileType eSrcType, TInterfaceNode* pNode,
+		TVariableObject &cVarObject, bool bSet);
+	bool GenerateAttributeValueInClsDef(ESrcFileType eFileType);
+};
+
+class TEventObjectCodeGeneratorCpp : public TEventObject
+{
+public:
+	TEventObjectCodeGeneratorCpp(TModuleObject *pModule,
+		const string cName);
+	~TEventObjectCodeGeneratorCpp();
+
+	bool GenerateCode(void);
+
+private:
+	bool GenerateHeaderFileCode(void);
+	bool GenerateHeaderFileMethodDef(void);
+	bool GenerateSourceFileProxyCode(void);
+	bool GenerateInlineHeaderFileCode(void);
+	bool GenerateSourceFileSkeletonCode(void);
+	bool GenerateOnTriggeredMethodBody(ESrcFileType eSrcType);
+};
+
+#endif

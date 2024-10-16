@@ -1,0 +1,28 @@
+syntax = "proto3";
+package vss;
+
+enum register_objecttype
+{
+	// unknown registered object
+	register_objtype_unknown = 0;
+
+	// registered object is a vehicle
+	register_objtype_vehicle = 1;
+
+	// registered object is a smart phone
+	register_objtype_smart_phone = 2;
+
+	// registered object is a monitoring camera
+	register_objtype_monitoring_camera = 3;
+
+	// registered object is a device in junction
+	register_objtype_junction_device = 4;
+};
+
+message register_request {
+	// the type of object to be registered
+	register_objecttype type = 1;
+
+	// loged-in account access token
+	string account_acstoken = 2;
+};

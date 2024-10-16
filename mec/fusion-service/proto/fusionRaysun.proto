@@ -1,0 +1,22 @@
+syntax = "proto3";
+package coop.v2x;
+
+message target {
+    int32 class = 1;
+    int32 id = 2;
+    double lon=3;
+    double lat=4;
+    float hdg=5;
+    float lenght=6;
+    float width=7;
+    float length=8;
+    float sog=9;
+
+}
+
+message frame{
+    int64 timestamp=1;
+    target targets=2;
+}
+
+

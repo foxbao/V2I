@@ -1,0 +1,47 @@
+syntax = "proto2";
+import "hdmap-geometry.proto";
+package zas.hdmap_ptcl;
+
+// 路口连接：等同于普通情况下的路
+message junction_connection
+{
+	// 道路ID
+	required fixed64 id = 1;
+	
+	// 该路口连接在那个道路对（roadpair）下
+	// ref type: junction_roadpair
+	required fixed64 roadpair = 2;
+
+	// 该道路的参考线（reference line）
+	// ref type: reference_line
+	repeated fixed64 refline = 3;
+	
+	// 道路的左右边界，车辆应保持不越过该车道
+	optional boundary_ref left = 4;
+	optional boundary_ref right = 5;
+	
+	// 道路的所有车道的集合
+	repeated fixed64 lanes = 6;
+};
+
+// 所有的来路(incomping road)和去路(leaving road)
+// 互相之间有连接关系的两两配对组成一个roadpair
+message junction_roadpair
+{
+	required fixed64 road1 = 1;
+	required fixed64 road2 = 2;
+	
+	// 该道路对下所有的“路口连接“
+	repeated fixed64 connections = 3;
+}
+
+// 定义一个交叉路口
+message junction
+{
+	// 该路口范围内所有的连接车道
+	// ref type: lane
+	repeated fixed64 connlanes = 1;
+	
+	// 本junction所有的roadpair
+	repeated junction_roadpair pair = 2;
+}

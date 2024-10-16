@@ -1,0 +1,63 @@
+{
+	"load-balance-service" : {
+		"client-endpoint":{
+			"port" : 5555
+		},
+		"server-endpoint":{
+			"port" : 5556
+		},
+		"distribute" : {
+			"ipaddr" : "localhost",
+			"port" : 6000
+		},
+		"rule-cnt" : 3,
+		"route-rule" : [
+			{
+				"url-name" : "/digdup/vss/v1/update",
+				"service" : {
+					"name" : "indexing-service",
+					"type" : "all"
+				}
+			},
+			{
+				"url-name" : "/digdup/vss/v1/register",
+				"service" : {
+					"name" : "indexing-service",
+					"type" : "all"
+				}
+			},
+			{
+				"url-name" : "/digdup/jos/v1/update",
+				"service" : {
+					"name" : "indexing-service",
+					"type" : "all"
+				}
+			}
+		],
+		"service": {
+			"indexing-service" : {
+				"name" : "indexing-service",
+				"max-count" : 10000,
+				"keepalive" : {
+					"internal" : 2500,
+					"liveness" : 3
+				}
+			}
+		}
+	},
+	"webcore" : {
+		"name" : "load-balance-service",
+		"timer-min-interval" : 10,
+		"sock-thread-maxcnt" : 1,
+		"server-count" : 1,
+		"servers" : [
+			{
+				"port" : 5555
+			}
+		]
+	},
+	"log" : {
+		"rootdir" : "/home/coder/mec/targets/x86-dbg/test/webcore-tmp",
+		"content-limit" : 4194304
+	}
+}

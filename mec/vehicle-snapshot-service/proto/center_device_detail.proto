@@ -1,0 +1,25 @@
+syntax = "proto3";
+package jos;
+
+import "proto/junction_package.proto";
+
+message device_detail{
+	// 雷达设备类型 ： radar_vision_type
+	uint32 type = 1;
+	// 雷达设备ID
+	string id = 2;
+	// 数据时间戳
+	uint64 timestamp = 3;
+
+	update_timeinfo timeinfo = 4;
+
+	// 经度, 雷达中心点经纬度 XY WGS84 /CGCS2000 坐标系
+	double lon = 5;
+	// 纬度, 雷达中心点经纬度 XY WGS84 /CGCS2000 坐标系
+	double lat = 6;
+
+	// 雷达朝向，与正北的夹角，0.0 - 360.0
+	float rdir = 7;
+	// 检测到的目标数据
+	repeated radar_target targets = 8;
+};

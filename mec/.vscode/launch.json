@@ -1,0 +1,220 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "(gdb) webcore-test",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/test/webcore",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg/test",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) mapcore-test",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/bin/mapcore_test",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text":  "python import sys; sys.path.append('/usr/share/gcc-8/python');sys.path.insert(0, '/usr/bin/python');from libstdcxx.v6.printers import register_libstdcxx_printers;register_libstdcxx_printers(None)",
+					"ignoreFailures": false
+				}
+			]
+		},
+		{
+			"name": "(gdb) osm-parser1",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/bin/osm-parser1",
+			"args": [
+				"--config-file=~/map/config.json"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) indexing-service",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/bin/indexing_service",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/build/bin",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text":  "python import sys; sys.path.append('/usr/share/gcc-8/python');sys.path.insert(0, '/usr/bin/python');from libstdcxx.v6.printers import register_libstdcxx_printers;register_libstdcxx_printers(None)",
+					"ignoreFailures": false
+				},
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+			]
+		},
+		{
+			"name": "(gdb) snapshot",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/bin/snapshot_service",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/build",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text":  "python import sys; sys.path.append('/usr/share/gcc-8/python');sys.path.insert(0, '/usr/bin/python');from libstdcxx.v6.printers import register_libstdcxx_printers;register_libstdcxx_printers(None)",
+					"ignoreFailures": false
+				},
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+			]
+		},
+		{
+			"name": "(gdb) testodr",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "/home/coder/mec/tools/osm-parser1/odrviewer/build/test-xodr",
+			"args": [
+				"/home/coder/map/od_shjd156_ys1123_1220.xodr"
+			],
+			"stopAtEntry": false,
+			"cwd": "/home/coder/mec/tools/osm-parser1/odrviewer/build",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) fusion_service",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "/home/coder/mec/build/bin/fusion_service",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "/home/coder/mec/build",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) load-balance",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/bin/load_balance",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/build",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) sigw",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/targets/x86-dbg/sigw",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/targets/x86-dbg",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		},
+		{
+			"name": "(gdb) fusiontest",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/fusion-service/build/tests",
+			"args": [
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/fusion-service",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			]
+		}
+	]
+}

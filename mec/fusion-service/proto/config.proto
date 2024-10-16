@@ -1,0 +1,19 @@
+syntax = "proto3";
+package coop.v2x;
+
+message CacherConfig {
+  float max_delay_ms = 1;
+  float duration_s = 2;
+}
+message FuserConfig {
+  CacherConfig cacher_cfg = 1;
+  // required int64 timestamp=1;
+  // repeated target targets=2;
+}
+
+message RaysunSystemConfig {
+  repeated string RayunFilePaths = 1;
+  string MapFilePath = 2;
+  int64 main_devid = 3;
+  double max_match_distance = 4;
+}

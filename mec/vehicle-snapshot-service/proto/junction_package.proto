@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+// junction objects snapshot
+package jos;
+
+enum radar_vision_type
+{
+	radar_vision_type_unknow = 0;
+	radar_vision_type_radar = 1;
+	radar_vision_type_camera = 2;
+	radar_vision_type_fusion = 3;
+	radar_vision_type_max = 4;
+};
+
+enum radar_target_type
+{
+	radar_target_type_unkonw = 0;
+	radar_target_type_pedestrian = 1;
+	radar_target_type_bike = 2;
+	radar_target_type_motobike = 3;
+	radar_target_type_car = 4;
+	radar_target_type_truck = 5;
+	radar_target_type_bus = 6;
+	radar_target_type_longtruck = 7;
+	radar_target_type_max = 8;
+};
+
+message radar_target {
+	// 检测目标编号
+	uint32 id = 1;
+	// 检测目标类型radar_target_type
+	uint32 type = 2;
+	
+	// 检测目标经度, 原始坐标为雷达坐标系，
+	// 障碍物中心点 XY WGS84 /CGCS2000 坐标系， (物体中心点经纬度)
+	double lon = 3;
+	// 检测目标纬度, 原始坐标为雷达坐标系，
+	// 障碍物中心点 XY WGS84 /CGCS2000 坐标系， (物体中心点经纬度)
+	double lat = 4;
+	// 航向角, 单位 度, WGS84/CGCS2000 坐标系时的航向角
+	float heading = 5;
+	// 长度, 单位 m
+	float length = 6;
+	// 宽度, 单位 m
+	float width = 7;
+	// 高度, 单位 m
+	float height = 8;
+	// 速度, 单位 km/h
+	float speed = 9;
+	// 相对距离，单位 m
+	float dist = 10;
+	// 相对角度，单位 度
+	float bearing = 11;
+	// 目标所处区域, 
+	// 障碍物为机动车或非机动车时，判断所处第几车道
+	// 以雷达观测区域从左到右依次 为 1 –9 车道；
+	// 目标为行人时，判断是否在人行道上，是为 10，否为 0
+	uint32 pos = 12;
+	// 稳定度
+	uint32 stable = 13;
+	
+	uint64 origin_time = 14;
+};
+
+message update_timeinfo {
+	// the timestamp of intersection upload
+	// _sec: escaped seconds since 1970/1/1
+	// _usec: usec of a second
+	int64 timestamp_sec = 1;
+	int64 timestamp_usec = 2;
+
+	// the timestamp of data_collection update
+	// _sec: escaped seconds since 1970/1/1
+	// _usec: usec of a second
+	int64 collection_timestamp_sec = 3;
+	int64 collection_timestamp_usec = 4;
+
+	// the timestamp of edge recv update
+	// _sec: escaped seconds since 1970/1/1
+	// _usec: usec of a second
+	int64 erecv_timestamp_sec = 5;
+	int64 erecv_timestamp_usec = 6;
+
+	// the timestamp of edge send update
+	// _sec: escaped seconds since 1970/1/1
+	// _usec: usec of a second
+	int64 esend_timestamp_sec = 7;
+	int64 esend_timestamp_usec = 8;
+};
+
+message radar_vision_info {
+	// 雷达设备类型 ： radar_vision_type
+	uint32 type = 1;
+	// 雷达设备ID
+	uint64 id = 2;
+	// 数据时间戳
+	uint64 timestamp = 3;
+
+	update_timeinfo timeinfo = 4;
+
+	// 经度, 雷达中心点经纬度 XY WGS84 /CGCS2000 坐标系
+	double lon = 5;
+	// 纬度, 雷达中心点经纬度 XY WGS84 /CGCS2000 坐标系
+	double lat = 6;
+
+	// 雷达朝向，与正北的夹角，0.0 - 360.0
+	float rdir = 7;
+	// 检测到的目标数据
+	repeated radar_target targets = 8;
+};
+
+message junction_package {
+	repeated radar_vision_info radar_info = 1;
+};

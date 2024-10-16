@@ -1,0 +1,46 @@
+{
+	"odr-files" : [
+		"~/map/boyuanlu2.xodr"
+	],
+	"target-dir" : "~/map/target/hdmap",
+	"version" : "v0001",
+	"extra-datafile" : "~/map/dataset.xml",
+	"render-map" : {
+		"block-width" : 100,
+		"block-height" : 100,
+		"road-edge" : {
+			"width" : 10,
+			"height" : -0.3
+		},
+		"epsilon" : 0.1
+	},
+	"hdmap" : {
+		"epsilon" : 1,
+		"generate-points" : true,
+		"generate-geometry" : true,
+		"use-extdatafile" : false,
+		"extdatafile" : {
+			"block-width" : 1000,
+			"block-height" : 1000,
+			"filesize-limit" : 1048576
+		}
+	},
+	"hdmap-defaults" : {
+		"signal-light" : {
+			"zoffset" : 6,
+			"height" : 0.1,
+			"radius" : 0.3,
+			"pitch" : 1.57079632679489661923,
+			"length" : 0,
+			"width" : 0,
+			"roll" : 0,
+			"hdg" : 0,
+			"pole-radius" : 0.0
+		},
+		"signal-board" : {
+			"height" : 0.0,
+			"need-pole" : true,
+			"pole-radius" : 0.1
+		}
+	}
+}
