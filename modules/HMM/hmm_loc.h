@@ -22,6 +22,7 @@ namespace civ
                 HMMLoc();
                 ~HMMLoc();
                 void ReadHDMap(std::string map_path, std::string json_path);
+                void SetHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap);
                 void ReadMap(std::string map_path);
                 /// @brief the viterbiAlgorithm
                 /// @param observations

@@ -37,6 +37,11 @@ namespace civ
                 sp_map_->ReadData(map_path);
             }
 
+
+            void HMMLoc::SetHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap)
+            {
+                sp_hdmap_=sp_hdmap;
+            }
             std::vector<int> HMMLoc::viterbiAlgorithm(const std::vector<int> &observations)
             {
 

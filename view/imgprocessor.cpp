@@ -66,9 +66,9 @@ namespace civ
                 SaveImage(&result_img_);
             }
 
-            void IMGPROCESSOR::PlotHDMap()
+            void IMGPROCESSOR::PlotHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap)
             {
-                std::vector<central_curve> central_curves_enu = sp_hdmap_->get_central_curves_enu();
+                std::vector<central_curve> central_curves_enu = sp_hdmap->get_central_curves_enu();
                 for (auto const &central_curve : central_curves_enu)
                 {
                     PlotCurveEnu(&result_img_, central_curve.p3d, cv::Scalar(128, 128, 128));
@@ -79,13 +79,20 @@ namespace civ
                 }
                 SaveImage(&result_img_);
             }
-
+            void IMGPROCESSOR::PlotHDMap()
+            {
+                this->PlotHDMap(sp_hdmap_);
+            }
+            void IMGPROCESSOR::PlotTrajectory(spTrajectoryProcessor sp_traj_processor)
+            {
+                PlotTrajectoryEnu(&result_img_, sp_traj_processor->get_trajectory_enu());
+                PlotTrajectoryInitialRange(&result_img_, sp_traj_processor,5.0);
+                SaveImage(&result_img_);
+            }
             void IMGPROCESSOR::PlotTrajectory(std::string trajectory_path)
             {
                 SetTrajectory(trajectory_path);
-                PlotTrajectoryEnu(&result_img_, sp_trajectory_processor_->get_trajectory_enu());
-                PlotTrajectoryInitialRange(&result_img_,5.0);
-                SaveImage(&result_img_);
+                this->PlotTrajectory(sp_trajectory_processor_);
             }
 
             void IMGPROCESSOR::PlotMapEnu(cv::Mat *ptr_img,
@@ -126,14 +133,24 @@ namespace civ
                 cv::putText(*ptr_img, std::to_string(id), cv::Point(pt_IMG[0], pt_IMG[1]), cv::FONT_HERSHEY_PLAIN, 1.5, 255, 2);
             }
 
-            void IMGPROCESSOR::PlotTrajectoryInitialRange(cv::Mat *ptr_img, double range_meter, cv::Scalar color)
+            void IMGPROCESSOR::PlotTrajectoryInitialRange(cv::Mat *ptr_img, spTrajectoryProcessor sp_trajectory_processor, double range_meter, cv::Scalar color)
             {
-                std::vector<Eigen::Vector3d> points_enu = sp_trajectory_processor_->get_trajectory_enu()->points_;
+                std::vector<Eigen::Vector3d> points_enu = sp_trajectory_processor->get_trajectory_enu()->points_;
                 for (const auto &pt : points_enu)
                 {
                     Eigen::Vector3d pt_IMG = Convert2IMG(pt);
                     cv::circle(*ptr_img, cv::Point(pt_IMG[0], pt_IMG[1]), range_meter * scale_, color, 1); // 画圆
-                }
+                } 
+            }
+            void IMGPROCESSOR::PlotTrajectoryInitialRange(cv::Mat *ptr_img, double range_meter, cv::Scalar color)
+            {
+                this->PlotTrajectoryInitialRange(ptr_img, sp_trajectory_processor_, range_meter, color);
+                // std::vector<Eigen::Vector3d> points_enu = sp_trajectory_processor_->get_trajectory_enu()->points_;
+                // for (const auto &pt : points_enu)
+                // {
+                //     Eigen::Vector3d pt_IMG = Convert2IMG(pt);
+                //     cv::circle(*ptr_img, cv::Point(pt_IMG[0], pt_IMG[1]), range_meter * scale_, color, 1); // 画圆
+                // }
             }
 
             Vec2d IMGPROCESSOR::Convert2IMG(const Vec2d &pt)
@@ -239,7 +256,7 @@ namespace civ
                 SaveImage(&result_img_);
             }
 
-            void IMGPROCESSOR::SaveImage(cv::Mat *ptr_img,std::string img_name)
+            void IMGPROCESSOR::SaveImage(cv::Mat *ptr_img, std::string img_name)
             {
                 PROJECT_ROOT_PATH;
                 // std::string img_name = "map";

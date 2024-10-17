@@ -24,6 +24,8 @@ namespace civ
                 void PlotMap(std::string map_path);
                 void SetHDMap(std::string map_path);
                 void PlotHDMap();
+                void PlotHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap);
+                void PlotTrajectory(spTrajectoryProcessor sp_traj_processor);
                 void PlotTrajectory(std::string trajectory_path);
                 /// @brief Plot the closest points of the trajectory on the map lane
                 /// @param trajectory_path
@@ -63,6 +65,7 @@ namespace civ
                 /// @param range range of selection, unit meter
                 /// @param color
                 void PlotTrajectoryInitialRange(cv::Mat *ptr_img,double range_meter = 5.0, cv::Scalar color = cv::Scalar(256, 128, 128));
+                void PlotTrajectoryInitialRange(cv::Mat *ptr_img,spTrajectoryProcessor sp_trajectory_processor,double range_meter = 5.0, cv::Scalar color = cv::Scalar(256, 128, 128));
                 /// @brief
                 /// @param ptr_img
                 /// @param curve

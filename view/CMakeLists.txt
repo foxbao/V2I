@@ -17,4 +17,5 @@ target_link_libraries(
 
 set(target_name ${MODULE_NAME}_test)
 add_executable(${target_name} imgprocessor_test.cpp)
-target_link_libraries(${target_name} PRIVATE ${MODULE_NAME} common modules)
+target_link_libraries(${target_name} 
+  PRIVATE ${MODULE_NAME} mapcore civmap common modules)

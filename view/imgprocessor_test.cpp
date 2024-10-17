@@ -10,7 +10,9 @@
 #include "common/math/line_segment.hpp"
 #include "opencv2/core/version.hpp"
 
-// This is the sample program which optimize the trajectory with HD map, and illustrates the 
+#include "mec/zsfd/inc/mapcore/hdmap.h"
+
+// This is the sample program which optimize the trajectory with HD map, and illustrates the
 // result with imgprocessor
 
 int main()
@@ -18,6 +20,7 @@ int main()
     using namespace civ::common::math;
     using namespace civ::V2I;
     using namespace civ::V2I::view;
+
     // std::cout << CV_VERSION << std::endl;
     civ::common::coord_transform::Earth::SetOrigin(Eigen::Vector3d(civ::common::util::g_ori_pos_deg[0],
                                                                    civ::common::util::g_ori_pos_deg[1],
@@ -28,18 +31,28 @@ int main()
     spTrajectoryProcessor sp_trajectory_processor = std::make_shared<TrajectoryProcessor>();
     // read and plot the trajectory
     sp_trajectory_processor->ReadTrajectory("/home/baojiali/Projects/civ/V2I/data/trajectory.txt");
-    sp_imgprocessor->PlotTrajectory("/home/baojiali/Projects/civ/V2I/data/trajectory.txt");
+    sp_imgprocessor->PlotTrajectory(sp_trajectory_processor);
 
     // read the map and plot it
     using namespace civ::V2I::modules;
-    sp_imgprocessor->SetHDMap("/home/baojiali/Projects/civ/V2I/map_data/hdmap");
-    sp_imgprocessor->PlotHDMap();
+
+    // std::shared_ptr<zas::mapcore::hdmap> sp_hdmap=std::make_shared<zas::mapcore::hdmap>();
+    std::shared_ptr<zas::mapcore::hdmap> sp_hdmap = std::make_shared<zas::mapcore::hdmap>();
+    std::string map_path = "/home/baojiali/Projects/civ/V2I/map_data/hdmap";
+    sp_hdmap->load_fromfile(map_path.c_str());
+    sp_imgprocessor->PlotHDMap(sp_hdmap);
+
     // plot the projection of trajectory on the closest lane
     // sp_imgprocessor->PlotClosestMapPointToTrajectory("/home/baojiali/Projects/civ/V2I/data/trajectory.txt");
     std::shared_ptr<civ::V2I::modules::HMMLoc> sp_model = std::make_shared<civ::V2I::modules::HMMLoc>();
 
+    std::string json_path="file:///home/baojiali/Projects/civ/V2I/map_data/lanesec.json";
+    sp_hdmap->generate_lanesect_transition(json_path.c_str());
     // Use hmm to read map, trajectory and calculate the best matching states with HMM
-    sp_model->ReadHDMap("/home/baojiali/Projects/civ/V2I/map_data/hdmap", "file:///home/baojiali/Projects/civ/V2I/map_data/lanesec.json");
+
+    sp_model->SetHDMap(sp_hdmap);
+    // sp_model->ReadHDMap("/home/baojiali/Projects/civ/V2I/map_data/hdmap", "file:///home/baojiali/Projects/civ/V2I/map_data/lanesec.json");
+
     // std::vector<uint64_t> states_lane = sp_model->viterbiAlgorithmHDMap(sp_trajectory_processor->get_trajectory_enu());
     std::vector<uint64_t> states_lane = sp_model->viterbiAlgorithmHDMap2(sp_trajectory_processor->get_trajectory_enu());
 
@@ -50,7 +63,7 @@ int main()
     }
     std::cout << std::endl;
 
-    for (int i = 0; i <states_lane.size(); i++)
+    for (int i = 0; i < states_lane.size(); i++)
     {
         Eigen::Vector3d pt_obs = sp_trajectory_processor->get_trajectory_enu()->points_[i];
         sp_imgprocessor->PlotClosestPointsLane(pt_obs, states_lane[i]);
