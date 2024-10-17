@@ -40,7 +40,7 @@ namespace civ
                 /// @param curve the curve composed of points(x,y,z)
                 /// @param color
                 void PlotCurveEnu(const std::vector<Eigen::Vector3d> &curve, cv::Scalar color = cv::Scalar(0, 256, 128));
-                void SaveImage(cv::Mat *ptr_img);
+                void SaveImage(cv::Mat *ptr_img,std::string img_name="map.jpg");
 
             private:
                 void SetMap(std::string map_path);

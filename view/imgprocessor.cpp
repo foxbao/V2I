@@ -239,12 +239,12 @@ namespace civ
                 SaveImage(&result_img_);
             }
 
-            void IMGPROCESSOR::SaveImage(cv::Mat *ptr_img)
+            void IMGPROCESSOR::SaveImage(cv::Mat *ptr_img,std::string img_name)
             {
                 PROJECT_ROOT_PATH;
-                std::string img_name = "map";
+                // std::string img_name = "map";
                 std::string file_path =
-                    std::string(PROJECT_ROOT_PATH) + "/img_result/" + "map.jpg";
+                    std::string(PROJECT_ROOT_PATH) + "/img_result/" + img_name;
                 std::cout << "saving int to:" << file_path << std::endl;
                 cv::imwrite(file_path, *ptr_img);
             }

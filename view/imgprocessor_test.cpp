@@ -9,13 +9,16 @@
 #include <boost/array.hpp>
 #include "common/math/line_segment.hpp"
 #include "opencv2/core/version.hpp"
+
+// This is the sample program which optimize the trajectory with HD map, and illustrates the 
+// result with imgprocessor
+
 int main()
 {
     using namespace civ::common::math;
-
     using namespace civ::V2I;
     using namespace civ::V2I::view;
-    std::cout << CV_VERSION << std::endl;
+    // std::cout << CV_VERSION << std::endl;
     civ::common::coord_transform::Earth::SetOrigin(Eigen::Vector3d(civ::common::util::g_ori_pos_deg[0],
                                                                    civ::common::util::g_ori_pos_deg[1],
                                                                    civ::common::util::g_ori_pos_deg[2]),

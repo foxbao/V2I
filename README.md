@@ -18,12 +18,12 @@
 
 
 ## Introduction
-This project provides 
+This project provides the implementation of HMM for lane level vehicle localization
 
 ## Download Source Code
 ```shell
 git clone git@github.com:foxbao/V2I.git
-git checkout -b dev origin/dev
+git checkout -b dev origin/dev(not necessary)
 ```
 
 ## Docker Version Installation
@@ -82,7 +82,7 @@ make test
 # Optionally install Ceres, it can also be exported using CMake which
 # allows Ceres to be used without requiring installation, see the documentation
 # for the EXPORT_BUILD_DIR option for more information.
-make install
+sudo make install
 ```
 
 3. Boost
@@ -92,7 +92,15 @@ sudo apt-get install libboost-all-dev
 4. Proj
 refer to https://www.osgeo.cn/proj/install.html. Download proj-9.0.0.tar.gz
 ```
-sudo apt install sqlite3 
+sudo apt install sqlite3 (prequisite)
+wget https://download.osgeo.org/proj/proj-9.0.0.tar.gz
+tar -zxvf  proj-9.0.0.tar.gz
+cd proj-9.1.0
+mkdir build
+cd build
+cmake ..
+cmake --build .
+sudo cmake --build . --target install
 ```
 
 
@@ -135,6 +143,7 @@ HMM is used to infer the vehicle localization on the lane level in order to know
 
 
 ```shell
+
 
 ```
 
