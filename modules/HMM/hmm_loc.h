@@ -45,6 +45,7 @@ namespace civ
                 /// @param observations 
                 /// @return 
                 std::vector<uint64_t> viterbiAlgorithmHDMap2(sp_cZTrajectory observations);
+                std::vector<uint64_t> viterbiAlgorithmHDMap2(sp_cZTrajectory observations,std::shared_ptr<zas::mapcore::hdmap> sp_hdmap);
             private:
                 /// @brief
                 /// @param observations

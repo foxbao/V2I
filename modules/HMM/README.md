@@ -20,10 +20,11 @@ https://medium.com/analytics-vidhya/baum-welch-algorithm-for-training-a-hidden-m
 ## Markov Chain
 A Markov chain is a model that tells us something about the probability of sequences of random variables. The Markov chain makes a strong assumption that when we want to make a prediction of future, we only depend on the current, and all the past do not matter.
 
-More formally, consider a sequence  of state variable $x_1$, $x_2$, $x_3$, Markov chain makes a strong Markov assumption
+More formally, consider a sequence  of state variable $x_1$, $x_2$, $x_3$, Markov chain makes a strong Markov assumption that the probability of the next state $x_i$ depends only on the current state $x_{i-1}$ and not on any of the previous states $x_1$, $x_2$, ..., $x_{i-2}$. Mathematically, we can write this as
 $$
 P\left( x_i=a|x_1x_2\cdots x_{i-1} \right) =P\left( x_i=a|x_{i-1} \right) 
 $$
+For example, in the following image, the probability of moving from state 1 to state 2 depends only on the current state 1 and not on the previous state 0. Similarly, the probability of moving from state 2 to state 3 depends only on the current state 2 and not on the previous state 1.
 
 <p align="center">
 <img src="../../imgs/markov_chain.png" width="400" >
@@ -60,9 +61,7 @@ A HMM should be characterized by three fundamental problems
 
 
 ## Foward-Backward
-We make the assumption that 
-
-We want to determine the probability distribution of the state variable at any time k given the whole sequence of observed data. It can be understood mathematically
+In the first problem, We want to determine the probability distribution of the state variable at any time k given the whole sequence of observed data. It can be understood mathematically
 $$
 P\left( X_k|Y_{0:T} \right) =\frac{P\left( X_k,Y_{0:T} \right)}{P\left( Y_{0:T} \right)}=\frac{P\left( X_k,Y_{0:k},Y_{k+1:T} \right)}{P\left( Y_{0:T} \right)}
 \\

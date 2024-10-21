@@ -37,10 +37,9 @@ namespace civ
                 sp_map_->ReadData(map_path);
             }
 
-
             void HMMLoc::SetHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap)
             {
-                sp_hdmap_=sp_hdmap;
+                sp_hdmap_ = sp_hdmap;
             }
             std::vector<int> HMMLoc::viterbiAlgorithm(const std::vector<int> &observations)
             {
@@ -217,8 +216,6 @@ namespace civ
                 return best_states;
             }
 
-
-
             std::vector<uint64_t> HMMLoc::viterbiAlgorithmHDMap(sp_cZTrajectory observations)
             {
                 int T = observations->points_.size();
@@ -322,8 +319,6 @@ namespace civ
                 return best_states;
             } // the comparator used in set to remove repetition of curves found
 
-
-
             template <typename T>
             void print_vec(std::vector<T> &vec)
             {
@@ -337,8 +332,9 @@ namespace civ
                 std::cout << std::endl;
             }
 
-            std::vector<uint64_t> HMMLoc::viterbiAlgorithmHDMap2(sp_cZTrajectory observations)
+            std::vector<uint64_t> HMMLoc::viterbiAlgorithmHDMap2(sp_cZTrajectory observations, std::shared_ptr<zas::mapcore::hdmap> sp_hdmap)
             {
+
                 int T = observations->points_.size();
                 std::vector<uint64_t> best_states;
                 if (T < 1)
@@ -347,20 +343,19 @@ namespace civ
                 }
                 // generate states which contain the curves near the observation points
                 // the range is given by initial_range_, ex. 5 meters
-                std::vector<uint64_t> lanes = sp_hdmap_->get_lanes_near_pt_enu(observations->points_, initial_range_);
+                std::vector<uint64_t> lanes = sp_hdmap->get_lanes_near_pt_enu(observations->points_, initial_range_);
                 // Initialization step
                 // Calculate the transitional probability
                 int num_states = lanes.size();
                 // the candidate states for each time epoch
                 std::vector<std::vector<uint64_t>> time_nodes;
 
-                Eigen::MatrixXd transition_matrix = sp_hdmap_->CalculateTransitionalProbability(lanes, lanes);
-                std::cout<<"lanes"<<std::endl;
+                Eigen::MatrixXd transition_matrix = sp_hdmap->CalculateTransitionalProbability(lanes, lanes);
+                std::cout << "lanes" << std::endl;
                 print_vec(lanes);
-                std::cout <<"transition matrix"<<std::endl;
-                std::cout<<transition_matrix<<std::endl;
-                
-                
+                std::cout << "transition matrix" << std::endl;
+                std::cout << transition_matrix << std::endl;
+
                 // The maximum probability of a given node
                 Eigen::MatrixXd delta = Eigen::MatrixXd::Zero(T, num_states);
                 // the path of a given node
@@ -387,15 +382,15 @@ namespace civ
                 std::cout << "initial_probs:" << initial_probs.transpose() << std::endl;
 
                 // use the first observed result to calculate the probabilities of first node
-                std::cout<<"initial delta:"<<std::endl;
+                std::cout << "initial delta:" << std::endl;
                 std::cout.precision(3);
                 for (int s = 0; s < num_states; ++s)
                 {
                     // use the distance from position to lane center to calculate intitial prob
                     // viterbi[s,1]<-P(X0Z0)=P(X0)*P(Z0|X0)
-                    std::cout<<"EmissionProbability("<<lanes[s]<<"):"<<EmissionProbability(lanes[s], observations->points_[0]);
+                    std::cout << "EmissionProbability(" << lanes[s] << "):" << EmissionProbability(lanes[s], observations->points_[0]);
                     delta(0, s) = initial_probs(s) * EmissionProbability(lanes[s], observations->points_[0]);
-                    std::cout << " delta "<<  delta(0, s) << std::endl;
+                    std::cout << " delta " << delta(0, s) << std::endl;
                     // backpointer[s,1]<-0
                     psi(0, s) = 0;
                 }
@@ -405,7 +400,7 @@ namespace civ
                 for (int t = 1; t < T; ++t)
                 {
                     // process only the cadidate states near to observation
-                    std::vector<uint64_t> lanes_neighbour = sp_hdmap_->get_lanes_near_pt_enu(observations->points_[t], initial_range_);
+                    std::vector<uint64_t> lanes_neighbour = sp_hdmap->get_lanes_near_pt_enu(observations->points_[t], initial_range_);
                     time_nodes.push_back(lanes_neighbour);
 
                     std::cout << "time_nodes[t - 1]" << std::endl;
@@ -414,7 +409,7 @@ namespace civ
                     print_vec(lanes_neighbour);
                     // std::cout<<lanes_neighbour<<std::endl;
 
-                    Eigen::MatrixXd transition_matrix_tmp = sp_hdmap_->CalculateTransitionalProbability(time_nodes[t - 1], lanes_neighbour);
+                    Eigen::MatrixXd transition_matrix_tmp = sp_hdmap->CalculateTransitionalProbability(time_nodes[t - 1], lanes_neighbour);
 
                     std::cout << "matrix_tmp" << std::endl;
                     std::cout << transition_matrix_tmp << std::endl;
@@ -453,8 +448,8 @@ namespace civ
                     }
                 }
 
-                std::cout<<"delta:"<<std::endl;
-                std::cout<<delta<<std::endl;
+                std::cout << "delta:" << std::endl;
+                std::cout << delta << std::endl;
                 // Backtrack to find the best path
                 best_path[T - 1] = best_final_state;
                 for (int t = T - 2; t >= 0; --t)
@@ -467,6 +462,138 @@ namespace civ
                     best_states.push_back(lanes[idx_path]);
                 }
                 return best_states;
+            }
+
+            std::vector<uint64_t> HMMLoc::viterbiAlgorithmHDMap2(sp_cZTrajectory observations)
+            {
+                return this->viterbiAlgorithmHDMap2(observations,this->sp_hdmap_);
+                // int T = observations->points_.size();
+                // std::vector<uint64_t> best_states;
+                // if (T < 1)
+                // {
+                //     return best_states;
+                // }
+                // // generate states which contain the curves near the observation points
+                // // the range is given by initial_range_, ex. 5 meters
+                // std::vector<uint64_t> lanes = sp_hdmap_->get_lanes_near_pt_enu(observations->points_, initial_range_);
+                // // Initialization step
+                // // Calculate the transitional probability
+                // int num_states = lanes.size();
+                // // the candidate states for each time epoch
+                // std::vector<std::vector<uint64_t>> time_nodes;
+
+                // Eigen::MatrixXd transition_matrix = sp_hdmap_->CalculateTransitionalProbability(lanes, lanes);
+                // std::cout << "lanes" << std::endl;
+                // print_vec(lanes);
+                // std::cout << "transition matrix" << std::endl;
+                // std::cout << transition_matrix << std::endl;
+
+                // // The maximum probability of a given node
+                // Eigen::MatrixXd delta = Eigen::MatrixXd::Zero(T, num_states);
+                // // the path of a given node
+                // Eigen::MatrixXi psi = Eigen::MatrixXi::Zero(T, num_states);
+                // // the best state for the observation
+                // std::vector<int> best_path(T);
+
+                // Eigen::MatrixXi mask = Eigen::MatrixXi::Zero(T, num_states);
+
+                // // calculate the initial probability
+                // // only the lane state candidate within the range of first observation will be calculated
+                // Eigen::VectorXd initial_probs = Eigen::VectorXd::Zero(num_states);
+                // std::vector<uint64_t> initial_states;
+                // for (int s = 0; s < num_states; ++s)
+                // {
+                //     initial_probs(s) = 1;
+                //     initial_states.push_back(lanes[s]);
+                // }
+
+                // time_nodes.push_back(initial_states);
+                // // normalize
+                // initial_probs = initial_probs / initial_probs.sum();
+                // std::cout << "-------------------------" << std::endl;
+                // std::cout << "initial_probs:" << initial_probs.transpose() << std::endl;
+
+                // // use the first observed result to calculate the probabilities of first node
+                // std::cout << "initial delta:" << std::endl;
+                // std::cout.precision(3);
+                // for (int s = 0; s < num_states; ++s)
+                // {
+                //     // use the distance from position to lane center to calculate intitial prob
+                //     // viterbi[s,1]<-P(X0Z0)=P(X0)*P(Z0|X0)
+                //     std::cout << "EmissionProbability(" << lanes[s] << "):" << EmissionProbability(lanes[s], observations->points_[0]);
+                //     delta(0, s) = initial_probs(s) * EmissionProbability(lanes[s], observations->points_[0]);
+                //     std::cout << " delta " << delta(0, s) << std::endl;
+                //     // backpointer[s,1]<-0
+                //     psi(0, s) = 0;
+                // }
+
+                // // Recursion step
+                // // for the steps after initialization
+                // for (int t = 1; t < T; ++t)
+                // {
+                //     // process only the cadidate states near to observation
+                //     std::vector<uint64_t> lanes_neighbour = sp_hdmap_->get_lanes_near_pt_enu(observations->points_[t], initial_range_);
+                //     time_nodes.push_back(lanes_neighbour);
+
+                //     std::cout << "time_nodes[t - 1]" << std::endl;
+                //     print_vec(time_nodes[t - 1]);
+                //     std::cout << "lanes_neighbour" << std::endl;
+                //     print_vec(lanes_neighbour);
+                //     // std::cout<<lanes_neighbour<<std::endl;
+
+                //     Eigen::MatrixXd transition_matrix_tmp = sp_hdmap_->CalculateTransitionalProbability(time_nodes[t - 1], lanes_neighbour);
+
+                //     std::cout << "matrix_tmp" << std::endl;
+                //     std::cout << transition_matrix_tmp << std::endl;
+
+                //     // current node
+                //     for (int s = 0; s < lanes_neighbour.size(); s++)
+                //     {
+                //         uint64_t lane_neighbour = lanes_neighbour[s];
+                //         double max_prob = 0.0;
+                //         int max_state = 0;
+                //         for (int s_prev = 0; s_prev < time_nodes[t - 1].size(); ++s_prev)
+                //         {
+                //             double transitional_prob = transition_matrix_tmp(s_prev, s);
+                //             // // v(t+1)=max(v(t)*P(Xt+1|Xt)*P(Zt|Xt))
+                //             // // x(t+1)=argmax(v(t)*P(Xt+1|Xt)*P(Zt|Xt))
+                //             double prob = delta(t - 1, s_prev) * transitional_prob * EmissionProbability(lanes_neighbour[s], observations->points_[t]);
+                //             if (prob > max_prob)
+                //             {
+                //                 max_prob = prob;
+                //                 max_state = s_prev;
+                //             }
+                //         }
+                //         delta(t, s) = max_prob;
+                //         psi(t, s) = max_state;
+                //     }
+                // }
+                // // termination step, select the maximum probability
+                // double max_prob = 0.0;
+                // int best_final_state = 0;
+                // for (int s = 0; s < num_states; ++s)
+                // {
+                //     if (delta(T - 1, s) > max_prob)
+                //     {
+                //         max_prob = delta(T - 1, s);
+                //         best_final_state = s;
+                //     }
+                // }
+
+                // std::cout << "delta:" << std::endl;
+                // std::cout << delta << std::endl;
+                // // Backtrack to find the best path
+                // best_path[T - 1] = best_final_state;
+                // for (int t = T - 2; t >= 0; --t)
+                // {
+                //     best_path[t] = psi(t + 1, best_path[t + 1]);
+                // }
+
+                // for (const auto &idx_path : best_path)
+                // {
+                //     best_states.push_back(lanes[idx_path]);
+                // }
+                // return best_states;
             }
             struct set_share_ptr_compptr
             {
@@ -526,7 +653,6 @@ namespace civ
                 double prob = CDF(lane_width_, gps_sigma_, distance);
                 return prob;
             }
-
 
             double HMMLoc::CDF(double w, double sigma, double d)
             {
