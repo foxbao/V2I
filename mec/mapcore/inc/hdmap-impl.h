@@ -48,6 +48,13 @@ struct hdmap_lanesect_transition
 	std::map<uint64_t, uint64_t> lsc_right_index;
 };
 
+// 定义枚举类
+enum class BoundaryType {
+    center_curve,   // 中心曲线
+    inner_boundary, // 内边界
+    outer_boundary  // 外边界
+};
+
 class hdmap_impl
 {
 public:
@@ -79,8 +86,11 @@ public:
 	Eigen::MatrixXd CalculateTransitionalProbability(std::vector<uint64_t> lanes_id_1,std::vector<uint64_t> lanes_id_2);
 	
 	double get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, uint64_t lane_id, Eigen::Vector3d &cross_pt_curve);
-	std::vector<central_curve> get_central_curves_enu(void);
-	std::vector<Eigen::Vector3d> get_curve(uint64_t lane_id);
+	std::vector<Curve> get_central_curves_enu(void);
+	std::vector<Curve> get_boundary_curves_enu(void);
+	std::vector<Curve> get_curves_enu(BoundaryType type=BoundaryType::center_curve);
+	
+	std::vector<Eigen::Vector3d> get_curve(uint64_t lane_id,BoundaryType type = BoundaryType::center_curve);
 	double get_distance_pt_closest_central_line_enu(const Eigen::Vector3d &pt_enu, Eigen::Vector3d &cross_pt_map_enu);
 	int	generate_lanesect_transition(const char* filepath);
 	

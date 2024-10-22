@@ -139,20 +139,15 @@ The gap parameters are estimated via Maximum Likelihood Estimate (MLE), which is
 
 ## HMM
 
-HMM is used to infer the vehicle localization on the lane level in order to know if the vehicle is driving on the 
-
-
-```shell
-
-
-```
+HMM is used to infer the vehicle localization on the lane level in order to know if the vehicle is driving on the correct way. The more detailed explanation is in modules/HMM/README.md
 
 ## view
-The viewer will show the map, trajectory and the HMM result
+The viewer is used to show the map, trajectory and the HMM result with the class IMGPROCESSOR implemented in imgprocessor.cpp. The example is given in imgprocessor_test.cpp, which generates civview_test
+
 ```shell
 ./build/bin/civview_test
 ```
-The result will be saved in the folder img_result
+This example will read a trajectory, filter it with HMM, and plot the result in folder img_result
 
 
 

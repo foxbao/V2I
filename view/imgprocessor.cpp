@@ -68,7 +68,9 @@ namespace civ
 
             void IMGPROCESSOR::PlotHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap)
             {
-                std::vector<central_curve> central_curves_enu = sp_hdmap->get_central_curves_enu();
+                std::vector<Curve> boundary_curves_enu = sp_hdmap->get_boundary_curves_enu();
+                // sp_hdmap_
+                std::vector<Curve> central_curves_enu = sp_hdmap->get_central_curves_enu();
                 for (auto const &central_curve : central_curves_enu)
                 {
                     PlotCurveEnu(&result_img_, central_curve.p3d, cv::Scalar(128, 128, 128));

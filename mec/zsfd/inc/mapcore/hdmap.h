@@ -496,11 +496,16 @@ struct Pose
     Eigen::Vector3d ENU;
 };
 
-struct central_curve
+struct Curve
 {
     uint64_t id;
     std::vector<Eigen::Vector3d> p3d;
 };
+// struct central_curve:Curve
+// {};
+
+
+
 
 struct hdmap_segment_point
 {
@@ -784,7 +789,9 @@ public:
 
 	double get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, uint64_t lane_id, Eigen::Vector3d &cross_pt_curve);
 
-	std::vector<central_curve> get_central_curves_enu(void);
+	std::vector<Curve> get_central_curves_enu(void);
+
+	std::vector<Curve> get_boundary_curves_enu(void);
 
 	std::vector<Eigen::Vector3d> get_curve(uint64_t lane_id);
 
