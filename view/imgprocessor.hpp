@@ -25,6 +25,8 @@ namespace civ
                 void SetHDMap(std::string map_path);
                 void PlotHDMap();
                 void PlotHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap);
+                void PlotCurves(std::shared_ptr<std::vector<Curve>> sp_curves, bool i_showid = false, cv::Scalar color = cv::Scalar(128, 128, 128));
+
                 void PlotTrajectory(spTrajectoryProcessor sp_traj_processor);
                 void PlotTrajectory(std::string trajectory_path);
                 /// @brief Plot the closest points of the trajectory on the map lane
@@ -42,7 +44,7 @@ namespace civ
                 /// @param curve the curve composed of points(x,y,z)
                 /// @param color
                 void PlotCurveEnu(const std::vector<Eigen::Vector3d> &curve, cv::Scalar color = cv::Scalar(0, 256, 128));
-                void SaveImage(cv::Mat *ptr_img,std::string img_name="map.jpg");
+                void SaveImage(cv::Mat *ptr_img, std::string img_name = "map.jpg");
 
             private:
                 void SetMap(std::string map_path);
@@ -64,8 +66,8 @@ namespace civ
                 /// @brief Plot the circle of range of state selction of all the points in trajectory
                 /// @param range range of selection, unit meter
                 /// @param color
-                void PlotTrajectoryInitialRange(cv::Mat *ptr_img,double range_meter = 5.0, cv::Scalar color = cv::Scalar(256, 128, 128));
-                void PlotTrajectoryInitialRange(cv::Mat *ptr_img,spTrajectoryProcessor sp_trajectory_processor,double range_meter = 5.0, cv::Scalar color = cv::Scalar(256, 128, 128));
+                void PlotTrajectoryInitialRange(cv::Mat *ptr_img, double range_meter = 5.0, cv::Scalar color = cv::Scalar(256, 128, 128));
+                void PlotTrajectoryInitialRange(cv::Mat *ptr_img, spTrajectoryProcessor sp_trajectory_processor, double range_meter = 5.0, cv::Scalar color = cv::Scalar(256, 128, 128));
                 /// @brief
                 /// @param ptr_img
                 /// @param curve

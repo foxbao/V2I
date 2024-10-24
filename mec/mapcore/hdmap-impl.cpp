@@ -940,7 +940,7 @@ double hdmap_impl::get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, uint
 	return distance;
 }
 
-std::vector<Curve> hdmap_impl::get_curves_enu(BoundaryType type)
+std::vector<Curve> hdmap_impl::get_curves_enu(CurveType type)
 {
 	std::vector<Curve> p3d_all;
 	auto* hdr = header();
@@ -955,7 +955,10 @@ std::vector<Curve> hdmap_impl::get_curves_enu(BoundaryType type)
 	}
 	for (uint64_t lane_index = 0; lane_index < hdr->laneseg_count; lane_index++) {
 		Curve curve;
-		vector<Eigen::Vector3d> p3ds = get_curve(lane_index,BoundaryType::inner_boundary);
+		vector<Eigen::Vector3d> p3ds = get_curve(lane_index,type);
+		int aaa=p3ds.size();
+		vector<Eigen::Vector3d> p3ds_center = get_curve(lane_index,CurveType::center_curve);
+		int bbb=p3ds.size();
 		curve.id = lane_index;
 		curve.p3d = p3ds;
 		p3d_all.push_back(curve);
@@ -963,56 +966,11 @@ std::vector<Curve> hdmap_impl::get_curves_enu(BoundaryType type)
 	return p3d_all;
 }
 
-std::vector<Curve> hdmap_impl::get_boundary_curves_enu(void)
-{
-	std::vector<Curve> p3d_all;
-	auto* hdr = header();
-	if (nullptr == hdr) {
-		return p3d_all;
-	}
-	if (!hdr->a.persistence) {
-		return p3d_all;
-	}
-	if (!hdr->laneseg_count) {
-		return p3d_all;
-	}
-	for (uint64_t lane_index = 0; lane_index < hdr->laneseg_count; lane_index++) {
-		Curve curve;
-		vector<Eigen::Vector3d> p3ds = get_curve(lane_index,BoundaryType::inner_boundary);
-		curve.id = lane_index;
-		curve.p3d = p3ds;
-		p3d_all.push_back(curve);
-	}
-	return p3d_all;
-}
-
-std::vector<Curve> hdmap_impl::get_central_curves_enu(void)
-{
-	std::vector<Curve> p3d_all;
-	auto* hdr = header();
-	if (nullptr == hdr) {
-		return p3d_all;
-	}
-	if (!hdr->a.persistence) {
-		return p3d_all;
-	}
-	if (!hdr->laneseg_count) {
-		return p3d_all;
-	}
-
-	for (uint64_t lane_index = 0; lane_index < hdr->laneseg_count; lane_index++) {
-		Curve curve;
-		vector<Eigen::Vector3d> p3ds = get_curve(lane_index);
-		curve.id = lane_index;
-		curve.p3d = p3ds;
-		p3d_all.push_back(curve);
-	}
-
-	return p3d_all;
-}
-
-
-std::vector<Eigen::Vector3d> hdmap_impl::get_curve(uint64_t lane_id,BoundaryType type)
+/// @brief 获取lane里面的曲线，可以设定中间线、内侧线和外侧线
+/// @param lane_id 
+/// @param type Center line, inner boundary or outer boundary
+/// @return std::vector<Eigen::Vector3d> p3ds
+std::vector<Eigen::Vector3d> hdmap_impl::get_curve(uint64_t lane_id,CurveType type)
 {
 	std::vector<Eigen::Vector3d> p3ds;
 	auto* hdr = header();
@@ -1041,83 +999,39 @@ std::vector<Eigen::Vector3d> hdmap_impl::get_curve(uint64_t lane_id,BoundaryType
 	if (nullptr == ls->lane.ptr) {
 		return p3ds;
 	}
+	osm_parser1::chunk<hdmap_lane_boundary_point_v1> *pts = nullptr;
+	size_t ptsz = 0;
 
-	auto& pts = ls->data.ptr->extinfo.center_pts;
-	size_t ptsz = ls->data.ptr->extinfo.center_pts.size / sizeof(hdmap_lane_boundary_point_v1);
-
-	if (type == BoundaryType::center_curve) {
-		auto& pts = ls->data.ptr->extinfo.center_pts;
-		size_t ptsz = ls->data.ptr->extinfo.center_pts.size / sizeof(hdmap_lane_boundary_point_v1);
+	if (type == CurveType::center_curve) {
+		pts = &ls->data.ptr->extinfo.center_pts;
+		ptsz = ls->data.ptr->extinfo.center_pts.size / sizeof(hdmap_lane_boundary_point_v1);
 	}
-	else if (type == BoundaryType::inner_boundary)
+	else if (type == CurveType::inner_boundary)
 	{
-		auto& pts = ls->data.ptr->extinfo.inner_pts;
-		size_t ptsz = ls->data.ptr->extinfo.inner_pts.size / sizeof(hdmap_lane_boundary_point_v1);
+		pts = &ls->data.ptr->extinfo.inner_pts;
+		ptsz = ls->data.ptr->extinfo.inner_pts.size / sizeof(hdmap_lane_boundary_point_v1);
 	}
-	else if (type == BoundaryType::outer_boundary)
+	else if (type == CurveType::outer_boundary)
 	{
-		auto& pts = ls->data.ptr->extinfo.outer_pts;
-		size_t ptsz = ls->data.ptr->extinfo.outer_pts.size / sizeof(hdmap_lane_boundary_point_v1);
+		pts = &ls->data.ptr->extinfo.outer_pts;
+		ptsz = ls->data.ptr->extinfo.outer_pts.size / sizeof(hdmap_lane_boundary_point_v1);
 	}
 	else
 	{
-		auto& pts = ls->data.ptr->extinfo.center_pts;
-		size_t ptsz = ls->data.ptr->extinfo.center_pts.size / sizeof(hdmap_lane_boundary_point_v1);
+		pts = &ls->data.ptr->extinfo.center_pts;
+		ptsz = ls->data.ptr->extinfo.center_pts.size / sizeof(hdmap_lane_boundary_point_v1);
 	}
 	
 	
 	for (size_t i = 0; i < ptsz; i++) {
 		Eigen::Vector3d p3d;
-		p3d[0] = pts.ptr[i].pt.xyz.x;
-		p3d[1] = pts.ptr[i].pt.xyz.y;
-		p3d[2] = pts.ptr[i].pt.xyz.z;
+		p3d[0] = pts->ptr[i].pt.xyz.x;
+		p3d[1] = pts->ptr[i].pt.xyz.y;
+		p3d[2] = pts->ptr[i].pt.xyz.z;
 		p3ds.push_back(p3d);
 	}
 	return p3ds;
 }
-
-// std::vector<Eigen::Vector3d> hdmap_impl::get_curve(uint64_t lane_id)
-// {
-// 	std::vector<Eigen::Vector3d> p3ds;
-// 	auto* hdr = header();
-// 	if (nullptr == hdr) {
-// 		return p3ds;
-// 	}
-// 	if (!hdr->a.persistence) {
-// 		return p3ds;
-// 	}
-// 	if (!hdr->laneseg_count) {
-// 		return p3ds;
-// 	}
-// 	if (lane_id >= hdr->laneseg_count) {
-// 		printf("lane seg point data error. point index %lu\n", lane_id);
-// 		return p3ds;
-// 	}
-// 	auto* ls = &_lanesegs[lane_id];
-// 	if (nullptr == ls || nullptr == ls->data.ptr) {
-// 		return p3ds;
-// 	}
-
-// 	if (nullptr == ls->data.ptr) {
-// 		return p3ds;
-// 	}
-
-// 	if (nullptr == ls->lane.ptr) {
-// 		return p3ds;
-// 	}
-
-// 	auto& pts = ls->data.ptr->extinfo.center_pts;
-// 	size_t ptsz = ls->data.ptr->extinfo.center_pts.size / sizeof(hdmap_lane_boundary_point_v1);
-	
-// 	for (size_t i = 0; i < ptsz; i++) {
-// 		Eigen::Vector3d p3d;
-// 		p3d[0] = pts.ptr[i].pt.xyz.x;
-// 		p3d[1] = pts.ptr[i].pt.xyz.y;
-// 		p3d[2] = pts.ptr[i].pt.xyz.z;
-// 		p3ds.push_back(p3d);
-// 	}
-// 	return p3ds;
-// }
 
 double hdmap_impl::get_distance_pt_closest_central_line_enu(const Eigen::Vector3d &pt_enu, Eigen::Vector3d &cross_pt_map_enu)
 {
@@ -2483,7 +2397,7 @@ double hdmap::get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, uint64_t 
 	return map->get_distance_pt_curve_enu(pt_enu, lane_id, cross_pt_curve);
 }
 
-std::vector<Curve> hdmap::get_boundary_curves_enu(void)
+std::vector<Curve> hdmap::get_curves_enu(CurveType type)
 {
 	std::vector<Curve> tmp;
 	if (nullptr == _data) {
@@ -2493,19 +2407,21 @@ std::vector<Curve> hdmap::get_boundary_curves_enu(void)
 	if (!map->valid()) {
 		return tmp;
 	}
-	return map->get_boundary_curves_enu();
+	return map->get_curves_enu(type);
+}
+
+std::vector<Curve> hdmap::get_inner_boundaries_enu(void)
+{
+	return get_curves_enu(CurveType::inner_boundary);
 }
 std::vector<Curve> hdmap::get_central_curves_enu(void)
 {
-	std::vector<Curve> tmp;
-	if (nullptr == _data) {
-		return tmp;
-	}
-	auto* map = reinterpret_cast<hdmap_impl*>(_data);
-	if (!map->valid()) {
-		return tmp;
-	}
-	return map->get_central_curves_enu();
+	return get_curves_enu(CurveType::center_curve);
+}
+
+std::vector<Curve> hdmap::get_outer_boundaries_enu(void)
+{
+	return get_curves_enu(CurveType::outer_boundary);
 }
 
 std::vector<Eigen::Vector3d> hdmap::get_curve(uint64_t lane_id)

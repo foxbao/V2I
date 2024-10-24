@@ -24,6 +24,13 @@ class rendermap;
 class hdrmap_ro_signal_light;
 class hdrmap_ro_roadside_device;
 
+
+// 定义枚举类
+enum class CurveType {
+    center_curve,   // 中心曲线
+    inner_boundary, // 内边界
+    outer_boundary  // 外边界
+};
 class MAPCORE_EXPORT rendermap_junction
 {
 public:
@@ -790,8 +797,10 @@ public:
 	double get_distance_pt_curve_enu(const Eigen::Vector3d &pt_enu, uint64_t lane_id, Eigen::Vector3d &cross_pt_curve);
 
 	std::vector<Curve> get_central_curves_enu(void);
+	std::vector<Curve> get_inner_boundaries_enu(void);
+	std::vector<Curve> get_outer_boundaries_enu(void);
+	std::vector<Curve> get_curves_enu(CurveType type);
 
-	std::vector<Curve> get_boundary_curves_enu(void);
 
 	std::vector<Eigen::Vector3d> get_curve(uint64_t lane_id);
 

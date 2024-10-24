@@ -66,19 +66,42 @@ namespace civ
                 SaveImage(&result_img_);
             }
 
-            void IMGPROCESSOR::PlotHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap)
+            void IMGPROCESSOR::PlotCurves(std::shared_ptr<std::vector<Curve>> sp_curves, bool i_showid, cv::Scalar color)
             {
-                std::vector<Curve> boundary_curves_enu = sp_hdmap->get_boundary_curves_enu();
-                // sp_hdmap_
-                std::vector<Curve> central_curves_enu = sp_hdmap->get_central_curves_enu();
-                for (auto const &central_curve : central_curves_enu)
+                for (const auto &curve : *sp_curves)
                 {
-                    PlotCurveEnu(&result_img_, central_curve.p3d, cv::Scalar(128, 128, 128));
-                    if (central_curve.p3d.size() > 0)
+                    PlotCurveEnu(&result_img_, curve.p3d, color);
+                    if (curve.p3d.size() > 0 && i_showid)
                     {
-                        PlotCurveId(&result_img_, central_curve.id, central_curve.p3d[0], cv::Scalar(128, 128, 128));
+                        PlotCurveId(&result_img_, curve.id, curve.p3d[0], color);
                     }
                 }
+            }
+
+            void IMGPROCESSOR::PlotHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap)
+            {
+                std::vector<Curve> central_curves_enu = sp_hdmap->get_central_curves_enu();
+                int central_curves_enu_size=central_curves_enu.size();
+                std::vector<Curve> inner_boundaries_enu = sp_hdmap->get_inner_boundaries_enu();
+                int inner_boundaries_enu_size=inner_boundaries_enu.size();
+                std::vector<Curve> outer_curves_enu = sp_hdmap->get_outer_boundaries_enu();
+                int outer_curves_enu_size=outer_curves_enu.size();
+
+                std::shared_ptr<std::vector<Curve>> inner_boundaries_ptr = std::make_shared<std::vector<Curve>>(inner_boundaries_enu);
+                std::shared_ptr<std::vector<Curve>> outer_curves_ptr = std::make_shared<std::vector<Curve>>(outer_curves_enu);
+                std::shared_ptr<std::vector<Curve>> central_curves_ptr = std::make_shared<std::vector<Curve>>(central_curves_enu);
+
+                PlotCurves(central_curves_ptr, true,cv::Scalar(128, 128, 128));
+                PlotCurves(inner_boundaries_ptr, false,cv::Scalar(255, 0, 0));
+                PlotCurves(outer_curves_ptr, false,cv::Scalar(255, 0, 0));
+                // for (auto const &central_curve : central_curves_enu)
+                // {
+                //     PlotCurveEnu(&result_img_, central_curve.p3d, cv::Scalar(128, 128, 128));
+                //     if (central_curve.p3d.size() > 0)
+                //     {
+                //         PlotCurveId(&result_img_, central_curve.id, central_curve.p3d[0], cv::Scalar(128, 128, 128));
+                //     }
+                // }
                 SaveImage(&result_img_);
             }
             void IMGPROCESSOR::PlotHDMap()
@@ -88,7 +111,7 @@ namespace civ
             void IMGPROCESSOR::PlotTrajectory(spTrajectoryProcessor sp_traj_processor)
             {
                 PlotTrajectoryEnu(&result_img_, sp_traj_processor->get_trajectory_enu());
-                PlotTrajectoryInitialRange(&result_img_, sp_traj_processor,5.0);
+                PlotTrajectoryInitialRange(&result_img_, sp_traj_processor, 5.0);
                 SaveImage(&result_img_);
             }
             void IMGPROCESSOR::PlotTrajectory(std::string trajectory_path)
@@ -142,7 +165,7 @@ namespace civ
                 {
                     Eigen::Vector3d pt_IMG = Convert2IMG(pt);
                     cv::circle(*ptr_img, cv::Point(pt_IMG[0], pt_IMG[1]), range_meter * scale_, color, 1); // 画圆
-                } 
+                }
             }
             void IMGPROCESSOR::PlotTrajectoryInitialRange(cv::Mat *ptr_img, double range_meter, cv::Scalar color)
             {
