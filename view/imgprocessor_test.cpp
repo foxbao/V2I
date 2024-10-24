@@ -42,8 +42,6 @@ int main()
     sp_hdmap->load_fromfile(map_path.c_str());
     sp_imgprocessor->PlotHDMap(sp_hdmap);
 
-    // plot the projection of trajectory on the closest lane
-    // sp_imgprocessor->PlotClosestMapPointToTrajectory("/home/baojiali/Projects/civ/V2I/data/trajectory.txt");
     // Read the full map which contains the relation between lanes 
     std::string json_path="file:///home/baojiali/Projects/civ/V2I/map_data/lanesec.json";
     sp_hdmap->generate_lanesect_transition(json_path.c_str());

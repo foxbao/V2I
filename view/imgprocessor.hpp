@@ -22,8 +22,7 @@ namespace civ
                 IMGPROCESSOR();
                 ~IMGPROCESSOR();
                 void PlotMap(std::string map_path);
-                void SetHDMap(std::string map_path);
-                void PlotHDMap();
+                // void SetHDMap(std::string map_path);
                 void PlotHDMap(std::shared_ptr<zas::mapcore::hdmap> sp_hdmap);
                 void PlotCurves(std::shared_ptr<std::vector<Curve>> sp_curves, bool i_showid = false, cv::Scalar color = cv::Scalar(128, 128, 128));
 
@@ -33,8 +32,6 @@ namespace civ
                 /// @param trajectory_path
                 /// @param map_path
                 void PlotClosestPoints(std::string trajectory_path, std::string map_path);
-
-                void PlotClosestMapPointToTrajectory(std::string trajectory_path);
                 /// @brief
                 /// @param pt
                 /// @param curve
@@ -48,7 +45,6 @@ namespace civ
 
             private:
                 void SetMap(std::string map_path);
-                void SetTrajectory(std::string trajectory_path);
                 /**
                  * @brief Plot map lines on image
                  * @param ptr_img image
@@ -62,11 +58,11 @@ namespace civ
                 void PlotTrajectoryEnu(cv::Mat *ptr_img,
                                        const sp_cZTrajectory &trajectory_enu);
                 void PlotPointEnu(cv::Mat *ptr_img, const Eigen::Vector3d &pt_enu, cv::Scalar color = cv::Scalar(255, 255, 255));
-                void PlotCurveId(cv::Mat *ptr_img, const uint64_t &id, const Eigen::Vector3d &pt_enu, cv::Scalar color = cv::Scalar(0, 256, 128));
+                void plotCurveId(cv::Mat *ptr_img, const uint64_t &id, const Eigen::Vector3d &pt_enu, cv::Scalar color = cv::Scalar(0, 256, 128));
                 /// @brief Plot the circle of range of state selction of all the points in trajectory
                 /// @param range range of selection, unit meter
                 /// @param color
-                void PlotTrajectoryInitialRange(cv::Mat *ptr_img, double range_meter = 5.0, cv::Scalar color = cv::Scalar(256, 128, 128));
+
                 void PlotTrajectoryInitialRange(cv::Mat *ptr_img, spTrajectoryProcessor sp_trajectory_processor, double range_meter = 5.0, cv::Scalar color = cv::Scalar(256, 128, 128));
                 /// @brief
                 /// @param ptr_img
@@ -91,7 +87,6 @@ namespace civ
                 std::vector<cv::Scalar> color_set_;
                 spCivMap sp_map_;
                 std::shared_ptr<zas::mapcore::hdmap> sp_hdmap_;
-                spTrajectoryProcessor sp_trajectory_processor_;
                 int font_;
             };
             // DEFINE_EXTEND_TYPE(IMGPROCESSOR);
