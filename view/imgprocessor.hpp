@@ -35,8 +35,8 @@ namespace civ
                 /// @brief
                 /// @param pt
                 /// @param curve
-                void PlotClosestPointsCurve(const Eigen::Vector3d &pt, const std::vector<Eigen::Vector3d> &curve);
-                void PlotClosestPointsLane(const Eigen::Vector3d &pt, const uint64_t &state);
+                // void PlotClosestPointsCurve(const Eigen::Vector3d &pt, const std::vector<Eigen::Vector3d> &curve);
+                void PlotClosestPointsLane(const Eigen::Vector3d &pt, const uint64_t &state,std::shared_ptr<zas::mapcore::hdmap> sp_hdmap);
                 /// @brief plot a curve of ENU coordinate
                 /// @param curve the curve composed of points(x,y,z)
                 /// @param color
@@ -44,7 +44,6 @@ namespace civ
                 void SaveImage(cv::Mat *ptr_img, std::string img_name = "map.jpg");
 
             private:
-                void SetMap(std::string map_path);
                 /**
                  * @brief Plot map lines on image
                  * @param ptr_img image
@@ -86,7 +85,6 @@ namespace civ
                 std::map<int, cv::Point2d> title_position_;
                 std::vector<cv::Scalar> color_set_;
                 spCivMap sp_map_;
-                std::shared_ptr<zas::mapcore::hdmap> sp_hdmap_;
                 int font_;
             };
             // DEFINE_EXTEND_TYPE(IMGPROCESSOR);

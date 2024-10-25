@@ -38,15 +38,14 @@ namespace civ
                 title_position_[104] = cv::Point2d(100, 250);
 
                 sp_map_ = std::make_shared<civ::V2I::map::CivMap>();
-                sp_hdmap_ = std::make_shared<zas::mapcore::hdmap>();
                 font_ = cv::FONT_HERSHEY_SIMPLEX;
             }
             IMGPROCESSOR::~IMGPROCESSOR() {}
 
-            void IMGPROCESSOR::SetMap(std::string map_path)
-            {
-                sp_map_->ReadData(map_path);
-            }
+            // void IMGPROCESSOR::SetMap(std::string map_path)
+            // {
+            //     sp_map_->ReadData(map_path);
+            // }
 
             void IMGPROCESSOR::PlotMap(std::string map_path)
             {
@@ -194,32 +193,35 @@ namespace civ
             {
                 spTrajectoryProcessor sp_trajectory_processor=std::make_shared<TrajectoryProcessor>();
                 sp_trajectory_processor->ReadTrajectory(trajectory_path);
-                SetMap(map_path);
+
+
+                spCivMap sp_map=std::make_shared<CivMap>();
+                sp_map->ReadData(map_path);
 
                 std::vector<Eigen::Vector3d> points_enu = sp_trajectory_processor->get_trajectory_enu()->points_;
                 for (const auto &pt_enu : points_enu)
                 {
                     Eigen::Vector3d cross_pt_map_enu;
-                    double distance = sp_map_->get_distance_pt_map_enu(pt_enu, cross_pt_map_enu);
+                    double distance = sp_map->get_distance_pt_map_enu(pt_enu, cross_pt_map_enu);
                     PlotPointEnu(&result_img_, pt_enu, cv::Scalar(0, 0, 255));
                     PlotPointEnu(&result_img_, cross_pt_map_enu);
                 }
                 SaveImage(&result_img_);
             }
 
-            void IMGPROCESSOR::PlotClosestPointsCurve(const Eigen::Vector3d &pt, const std::vector<Eigen::Vector3d> &curve)
-            {
-                Eigen::Vector3d cross_pt_enu;
-                double closest_distance = sp_map_->get_distance_pt_curve_enu(pt, curve, cross_pt_enu);
-                std::cout << cross_pt_enu.transpose() << std::endl;
-                PlotPointEnu(&result_img_, cross_pt_enu, cv::Scalar(255, 0, 255));
-                SaveImage(&result_img_);
-            }
+            // void IMGPROCESSOR::PlotClosestPointsCurve(const Eigen::Vector3d &pt, const std::vector<Eigen::Vector3d> &curve)
+            // {
+            //     Eigen::Vector3d cross_pt_enu;
+            //     double closest_distance = sp_map_->get_distance_pt_curve_enu(pt, curve, cross_pt_enu);
+            //     std::cout << cross_pt_enu.transpose() << std::endl;
+            //     PlotPointEnu(&result_img_, cross_pt_enu, cv::Scalar(255, 0, 255));
+            //     SaveImage(&result_img_);
+            // }
 
-            void IMGPROCESSOR::PlotClosestPointsLane(const Eigen::Vector3d &pt, const uint64_t &lane_id)
+            void IMGPROCESSOR::PlotClosestPointsLane(const Eigen::Vector3d &pt, const uint64_t &lane_id,std::shared_ptr<zas::mapcore::hdmap> sp_hdmap)
             {
                 Eigen::Vector3d cross_pt_enu;
-                double closest_distance = sp_hdmap_->get_distance_pt_curve_enu(pt, lane_id, cross_pt_enu);
+                double closest_distance = sp_hdmap->get_distance_pt_curve_enu(pt, lane_id, cross_pt_enu);
                 std::cout << "purple distance:" << closest_distance << std::endl;
                 std::cout << cross_pt_enu.transpose() << std::endl;
                 PlotPointEnu(&result_img_, cross_pt_enu, cv::Scalar(255, 0, 255));

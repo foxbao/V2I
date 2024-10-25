@@ -62,7 +62,7 @@ int main()
     for (int i = 0; i < states_lane.size(); i++)
     {
         Eigen::Vector3d pt_obs = sp_trajectory_processor->get_trajectory_enu()->points_[i];
-        sp_imgprocessor->PlotClosestPointsLane(pt_obs, states_lane[i]);
+        sp_imgprocessor->PlotClosestPointsLane(pt_obs, states_lane[i],sp_hdmap);
     }
 
     return 0;
